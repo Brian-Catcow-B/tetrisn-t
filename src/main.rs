@@ -16,9 +16,6 @@ use std::io::{Read, Write};
 const BOARD_HEIGHT_BUFFER_U: u8 = 2;
 // the amount of columns that should be on either side of the board to account for next pieces, score, etc
 const BOARD_WIDTH_EXTENSION_LR: u8 = 6;
-// these constants always point to the lower right corner of the window no matter what size the window actually is
-const RELATIVE_WINDOW_WIDTH: f32 = 800.0;
-const RELATIVE_WINDOW_HEIGHT: f32 = 600.0;
 
 fn main() {
     let mut context = ContextBuilder::new("Rustrisn-t", "Catcow");
