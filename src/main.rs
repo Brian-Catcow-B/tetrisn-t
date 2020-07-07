@@ -153,7 +153,6 @@ impl Board {
 struct Rustrisnt {
     num_players: u8,
     board: Board,
-    // canvas: graphics::Canvas,
     text: graphics::Text,
     tile_size: f32,
     batch_empty_tile: graphics::spritebatch::SpriteBatch,
@@ -167,7 +166,6 @@ impl Rustrisnt {
         Self {
             num_players: 2,
             board: Board::new(140u8, 20u8),
-            // canvas: graphics::Canvas::with_window_size(ctx).expect("Failed to create canvas based on window size"),
             text: graphics::Text::new(("Hello world!", graphics::Font::default(), 24.0)),
             tile_size: TileGraphic::get_size(ctx, 14u8, 20u8),
             batch_empty_tile: batch_empty_tile,
@@ -179,7 +177,6 @@ impl Rustrisnt {
 impl EventHandler for Rustrisnt {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         // Update code here...
-                // println!("Added empty tile");
 
         Ok(())
     }
