@@ -169,7 +169,7 @@ impl Rustrisnt {
         let batch_empty_tile = graphics::spritebatch::SpriteBatch::new(image);
         Self {
             num_players: 2,
-            board: Board::new(100u8, 20u8),
+            board: Board::new(140u8, 20u8),
             // canvas: graphics::Canvas::with_window_size(ctx).expect("Failed to create canvas based on window size"),
             text: graphics::Text::new(("Hello world!", graphics::Font::default(), 24.0)),
             tile_size: TileGraphic::get_size(ctx, 14u8, 20u8),
@@ -188,6 +188,7 @@ impl EventHandler for Rustrisnt {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
+        let (window_width, window_height) = graphics::size(ctx);
         graphics::clear(ctx, graphics::BLACK);
         // empty tiles as the first layer
         self.tile_size = TileGraphic::get_size(ctx, self.board.board_width, self.board.board_height);
@@ -199,7 +200,7 @@ impl EventHandler for Rustrisnt {
                 self.batch_empty_tile.add(empty_tile);
             }
         }
-        graphics::draw(ctx, &self.batch_empty_tile, DrawParam::new().dest(Point2::new(RELATIVE_WINDOW_WIDTH / 2.0 - (self.tile_size * NUM_PIXEL_ROWS as f32 * self.board.board_width as f32 / (2.0 * 10.0)), 0.0)).scale(Vector2::new(self.tile_size / 10.0, self.tile_size / 10.0)))?;
+        graphics::draw(ctx, &self.batch_empty_tile, DrawParam::new().dest(Point2::new(window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS as f32 * self.board.board_width as f32 / (2.0 * 10.0)), 0.0)).scale(Vector2::new(self.tile_size / 10.0, self.tile_size / 10.0)))?;
 
         graphics::present(ctx)
     }
