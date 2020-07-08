@@ -16,6 +16,8 @@ use tile::NUM_PIXEL_ROWS_PER_TILEGRAPHIC;
 use tile::Tile;
 use tile::TileGraphic;
 
+mod piece;
+
 // this constant is for the two unseen columns above the board so that when an I piece is rotated
 // right after spawning, the two tiles that go above the board are kept track of
 const BOARD_HEIGHT_BUFFER_U: u8 = 2;

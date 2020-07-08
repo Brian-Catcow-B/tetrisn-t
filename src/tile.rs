@@ -39,7 +39,8 @@ impl Tile {
 }
 
 pub struct TileGraphic {
-    pub image: graphics::Image,
+    pub 
+    image: graphics::Image,
 }
 
 impl TileGraphic {
