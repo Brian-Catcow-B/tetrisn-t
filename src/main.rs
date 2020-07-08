@@ -1,7 +1,7 @@
 use ggez;
 use ggez::{Context, ContextBuilder, GameResult};
 use ggez::event::{self, EventHandler};
-use ggez::graphics::{self, Color, DrawParam};
+use ggez::graphics::{self, DrawParam};
 use ggez::nalgebra as na;
 use na::Point2;
 use na::Vector2;
@@ -9,7 +9,12 @@ use na::Vector2;
 // file systems stuff
 use std::path;
 use std::env;
-use std::io::{Read, Write};
+// use std::io::{Read, Write};
+
+mod tile;
+use tile::NUM_PIXEL_ROWS_PER_TILEGRAPHIC;
+use tile::Tile;
+use tile::TileGraphic;
 
 // this constant is for the two unseen columns above the board so that when an I piece is rotated
 // right after spawning, the two tiles that go above the board are kept track of
@@ -43,94 +48,6 @@ fn main() {
     match event::run(ctx, event_loop, &mut rustrisnt) {
         Ok(_) => println!("Exited cleanly."),
         Err(e) => println!("Error occured: {}", e)
-    }
-}
-
-#[derive(Clone)]
-struct Tile {
-    empty: bool,
-    active: bool,
-    player: u8,
-}
-
-impl Tile {
-    pub fn new_empty() -> Self {
-        Self {
-            empty: true,
-            active: false,
-            player: 0xffu8,
-        }
-    }
-
-    // TODO: figure out how to fill the rest of the `Self` arguments as what they are and optimize modify_fill and modify_empty
-    pub fn modify_fill(&mut self, active: bool, player: u8) -> Self {
-        Self {
-            empty: false,
-            active: active,
-            player: player,
-        }
-    }
-
-    pub fn modify_empty(&mut self) -> Self {
-        Self {
-            empty: false,
-            active: false,
-            player: self.player,
-        }
-    }
-}
-
-struct TileGraphic {
-    image: graphics::Image,
-}
-
-const NUM_PIXEL_ROWS: u16 = 8;
-const GRAY: (u8, u8, u8) = (150u8, 150u8, 150u8);
-const DARK_GRAY: (u8, u8, u8) = (84u8, 84u8, 84u8);
-
-impl TileGraphic {
-    pub fn new_empty(ctx: &mut Context) -> Self {
-        // create a pixel buffer big enough to hold 4 u8's for each pixel because rgba
-        let mut pixel_buf: [u8; 4 * (NUM_PIXEL_ROWS as usize) * (NUM_PIXEL_ROWS as usize)] = [0u8; 4 * (NUM_PIXEL_ROWS as usize) * (NUM_PIXEL_ROWS as usize)];
-        for row_index in 0..NUM_PIXEL_ROWS {
-            for col_index in 0..NUM_PIXEL_ROWS {
-                if row_index == 0 || row_index == NUM_PIXEL_ROWS - 1 || col_index == 0 || col_index == NUM_PIXEL_ROWS - 1 {
-                    pixel_buf[(row_index * NUM_PIXEL_ROWS * 4 + col_index * 4 + 0) as usize] = DARK_GRAY.0;
-                    pixel_buf[(row_index * NUM_PIXEL_ROWS * 4 + col_index * 4 + 1) as usize] = DARK_GRAY.1;
-                    pixel_buf[(row_index * NUM_PIXEL_ROWS * 4 + col_index * 4 + 2) as usize] = DARK_GRAY.2;
-                    pixel_buf[(row_index * NUM_PIXEL_ROWS * 4 + col_index * 4 + 3) as usize] = 0xff;
-                } else {
-                    pixel_buf[(row_index * NUM_PIXEL_ROWS * 4 + col_index * 4 + 0) as usize] = GRAY.0;
-                    pixel_buf[(row_index * NUM_PIXEL_ROWS * 4 + col_index * 4 + 1) as usize] = GRAY.1;
-                    pixel_buf[(row_index * NUM_PIXEL_ROWS * 4 + col_index * 4 + 2) as usize] = GRAY.2;
-                    pixel_buf[(row_index * NUM_PIXEL_ROWS * 4 + col_index * 4 + 3) as usize] = 0xff;
-                }
-            }
-        }
-        Self{
-            image: graphics::Image::from_rgba8(ctx, NUM_PIXEL_ROWS, NUM_PIXEL_ROWS, &pixel_buf).expect("Failed to create background tile image"),
-        }
-    }
-
-    pub fn get_size(ctx: &mut Context, board_width: u8, board_height: u8) -> f32 {
-        std::cmp::min(graphics::size(ctx).1 as u32 / board_height as u32, graphics::size(ctx).0 as u32 / board_width as u32) as f32
-    }
-
-    pub fn _print_image_buf(self, ctx: &mut Context) {
-        let image_buf: Vec<u8> = self.image.to_rgba8(ctx).expect("Failed to create image buffer");
-        for index in 0..image_buf.len() {
-            if index % 4 == 0 {
-                if index % 32 == 0 {
-                    print!("\n");
-                } else {
-                    if index != 0 {
-                        print!(" ");
-                    }
-                }
-            }
-            print!("{:02x}", image_buf[index]);
-        }
-        print!("\n");
     }
 }
 
@@ -190,11 +107,11 @@ impl EventHandler for Rustrisnt {
             for y in 0..self.board.board_height {
                 let x = x as f32;
                 let y = y as f32;
-                let empty_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS as f32, y * NUM_PIXEL_ROWS as f32));
+                let empty_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
                 self.batch_empty_tile.add(empty_tile);
             }
         }
-        graphics::draw(ctx, &self.batch_empty_tile, DrawParam::new().dest(Point2::new(window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS as f32 * self.board.board_width as f32 / (2.0 * 10.0)), 0.0)).scale(Vector2::new(self.tile_size / 10.0, self.tile_size / 10.0)))?;
+        graphics::draw(ctx, &self.batch_empty_tile, DrawParam::new().dest(Point2::new(window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * self.board.board_width as f32 / (2.0 * 10.0)), 0.0)).scale(Vector2::new(self.tile_size / 10.0, self.tile_size / 10.0)))?;
 
         graphics::present(ctx)
     }
