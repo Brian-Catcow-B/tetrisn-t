@@ -37,6 +37,9 @@ fn main() {
     graphics::set_resizable(ctx, true).expect("Failed to set window to resizable");
     graphics::set_drawable_size(ctx, 800.0, 600.0).expect("Failed to resize window");
 
+    // make it not blurry
+    graphics::set_default_filter(ctx, graphics::FilterMode::Nearest);
+
     // Create an instance of your event handler.
     // Usually, you should provide it with the Context object
     // so it can load resources like images during setup.
@@ -66,7 +69,7 @@ impl Rustrisnt {
             num_players: 2,
             board: Board::new(14u8, 20u8),
             text: graphics::Text::new(("Hello world!", graphics::Font::default(), 24.0)),
-            tile_size: TileGraphic::get_size(ctx, 14u8, 20u8),
+            tile_size: 0.0,
             batch_empty_tile: batch_empty_tile,
         }
     }
@@ -93,7 +96,7 @@ impl EventHandler for Rustrisnt {
                 self.batch_empty_tile.add(empty_tile);
             }
         }
-        graphics::draw(ctx, &self.batch_empty_tile, DrawParam::new().dest(Point2::new(window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * self.board.board_width as f32 / (2.0 * 8.0)), 0.0)).scale(Vector2::new(self.tile_size / 8.0, self.tile_size / 10.0)))?;
+        graphics::draw(ctx, &self.batch_empty_tile, DrawParam::new().dest(Point2::new(window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * self.board.board_width as f32 / (2.0 * 8.5)), 0.0)).scale(Vector2::new(self.tile_size / 8.5, self.tile_size / 8.5)))?;
 
         graphics::present(ctx)
     }
