@@ -9,20 +9,16 @@ use na::Vector2;
 // file systems stuff
 use std::path;
 use std::env;
-// use std::io::{Read, Write};
 
 mod tile;
 use tile::NUM_PIXEL_ROWS_PER_TILEGRAPHIC;
-use tile::Tile;
-use tile::TileGraphic;
+use tile::{Tile, TileGraphic};
 
 mod piece;
 
-// this constant is for the two unseen columns above the board so that when an I piece is rotated
-// right after spawning, the two tiles that go above the board are kept track of
-const BOARD_HEIGHT_BUFFER_U: u8 = 2;
-// the amount of columns that should be on either side of the board to account for next pieces, score, etc
-const BOARD_WIDTH_EXTENSION_LR: u8 = 6;
+mod board;
+use board::BOARD_HEIGHT_BUFFER_U;
+use board::Board;
 
 fn main() {
     let mut context = ContextBuilder::new("Rustrisn-t", "Catcow");
@@ -53,22 +49,6 @@ fn main() {
     }
 }
 
-struct Board {
-    board_width: u8,
-    board_height: u8,
-    board: Vec<Vec<Tile>>,
-}
-
-impl Board {
-    pub fn new(board_width: u8, board_height: u8) -> Self {
-        Self {
-            board_width: board_width,
-            board_height: board_height,
-            board: vec![vec![Tile::new_empty(); (board_height + BOARD_HEIGHT_BUFFER_U) as usize]; board_width as usize],
-        }
-    }
-}
-
 struct Rustrisnt {
     num_players: u8,
     board: Board,
@@ -84,7 +64,7 @@ impl Rustrisnt {
         let batch_empty_tile = graphics::spritebatch::SpriteBatch::new(image);
         Self {
             num_players: 2,
-            board: Board::new(140u8, 20u8),
+            board: Board::new(14u8, 20u8),
             text: graphics::Text::new(("Hello world!", graphics::Font::default(), 24.0)),
             tile_size: TileGraphic::get_size(ctx, 14u8, 20u8),
             batch_empty_tile: batch_empty_tile,
@@ -109,11 +89,11 @@ impl EventHandler for Rustrisnt {
             for y in 0..self.board.board_height {
                 let x = x as f32;
                 let y = y as f32;
-                let empty_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
+                let empty_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32)); // TODO: see if scaling these up to the right size here as opposed to when the spritebatch is drawn fixes blurriness
                 self.batch_empty_tile.add(empty_tile);
             }
         }
-        graphics::draw(ctx, &self.batch_empty_tile, DrawParam::new().dest(Point2::new(window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * self.board.board_width as f32 / (2.0 * 10.0)), 0.0)).scale(Vector2::new(self.tile_size / 10.0, self.tile_size / 10.0)))?;
+        graphics::draw(ctx, &self.batch_empty_tile, DrawParam::new().dest(Point2::new(window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * self.board.board_width as f32 / (2.0 * 8.0)), 0.0)).scale(Vector2::new(self.tile_size / 8.0, self.tile_size / 10.0)))?;
 
         graphics::present(ctx)
     }
