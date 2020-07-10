@@ -1,7 +1,7 @@
 use ggez;
 use ggez::{Context, ContextBuilder, GameResult};
 use ggez::event::{self, EventHandler};
-use ggez::graphics::{self, Color, DrawParam};
+use ggez::graphics::{self, DrawParam, spritebatch};
 use ggez::nalgebra as na;
 use na::Point2;
 use na::Vector2;
@@ -9,13 +9,16 @@ use na::Vector2;
 // file systems stuff
 use std::path;
 use std::env;
-use std::io::{Read, Write};
 
-// this constant is for the two unseen columns above the board so that when an I piece is rotated
-// right after spawning, the two tiles that go above the board are kept track of
-const BOARD_HEIGHT_BUFFER_U: u8 = 2;
-// the amount of columns that should be on either side of the board to account for next pieces, score, etc
-const BOARD_WIDTH_EXTENSION_LR: u8 = 6;
+mod tile;
+use tile::NUM_PIXEL_ROWS_PER_TILEGRAPHIC;
+use tile::{Tile, TileGraphic};
+
+mod piece;
+
+mod board;
+use board::BOARD_HEIGHT_BUFFER_U;
+use board::Board;
 
 fn main() {
     let mut context = ContextBuilder::new("Rustrisn-t", "Catcow");
@@ -34,10 +37,13 @@ fn main() {
     graphics::set_resizable(ctx, true).expect("Failed to set window to resizable");
     graphics::set_drawable_size(ctx, 800.0, 600.0).expect("Failed to resize window");
 
+    // make it not blurry
+    graphics::set_default_filter(ctx, graphics::FilterMode::Nearest);
+
     // Create an instance of your event handler.
     // Usually, you should provide it with the Context object
     // so it can load resources like images during setup.
-    let mut rustrisnt = Rustrisnt::new(ctx);
+    let mut rustrisnt = Rustrisnt::new(ctx, 15u8);
 
     // Run!
     match event::run(ctx, event_loop, &mut rustrisnt) {
@@ -46,129 +52,33 @@ fn main() {
     }
 }
 
-#[derive(Clone)]
-struct Tile {
-    empty: bool,
-    active: bool,
-    player: u8,
-}
-
-impl Tile {
-    pub fn new_empty() -> Self {
-        Self {
-            empty: true,
-            active: false,
-            player: 0xffu8,
-        }
-    }
-
-    // TODO: figure out how to fill the rest of the `Self` arguments as what they are and optimize modify_fill and modify_empty
-    pub fn modify_fill(&mut self, active: bool, player: u8) -> Self {
-        Self {
-            empty: false,
-            active: active,
-            player: player,
-        }
-    }
-
-    pub fn modify_empty(&mut self) -> Self {
-        Self {
-            empty: false,
-            active: false,
-            player: self.player,
-        }
-    }
-}
-
-struct TileGraphic {
-    image: graphics::Image,
-}
-
-const NUM_PIXEL_ROWS: u16 = 8;
-const GRAY: (u8, u8, u8) = (150u8, 150u8, 150u8);
-const DARK_GRAY: (u8, u8, u8) = (84u8, 84u8, 84u8);
-
-impl TileGraphic {
-    pub fn new_empty(ctx: &mut Context) -> Self {
-        // create a pixel buffer big enough to hold 4 u8's for each pixel because rgba
-        let mut pixel_buf: [u8; 4 * (NUM_PIXEL_ROWS as usize) * (NUM_PIXEL_ROWS as usize)] = [0u8; 4 * (NUM_PIXEL_ROWS as usize) * (NUM_PIXEL_ROWS as usize)];
-        for row_index in 0..NUM_PIXEL_ROWS {
-            for col_index in 0..NUM_PIXEL_ROWS {
-                if row_index == 0 || row_index == NUM_PIXEL_ROWS - 1 || col_index == 0 || col_index == NUM_PIXEL_ROWS - 1 {
-                    pixel_buf[(row_index * NUM_PIXEL_ROWS * 4 + col_index * 4 + 0) as usize] = DARK_GRAY.0;
-                    pixel_buf[(row_index * NUM_PIXEL_ROWS * 4 + col_index * 4 + 1) as usize] = DARK_GRAY.1;
-                    pixel_buf[(row_index * NUM_PIXEL_ROWS * 4 + col_index * 4 + 2) as usize] = DARK_GRAY.2;
-                    pixel_buf[(row_index * NUM_PIXEL_ROWS * 4 + col_index * 4 + 3) as usize] = 0xff;
-                } else {
-                    pixel_buf[(row_index * NUM_PIXEL_ROWS * 4 + col_index * 4 + 0) as usize] = GRAY.0;
-                    pixel_buf[(row_index * NUM_PIXEL_ROWS * 4 + col_index * 4 + 1) as usize] = GRAY.1;
-                    pixel_buf[(row_index * NUM_PIXEL_ROWS * 4 + col_index * 4 + 2) as usize] = GRAY.2;
-                    pixel_buf[(row_index * NUM_PIXEL_ROWS * 4 + col_index * 4 + 3) as usize] = 0xff;
-                }
-            }
-        }
-        Self{
-            image: graphics::Image::from_rgba8(ctx, NUM_PIXEL_ROWS, NUM_PIXEL_ROWS, &pixel_buf).expect("Failed to create background tile image"),
-        }
-    }
-
-    pub fn get_size(ctx: &mut Context, board_width: u8, board_height: u8) -> f32 {
-        std::cmp::min(graphics::size(ctx).1 as u32 / board_height as u32, graphics::size(ctx).0 as u32 / board_width as u32) as f32
-    }
-
-    pub fn _print_image_buf(self, ctx: &mut Context) {
-        let image_buf: Vec<u8> = self.image.to_rgba8(ctx).expect("Failed to create image buffer");
-        for index in 0..image_buf.len() {
-            if index % 4 == 0 {
-                if index % 32 == 0 {
-                    print!("\n");
-                } else {
-                    if index != 0 {
-                        print!(" ");
-                    }
-                }
-            }
-            print!("{:02x}", image_buf[index]);
-        }
-        print!("\n");
-    }
-}
-
-struct Board {
-    board_width: u8,
-    board_height: u8,
-    board: Vec<Vec<Tile>>,
-}
-
-impl Board {
-    pub fn new(board_width: u8, board_height: u8) -> Self {
-        Self {
-            board_width: board_width,
-            board_height: board_height,
-            board: vec![vec![Tile::new_empty(); (board_height + BOARD_HEIGHT_BUFFER_U) as usize]; board_width as usize],
-        }
-    }
-}
-
 struct Rustrisnt {
+    // logic (mostly)
     num_players: u8,
     board: Board,
+    // drawing
     text: graphics::Text,
     tile_size: f32,
-    batch_empty_tile: graphics::spritebatch::SpriteBatch,
+    batch_empty_tile: spritebatch::SpriteBatch,
+    vec_batch_player_tile: Vec<spritebatch::SpriteBatch>,
 }
 
 impl Rustrisnt {
-    pub fn new(mut ctx: &mut Context) -> Rustrisnt {
+    pub fn new(mut ctx: &mut Context, num_players: u8) -> Rustrisnt {
         // Load/create resources here: images, fonts, sounds, etc.
         let image = TileGraphic::new_empty(ctx).image;
-        let batch_empty_tile = graphics::spritebatch::SpriteBatch::new(image);
+        let batch_empty_tile = spritebatch::SpriteBatch::new(image);
+        let mut vec_batch_player_tile: Vec<spritebatch::SpriteBatch> = vec![];
+        for player in 0..num_players {
+            vec_batch_player_tile.push(spritebatch::SpriteBatch::new(TileGraphic::new_player(ctx, player).image));
+        }
         Self {
-            num_players: 2,
-            board: Board::new(140u8, 20u8),
+            num_players: num_players,
+            board: Board::new(14u8, 20u8),
             text: graphics::Text::new(("Hello world!", graphics::Font::default(), 24.0)),
-            tile_size: TileGraphic::get_size(ctx, 14u8, 20u8),
+            tile_size: 0.0,
             batch_empty_tile: batch_empty_tile,
+            vec_batch_player_tile: vec_batch_player_tile,
         }
     }
 }
@@ -177,6 +87,9 @@ impl Rustrisnt {
 impl EventHandler for Rustrisnt {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         // Update code here...
+        for player in 0..self.board.width {
+            self.board.matrix[player as usize][0] = Tile::new(false, true, player);
+        }
 
         Ok(())
     }
@@ -184,17 +97,35 @@ impl EventHandler for Rustrisnt {
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
         let (window_width, window_height) = graphics::size(ctx);
         graphics::clear(ctx, graphics::BLACK);
-        // empty tiles as the first layer
-        self.tile_size = TileGraphic::get_size(ctx, self.board.board_width, self.board.board_height);
-        for x in 0..self.board.board_width {
-            for y in 0..self.board.board_height {
-                let x = x as f32;
-                let y = y as f32;
-                let empty_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS as f32, y * NUM_PIXEL_ROWS as f32));
-                self.batch_empty_tile.add(empty_tile);
+        self.tile_size = TileGraphic::get_size(ctx, self.board.width, self.board.height);
+
+        for x in 0..self.board.width {
+            for y in 0..self.board.height {
+                // empty tiles
+                if self.board.matrix[x as usize][y as usize].empty {
+                    let x = x as f32;
+                    let y = y as f32;
+                    let empty_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
+                    self.batch_empty_tile.add(empty_tile);
+                } else {
+                    // player tiles
+                    for player in 0..self.num_players {
+                        if self.board.matrix[x as usize][y as usize].player == player {
+                            let x = x as f32;
+                            let y = y as f32;
+                            let player_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
+                            self.vec_batch_player_tile[player as usize].add(player_tile);
+                        }
+                    }
+                }
             }
         }
-        graphics::draw(ctx, &self.batch_empty_tile, DrawParam::new().dest(Point2::new(window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS as f32 * self.board.board_width as f32 / (2.0 * 10.0)), 0.0)).scale(Vector2::new(self.tile_size / 10.0, self.tile_size / 10.0)))?;
+        // empty tiles
+        graphics::draw(ctx, &self.batch_empty_tile, DrawParam::new().dest(Point2::new(window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * self.board.width as f32 / (2.0 * 8.5)), 0.0)).scale(Vector2::new(self.tile_size / 8.5, self.tile_size / 8.5)))?;
+        // player tiles
+        for player in 0..self.num_players {
+            graphics::draw(ctx, &self.vec_batch_player_tile[player as usize], DrawParam::new().dest(Point2::new(window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * self.board.width as f32 / (2.0 * 8.5)), 0.0)).scale(Vector2::new(self.tile_size / 8.5, self.tile_size / 8.5)))?;           
+        }
 
         graphics::present(ctx)
     }
