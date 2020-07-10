@@ -44,10 +44,10 @@ impl Piece {
         match self.shape {
             Shapes::I => {
                 self.positions = [
-                    (spawn_column - 2, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][3][-]
-                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [0][1][2][3] | [-][-][2][-]
-                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][1][-]
-                    (spawn_column + 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][0][-]
+                    (spawn_column - 2, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][0][-]
+                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][1][-]
+                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [0][1][2][3] | [-][-][2][-]
+                    (spawn_column + 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][3][-]
                 ]
             },
             Shapes::O => {

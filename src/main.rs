@@ -120,6 +120,7 @@ impl EventHandler for Rustrisnt {
                 }
             }
         }
+
         // empty tiles
         graphics::draw(ctx, &self.batch_empty_tile, DrawParam::new().dest(Point2::new(window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * self.board.width as f32 / (2.0 * 8.5)), 0.0)).scale(Vector2::new(self.tile_size / 8.5, self.tile_size / 8.5)))?;
         // player tiles
@@ -127,11 +128,12 @@ impl EventHandler for Rustrisnt {
             graphics::draw(ctx, &self.vec_batch_player_tile[player as usize], DrawParam::new().dest(Point2::new(window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * self.board.width as f32 / (2.0 * 8.5)), 0.0)).scale(Vector2::new(self.tile_size / 8.5, self.tile_size / 8.5)))?;           
         }
 
-        graphics::present(ctx)
-    }
+        // clear sprite batches; this is a bit inefficient and should maybe be changed to using sprite indices
+        self.batch_empty_tile.clear();
+        for player in 0..self.num_players {
+            self.vec_batch_player_tile[player as usize].clear();
+        }
 
-    fn resize_event(&mut self, ctx: &mut Context, width: f32, height: f32) {
-        let new_rect = graphics::Rect::new(0.0, 0.0, width, height);
-        graphics::set_screen_coordinates(ctx, new_rect).unwrap();
+        graphics::present(ctx)
     }
 }
