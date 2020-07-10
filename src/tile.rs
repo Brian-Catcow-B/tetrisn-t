@@ -1,6 +1,9 @@
 use ggez::{Context, graphics};
 
 pub const NUM_PIXEL_ROWS_PER_TILEGRAPHIC: u16 = 8;
+
+const BASE_PLAYER_COLOR: (u8, u8, u8, u8) = (69, 125, 225, 0xff);
+
 const BLACK: (u8, u8, u8, u8) = (0u8, 0u8, 0u8, 0xffu8);
 const DARK_GRAY: (u8, u8, u8, u8) = (60u8, 60u8, 60u8, 0xffu8);
 const GRAY: (u8, u8, u8, u8) = (120u8, 120u8, 120u8, 0xffu8);
@@ -35,12 +38,20 @@ const PLAYER_TILE_BRIGHTEN_2: f32 = 0.10;
 
 #[derive(Clone)]
 pub struct Tile {
-    empty: bool,
-    active: bool,
-    player: u8,
+    pub empty: bool,
+    pub active: bool,
+    pub player: u8,
 }
 
 impl Tile {
+    pub fn new(empty: bool, active: bool, player: u8) -> Self {
+        Self {
+            empty: empty,
+            active: active,
+            player: player,
+        }
+    }
+
     pub fn new_empty() -> Self {
         Self {
             empty: true,
@@ -99,7 +110,7 @@ impl TileGraphic {
     }
 
     pub fn new_player(ctx: &mut Context, player: u8) -> Self {
-        let player_color: (u8, u8, u8, u8) = ((player + 1) * 69, (player + 1) * 110, (player + 1) * 210, 0xff);
+        let player_color: (u8, u8, u8, u8) = ((player + 1) * BASE_PLAYER_COLOR.0, (player + 1) * BASE_PLAYER_COLOR.1, (player + 1) * BASE_PLAYER_COLOR.2, BASE_PLAYER_COLOR.3);
         // create a buffer of (u8, u8, u8, u8), because rgba, big enough to hold each pixel
         let mut pixel_color_buf: [(u8, u8, u8, u8); NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize] = [player_color; NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize];
         // corner

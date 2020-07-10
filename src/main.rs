@@ -1,7 +1,7 @@
 use ggez;
 use ggez::{Context, ContextBuilder, GameResult};
 use ggez::event::{self, EventHandler};
-use ggez::graphics::{self, DrawParam};
+use ggez::graphics::{self, DrawParam, spritebatch};
 use ggez::nalgebra as na;
 use na::Point2;
 use na::Vector2;
@@ -43,7 +43,7 @@ fn main() {
     // Create an instance of your event handler.
     // Usually, you should provide it with the Context object
     // so it can load resources like images during setup.
-    let mut rustrisnt = Rustrisnt::new(ctx);
+    let mut rustrisnt = Rustrisnt::new(ctx, 15u8);
 
     // Run!
     match event::run(ctx, event_loop, &mut rustrisnt) {
@@ -53,24 +53,32 @@ fn main() {
 }
 
 struct Rustrisnt {
+    // logic (mostly)
     num_players: u8,
     board: Board,
+    // drawing
     text: graphics::Text,
     tile_size: f32,
-    batch_empty_tile: graphics::spritebatch::SpriteBatch,
+    batch_empty_tile: spritebatch::SpriteBatch,
+    vec_batch_player_tile: Vec<spritebatch::SpriteBatch>,
 }
 
 impl Rustrisnt {
-    pub fn new(mut ctx: &mut Context) -> Rustrisnt {
+    pub fn new(mut ctx: &mut Context, num_players: u8) -> Rustrisnt {
         // Load/create resources here: images, fonts, sounds, etc.
         let image = TileGraphic::new_empty(ctx).image;
-        let batch_empty_tile = graphics::spritebatch::SpriteBatch::new(image);
+        let batch_empty_tile = spritebatch::SpriteBatch::new(image);
+        let mut vec_batch_player_tile: Vec<spritebatch::SpriteBatch> = vec![];
+        for player in 0..num_players {
+            vec_batch_player_tile.push(spritebatch::SpriteBatch::new(TileGraphic::new_player(ctx, player).image));
+        }
         Self {
-            num_players: 2,
+            num_players: num_players,
             board: Board::new(14u8, 20u8),
             text: graphics::Text::new(("Hello world!", graphics::Font::default(), 24.0)),
             tile_size: 0.0,
             batch_empty_tile: batch_empty_tile,
+            vec_batch_player_tile: vec_batch_player_tile,
         }
     }
 }
@@ -79,6 +87,9 @@ impl Rustrisnt {
 impl EventHandler for Rustrisnt {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         // Update code here...
+        for player in 0..self.board.width {
+            self.board.matrix[player as usize][0] = Tile::new(false, true, player);
+        }
 
         Ok(())
     }
@@ -86,17 +97,35 @@ impl EventHandler for Rustrisnt {
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
         let (window_width, window_height) = graphics::size(ctx);
         graphics::clear(ctx, graphics::BLACK);
-        // empty tiles as the first layer
-        self.tile_size = TileGraphic::get_size(ctx, self.board.board_width, self.board.board_height);
-        for x in 0..self.board.board_width {
-            for y in 0..self.board.board_height {
-                let x = x as f32;
-                let y = y as f32;
-                let empty_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32)); // TODO: see if scaling these up to the right size here as opposed to when the spritebatch is drawn fixes blurriness
-                self.batch_empty_tile.add(empty_tile);
+        self.tile_size = TileGraphic::get_size(ctx, self.board.width, self.board.height);
+
+        for x in 0..self.board.width {
+            for y in 0..self.board.height {
+                // empty tiles
+                if self.board.matrix[x as usize][y as usize].empty {
+                    let x = x as f32;
+                    let y = y as f32;
+                    let empty_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32)); // TODO: see if scaling these up to the right size here as opposed to when the spritebatch is drawn fixes blurriness
+                    self.batch_empty_tile.add(empty_tile);
+                } else {
+                    // player tiles
+                    for player in 0..self.num_players {
+                        if self.board.matrix[x as usize][y as usize].player == player {
+                            let x = x as f32;
+                            let y = y as f32;
+                            let player_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32)); // TODO: see if scaling these up to the right size here as opposed to when the spritebatch is drawn fixes blurriness
+                            self.vec_batch_player_tile[player as usize].add(player_tile);
+                        }
+                    }
+                }
             }
         }
-        graphics::draw(ctx, &self.batch_empty_tile, DrawParam::new().dest(Point2::new(window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * self.board.board_width as f32 / (2.0 * 8.5)), 0.0)).scale(Vector2::new(self.tile_size / 8.5, self.tile_size / 8.5)))?;
+        // empty tiles
+        graphics::draw(ctx, &self.batch_empty_tile, DrawParam::new().dest(Point2::new(window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * self.board.width as f32 / (2.0 * 8.5)), 0.0)).scale(Vector2::new(self.tile_size / 8.5, self.tile_size / 8.5)))?;
+        // player tiles
+        for player in 0..self.num_players {
+            graphics::draw(ctx, &self.vec_batch_player_tile[player as usize], DrawParam::new().dest(Point2::new(window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * self.board.width as f32 / (2.0 * 8.5)), 0.0)).scale(Vector2::new(self.tile_size / 8.5, self.tile_size / 8.5)))?;           
+        }
 
         graphics::present(ctx)
     }

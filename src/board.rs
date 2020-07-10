@@ -5,17 +5,17 @@ use crate::tile::Tile;
 pub const BOARD_HEIGHT_BUFFER_U: u8 = 2;
 
 pub struct Board {
-    pub board_width: u8,
-    pub board_height: u8,
-    board: Vec<Vec<Tile>>,
+    pub width: u8,
+    pub height: u8,
+    pub matrix: Vec<Vec<Tile>>,
 }
 
 impl Board {
     pub fn new(board_width: u8, board_height: u8) -> Self {
         Self {
-            board_width: board_width,
-            board_height: board_height,
-            board: vec![vec![Tile::new_empty(); (board_height + BOARD_HEIGHT_BUFFER_U) as usize]; board_width as usize],
+            width: board_width,
+            height: board_height,
+            matrix: vec![vec![Tile::new_empty(); (board_height + BOARD_HEIGHT_BUFFER_U) as usize]; board_width as usize],
         }
     }
 }
