@@ -105,7 +105,7 @@ impl EventHandler for Rustrisnt {
                 if self.board.matrix[x as usize][y as usize].empty {
                     let x = x as f32;
                     let y = y as f32;
-                    let empty_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32)); // TODO: see if scaling these up to the right size here as opposed to when the spritebatch is drawn fixes blurriness
+                    let empty_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
                     self.batch_empty_tile.add(empty_tile);
                 } else {
                     // player tiles
@@ -113,7 +113,7 @@ impl EventHandler for Rustrisnt {
                         if self.board.matrix[x as usize][y as usize].player == player {
                             let x = x as f32;
                             let y = y as f32;
-                            let player_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32)); // TODO: see if scaling these up to the right size here as opposed to when the spritebatch is drawn fixes blurriness
+                            let player_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
                             self.vec_batch_player_tile[player as usize].add(player_tile);
                         }
                     }
