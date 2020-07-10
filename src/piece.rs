@@ -44,58 +44,58 @@ impl Piece {
         match self.shape {
             Shapes::I => {
                 self.positions = [
-                    (spawn_column - 2, 0 + BOARD_HEIGHT_BUFFER_U), // [#][#][#][#] | [#][#][3][#]
-                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [0][1][2][3] | [#][#][2][#]
-                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [#][#][#][#] | [#][#][1][#]
-                    (spawn_column + 1, 0 + BOARD_HEIGHT_BUFFER_U), // [#][#][#][#] | [#][#][0][#]
+                    (spawn_column - 2, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][3][-]
+                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [0][1][2][3] | [-][-][2][-]
+                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][1][-]
+                    (spawn_column + 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][0][-]
                 ]
             },
             Shapes::O => {
                 self.positions = [
-                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [#][#][#][#]
-                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [#][0][1][#]
-                    (spawn_column + 0, 1 + BOARD_HEIGHT_BUFFER_U), // [#][2][3][#]
-                    (spawn_column + 0, 1 + BOARD_HEIGHT_BUFFER_U), // [#][#][#][#]
+                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-]
+                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][0][1][-]
+                    (spawn_column + 0, 1 + BOARD_HEIGHT_BUFFER_U), // [-][2][3][-]
+                    (spawn_column + 0, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-]
                 ]
             },
             Shapes::T => {
                 self.positions = [
-                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [#][#][#][#] | [#][#][0][#] | [#][#][3][#] | [#][#][2][#]
-                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [#][0][1][2] | [#][3][1][#] | [#][2][1][0] | [#][#][1][3]
-                    (spawn_column + 1, 0 + BOARD_HEIGHT_BUFFER_U), // [#][#][3][#] | [#][#][2][#] | [#][#][#][#] | [#][#][0][#]
-                    (spawn_column + 0, 1 + BOARD_HEIGHT_BUFFER_U), // [#][#][#][#] | [#][#][#][#] | [#][#][#][#] | [#][#][#][#]
+                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][0][-] | [-][-][3][-] | [-][-][2][-]
+                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [-][0][1][2] | [-][3][1][-] | [-][2][1][0] | [-][-][1][3]
+                    (spawn_column + 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][3][-] | [-][-][2][-] | [-][-][-][-] | [-][-][0][-]
+                    (spawn_column + 0, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
                 ]
             },
             Shapes::J => {
                 self.positions = [
-                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [#][#][#][#] | [#][#][0][#] | [#][3][#][#] | [#][#][2][3]
-                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [#][0][1][2] | [#][#][1][#] | [#][2][1][0] | [#][#][1][#]
-                    (spawn_column + 1, 0 + BOARD_HEIGHT_BUFFER_U), // [#][#][#][3] | [#][3][2][#] | [#][#][#][#] | [#][#][0][#]
-                    (spawn_column + 1, 1 + BOARD_HEIGHT_BUFFER_U), // [#][#][#][#] | [#][#][#][#] | [#][#][#][#] | [#][#][#][#]
+                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][0][-] | [-][3][-][-] | [-][-][2][3]
+                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [-][0][1][2] | [-][-][1][-] | [-][2][1][0] | [-][-][1][-]
+                    (spawn_column + 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][3] | [-][3][2][-] | [-][-][-][-] | [-][-][0][-]
+                    (spawn_column + 1, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
                 ]
             },
             Shapes::L => {
                 self.positions = [
-                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [#][#][#][#] | [#][3][0][#] | [#][#][#][3] | [#][#][2][#]
-                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [#][0][1][2] | [#][#][1][#] | [#][2][1][0] | [#][#][1][#]
-                    (spawn_column + 1, 0 + BOARD_HEIGHT_BUFFER_U), // [#][3][#][#] | [#][#][2][#] | [#][#][#][#] | [#][#][0][3]
-                    (spawn_column - 1, 1 + BOARD_HEIGHT_BUFFER_U), // [#][#][#][#] | [#][#][#][#] | [#][#][#][#] | [#][#][#][#]
+                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][3][0][-] | [-][-][-][3] | [-][-][2][-]
+                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [-][0][1][2] | [-][-][1][-] | [-][2][1][0] | [-][-][1][-]
+                    (spawn_column + 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][3][-][-] | [-][-][2][-] | [-][-][-][-] | [-][-][0][3]
+                    (spawn_column - 1, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
                 ]
             },
             Shapes::S => {
                 self.positions = [
-                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [#][#][#][#] | [#][#][1][#]
-                    (spawn_column + 1, 0 + BOARD_HEIGHT_BUFFER_U), // [#][#][0][1] | [#][#][0][3]
-                    (spawn_column - 1, 1 + BOARD_HEIGHT_BUFFER_U), // [#][2][3][#] | [#][#][#][2]
-                    (spawn_column + 0, 1 + BOARD_HEIGHT_BUFFER_U), // [#][#][#][#] | [#][#][#][#]
+                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][1][-]
+                    (spawn_column + 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][0][1] | [-][-][0][3]
+                    (spawn_column - 1, 1 + BOARD_HEIGHT_BUFFER_U), // [-][2][3][-] | [-][-][-][2]
+                    (spawn_column + 0, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][-][-]
                 ]
             },
             Shapes::Z => {
                 self.positions = [
-                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [#][#][#][#] | [#][#][#][3]
-                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [#][0][1][#] | [#][#][1][2]
-                    (spawn_column + 0, 1 + BOARD_HEIGHT_BUFFER_U), // [#][#][2][3] | [#][#][0][#]
-                    (spawn_column + 1, 1 + BOARD_HEIGHT_BUFFER_U), // [#][#][#][#] | [#][#][#][#]
+                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][-][3]
+                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [-][0][1][-] | [-][-][1][2]
+                    (spawn_column + 0, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][2][3] | [-][-][0][-]
+                    (spawn_column + 1, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][-][-]
                 ]
             },
         }
