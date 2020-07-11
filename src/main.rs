@@ -15,6 +15,7 @@ use tile::NUM_PIXEL_ROWS_PER_TILEGRAPHIC;
 use tile::{Tile, TileGraphic};
 
 mod piece;
+use piece::{Shapes, Movement};
 
 mod board;
 use board::BOARD_HEIGHT_BUFFER_U;
@@ -90,6 +91,19 @@ impl EventHandler for Rustrisnt {
         for player in 0..self.board.width {
             self.board.matrix[player as usize][0] = Tile::new(false, true, player);
         }
+
+        let mut piece = piece::Piece::new(Shapes::I, 0);
+        piece.spawn(6u8);
+        self.board.matrix[piece.positions[0].0 as usize][piece.positions[0].1 as usize] = tile::Tile::new(false, true, 0);
+        self.board.matrix[piece.positions[1].0 as usize][piece.positions[1].1 as usize] = tile::Tile::new(false, true, 0);
+        self.board.matrix[piece.positions[2].0 as usize][piece.positions[2].1 as usize] = tile::Tile::new(false, true, 0);
+        self.board.matrix[piece.positions[3].0 as usize][piece.positions[3].1 as usize] = tile::Tile::new(false, true, 0);
+        self.board.emptify_piece(&piece.piece_pos(Movement::None));
+        piece.positions = piece.piece_pos(Movement::RotateCw);
+        self.board.matrix[piece.positions[0].0 as usize][piece.positions[0].1 as usize] = tile::Tile::new(false, true, 0);
+        self.board.matrix[piece.positions[1].0 as usize][piece.positions[1].1 as usize] = tile::Tile::new(false, true, 0);
+        self.board.matrix[piece.positions[2].0 as usize][piece.positions[2].1 as usize] = tile::Tile::new(false, true, 0);
+        self.board.matrix[piece.positions[3].0 as usize][piece.positions[3].1 as usize] = tile::Tile::new(false, true, 0);
 
         Ok(())
     }
