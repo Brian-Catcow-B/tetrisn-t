@@ -3,6 +3,7 @@ use crate::board::BOARD_HEIGHT_BUFFER_U;
 #[repr(u8)]
 #[derive(PartialEq, Eq)]
 pub enum Shapes {
+    None,
     I,
     O,
     T,
@@ -25,7 +26,7 @@ pub enum Movement {
 
 pub struct Piece {
     shape: Shapes,
-    positions: [(u8, u8); 4],
+    pub positions: [(u8, u8); 4],
     rotation: u8, // 0, 1, 2, 3: 0, 90, 180, 270; CW
     player: u8,
 }
@@ -42,12 +43,13 @@ impl Piece {
 
     pub fn spawn(&mut self, spawn_column: u8) {
         match self.shape {
+            Shapes::None => println!("[!] tried to spawn a piece with shape type Shapes::None"),
             Shapes::I => {
                 self.positions = [
-                    (spawn_column - 2, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][3][-]
-                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [0][1][2][3] | [-][-][2][-]
-                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][1][-]
-                    (spawn_column + 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][0][-]
+                    (spawn_column - 2, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][0][-]
+                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][1][-]
+                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [0][1][2][3] | [-][-][2][-]
+                    (spawn_column + 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][3][-]
                 ]
             },
             Shapes::O => {
@@ -101,7 +103,8 @@ impl Piece {
         }
     }
 
-    pub fn tile_pos(&mut self, r#move: Movement) -> [(u8, u8); 4] {
+    // returns the position based on the given Movement type
+    pub fn piece_pos(&mut self, r#move: Movement) -> [(u8, u8); 4] {
         // for movements and rotations, we don't have to worry about integer underflow because we will assume the board width is nowhere close to 0xff
         if r#move == Movement::None {
             return self.positions;

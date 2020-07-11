@@ -15,6 +15,7 @@ use tile::NUM_PIXEL_ROWS_PER_TILEGRAPHIC;
 use tile::{Tile, TileGraphic};
 
 mod piece;
+use piece::{Shapes, Movement};
 
 mod board;
 use board::BOARD_HEIGHT_BUFFER_U;
@@ -56,6 +57,7 @@ struct Rustrisnt {
     // logic (mostly)
     num_players: u8,
     board: Board,
+    active_piece: piece::Piece,
     // drawing
     text: graphics::Text,
     tile_size: f32,
@@ -75,6 +77,7 @@ impl Rustrisnt {
         Self {
             num_players: num_players,
             board: Board::new(14u8, 20u8),
+            active_piece: piece::Piece::new(Shapes::None, 0u8),
             text: graphics::Text::new(("Hello world!", graphics::Font::default(), 24.0)),
             tile_size: 0.0,
             batch_empty_tile: batch_empty_tile,
@@ -87,9 +90,17 @@ impl Rustrisnt {
 impl EventHandler for Rustrisnt {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         // Update code here...
+        // just some example/testing things rn
         for player in 0..self.board.width {
             self.board.matrix[player as usize][0] = Tile::new(false, true, player);
         }
+
+        self.active_piece = piece::Piece::new(Shapes::I, 0);
+        self.active_piece.spawn(6u8);
+        self.board.playerify_piece(0u8, &self.active_piece.positions);
+        self.board.emptify_piece(&self.active_piece.positions);
+        self.active_piece.positions = self.active_piece.piece_pos(Movement::RotateCw);
+        self.board.playerify_piece(0u8, &self.active_piece.positions);
 
         Ok(())
     }
@@ -120,6 +131,7 @@ impl EventHandler for Rustrisnt {
                 }
             }
         }
+
         // empty tiles
         graphics::draw(ctx, &self.batch_empty_tile, DrawParam::new().dest(Point2::new(window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * self.board.width as f32 / (2.0 * 8.5)), 0.0)).scale(Vector2::new(self.tile_size / 8.5, self.tile_size / 8.5)))?;
         // player tiles
@@ -127,9 +139,16 @@ impl EventHandler for Rustrisnt {
             graphics::draw(ctx, &self.vec_batch_player_tile[player as usize], DrawParam::new().dest(Point2::new(window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * self.board.width as f32 / (2.0 * 8.5)), 0.0)).scale(Vector2::new(self.tile_size / 8.5, self.tile_size / 8.5)))?;           
         }
 
+        // clear sprite batches; this is a bit inefficient and should maybe be changed to using sprite indices
+        self.batch_empty_tile.clear();
+        for player in 0..self.num_players {
+            self.vec_batch_player_tile[player as usize].clear();
+        }
+
         graphics::present(ctx)
     }
 
+    // this seems unused but is called somewhere in ggez to ultimately make things scale and get placed correctly
     fn resize_event(&mut self, ctx: &mut Context, width: f32, height: f32) {
         let new_rect = graphics::Rect::new(0.0, 0.0, width, height);
         graphics::set_screen_coordinates(ctx, new_rect).unwrap();

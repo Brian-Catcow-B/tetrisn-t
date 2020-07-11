@@ -6,6 +6,7 @@ edition = "2018"
 
 [profile.dev]
 opt-level = 0
+overflow-checks = false  # it's a feature, not a bug; overflow is used for player colors in tile.rs
 
 [profile.release]
 opt-level = 3

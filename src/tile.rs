@@ -73,7 +73,7 @@ impl Tile {
         Self {
             empty: false,
             active: false,
-            player: self.player,
+            player: 0xffu8,
         }
     }
 }
