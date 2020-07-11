@@ -57,6 +57,7 @@ struct Rustrisnt {
     // logic (mostly)
     num_players: u8,
     board: Board,
+    active_piece: piece::Piece,
     // drawing
     text: graphics::Text,
     tile_size: f32,
@@ -76,6 +77,7 @@ impl Rustrisnt {
         Self {
             num_players: num_players,
             board: Board::new(14u8, 20u8),
+            active_piece: piece::Piece::new(Shapes::None, 0u8),
             text: graphics::Text::new(("Hello world!", graphics::Font::default(), 24.0)),
             tile_size: 0.0,
             batch_empty_tile: batch_empty_tile,
@@ -94,16 +96,10 @@ impl EventHandler for Rustrisnt {
 
         let mut piece = piece::Piece::new(Shapes::I, 0);
         piece.spawn(6u8);
-        self.board.matrix[piece.positions[0].0 as usize][piece.positions[0].1 as usize] = tile::Tile::new(false, true, 0);
-        self.board.matrix[piece.positions[1].0 as usize][piece.positions[1].1 as usize] = tile::Tile::new(false, true, 0);
-        self.board.matrix[piece.positions[2].0 as usize][piece.positions[2].1 as usize] = tile::Tile::new(false, true, 0);
-        self.board.matrix[piece.positions[3].0 as usize][piece.positions[3].1 as usize] = tile::Tile::new(false, true, 0);
-        self.board.emptify_piece(&piece.piece_pos(Movement::None));
+        self.board.playerify_piece(0u8, &piece.positions);
+        self.board.emptify_piece(&piece.positions);
         piece.positions = piece.piece_pos(Movement::RotateCw);
-        self.board.matrix[piece.positions[0].0 as usize][piece.positions[0].1 as usize] = tile::Tile::new(false, true, 0);
-        self.board.matrix[piece.positions[1].0 as usize][piece.positions[1].1 as usize] = tile::Tile::new(false, true, 0);
-        self.board.matrix[piece.positions[2].0 as usize][piece.positions[2].1 as usize] = tile::Tile::new(false, true, 0);
-        self.board.matrix[piece.positions[3].0 as usize][piece.positions[3].1 as usize] = tile::Tile::new(false, true, 0);
+        self.board.playerify_piece(0u8, &piece.positions);
 
         Ok(())
     }

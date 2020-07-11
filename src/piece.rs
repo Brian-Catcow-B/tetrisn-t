@@ -3,6 +3,7 @@ use crate::board::BOARD_HEIGHT_BUFFER_U;
 #[repr(u8)]
 #[derive(PartialEq, Eq)]
 pub enum Shapes {
+    None,
     I,
     O,
     T,
@@ -42,6 +43,7 @@ impl Piece {
 
     pub fn spawn(&mut self, spawn_column: u8) {
         match self.shape {
+            Shapes::None => println!("[!] tried to spawn a piece with shape type Shapes::None"),
             Shapes::I => {
                 self.positions = [
                     (spawn_column - 2, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][0][-]

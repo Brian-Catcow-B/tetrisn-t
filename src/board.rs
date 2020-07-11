@@ -24,7 +24,17 @@ impl Board {
             if positions[pos_index] != (0xffu8, 0xffu8) {
                 self.matrix[positions[pos_index].0 as usize][positions[pos_index].1 as usize] = Tile::new_empty();
             } else {
-                println!("tried to emptify piece that contained position (0xffu8, 0xffu8)");
+                println!("[!] tried to emptify piece that contained position (0xffu8, 0xffu8)");
+            }
+        }
+    }
+
+    pub fn playerify_piece(&mut self, player: u8, positions: &[(u8, u8); 4]) {
+        for pos_index in 0..4 {
+            if positions[pos_index] != (0xffu8, 0xffu8) {
+                self.matrix[positions[pos_index].0 as usize][positions[pos_index].1 as usize] = Tile::new(false, true, player);
+            } else {
+                println!("[!] tried to playerify piece that contained position (0xffu8, 0xffu8)");
             }
         }
     }
