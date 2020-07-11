@@ -136,4 +136,10 @@ impl EventHandler for Rustrisnt {
 
         graphics::present(ctx)
     }
+
+    // this seems unused but is called somewhere in ggez to ultimately make things scale and get placed correctly
+    fn resize_event(&mut self, ctx: &mut Context, width: f32, height: f32) {
+        let new_rect = graphics::Rect::new(0.0, 0.0, width, height);
+        graphics::set_screen_coordinates(ctx, new_rect).unwrap();
+    }
 }
