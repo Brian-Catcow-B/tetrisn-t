@@ -90,16 +90,17 @@ impl Rustrisnt {
 impl EventHandler for Rustrisnt {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         // Update code here...
+        // just some example/testing things rn
         for player in 0..self.board.width {
             self.board.matrix[player as usize][0] = Tile::new(false, true, player);
         }
 
-        let mut piece = piece::Piece::new(Shapes::I, 0);
-        piece.spawn(6u8);
-        self.board.playerify_piece(0u8, &piece.positions);
-        self.board.emptify_piece(&piece.positions);
-        piece.positions = piece.piece_pos(Movement::RotateCw);
-        self.board.playerify_piece(0u8, &piece.positions);
+        self.active_piece = piece::Piece::new(Shapes::I, 0);
+        self.active_piece.spawn(6u8);
+        self.board.playerify_piece(0u8, &self.active_piece.positions);
+        self.board.emptify_piece(&self.active_piece.positions);
+        self.active_piece.positions = self.active_piece.piece_pos(Movement::RotateCw);
+        self.board.playerify_piece(0u8, &self.active_piece.positions);
 
         Ok(())
     }
