@@ -15,9 +15,6 @@ mod tile;
 use tile::NUM_PIXEL_ROWS_PER_TILEGRAPHIC;
 use tile::{Tile, TileGraphic};
 
-// mod piece;
-// use piece::{Shapes, Movement};
-
 mod board;
 use board::BOARD_HEIGHT_BUFFER_U;
 use board::Board;
@@ -49,7 +46,7 @@ fn main() {
     // Create an instance of your event handler.
     // Usually, you should provide it with the Context object
     // so it can load resources like images during setup.
-    let mut rustrisnt = Rustrisnt::new(ctx, 15u8);
+    let mut rustrisnt = Rustrisnt::new(ctx, 6u8);
 
     // Run!
     match event::run(ctx, event_loop, &mut rustrisnt) {
@@ -62,7 +59,8 @@ struct Rustrisnt {
     // logic (mostly)
     num_players: u8,
     board: Board,
-    controls: ControlScheme,
+    control_scheme: ControlScheme,
+    input: controls::Input,
     active_piece: piece::Piece,
     // drawing
     text: graphics::Text,
@@ -83,7 +81,8 @@ impl Rustrisnt {
         Self {
             num_players,
             board: Board::new(6 + 4 * num_players, 20u8),
-            controls: ControlScheme::new(0u8, KeyCode::Left, KeyCode::Right, KeyCode::Down, KeyCode::Z, KeyCode::X),
+            control_scheme: ControlScheme::new(0u8, KeyCode::Left, KeyCode::Right, KeyCode::Down, KeyCode::Z, KeyCode::X),
+            input: controls::Input::new(),
             active_piece: piece::Piece::new(Shapes::None, 0u8),
             text: graphics::Text::new(("Hello world!", graphics::Font::default(), 24.0)),
             tile_size: 0.0,
@@ -102,12 +101,15 @@ impl EventHandler for Rustrisnt {
             self.board.matrix[player as usize][0] = Tile::new(false, true, player);
         }
 
-        self.active_piece = piece::Piece::new(Shapes::I, 0);
-        self.active_piece.spawn(6u8);
-        self.board.playerify_piece(0u8, &self.active_piece.positions);
-        self.board.emptify_piece(&self.active_piece.positions);
-        self.active_piece.positions = self.active_piece.piece_pos(Movement::RotateCw);
-        self.board.playerify_piece(0u8, &self.active_piece.positions);
+        if !self.input.keydown_rotate_cw.0 {
+            self.active_piece = piece::Piece::new(Shapes::I, 0);
+            self.active_piece.spawn(9u8);
+            self.board.playerify_piece(0u8, &self.active_piece.positions);
+        } else {
+            self.board.emptify_piece(&self.active_piece.positions);
+            self.active_piece.positions = self.active_piece.piece_pos(Movement::RotateCw);
+            self.board.playerify_piece(0u8, &self.active_piece.positions);
+        }
 
         Ok(())
     }
@@ -116,17 +118,35 @@ impl EventHandler for Rustrisnt {
         &mut self,
         _ctx: &mut Context,
         keycode: KeyCode,
-        keymod: KeyMods,
+        _keymod: KeyMods,
         repeat: bool,
     ) {
         println!(
             "Key pressed: {:?}, modifier {:?}, repeat: {}",
-            keycode, keymod, repeat
+            keycode, _keymod, repeat
         );
+        if !repeat {
+            match self.control_scheme.find_move(keycode) {
+                Movement::Left => self.input.keydown_left = (true, true),
+                Movement::Right => self.input.keydown_right = (true, true),
+                Movement::Down => self.input.keydown_down = (true, true),
+                Movement::RotateCw => self.input.keydown_rotate_cw = (true, true),
+                Movement::RotateCcw => self.input.keydown_rotate_ccw = (true, true),
+                Movement::None => return,
+            }
+        }
     }
 
     fn key_up_event(&mut self, _ctx: &mut Context, keycode: KeyCode, keymod: KeyMods) {
         println!("Key released: {:?}, modifier {:?}", keycode, keymod);
+        match self.control_scheme.find_move(keycode) {
+            Movement::Left => self.input.keydown_left = (false, false),
+            Movement::Right => self.input.keydown_right = (false, false),
+            Movement::Down => self.input.keydown_down = (false, false),
+            Movement::RotateCw => self.input.keydown_rotate_cw = (false, false),
+            Movement::RotateCcw => self.input.keydown_rotate_ccw = (false, false),
+            Movement::None => return,
+        }
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
