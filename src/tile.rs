@@ -46,9 +46,9 @@ pub struct Tile {
 impl Tile {
     pub fn new(empty: bool, active: bool, player: u8) -> Self {
         Self {
-            empty: empty,
-            active: active,
-            player: player,
+            empty,
+            active,
+            player,
         }
     }
 
@@ -64,8 +64,8 @@ impl Tile {
     pub fn modify_fill(&mut self, active: bool, player: u8) -> Self {
         Self {
             empty: false,
-            active: active,
-            player: player,
+            active,
+            player,
         }
     }
 
@@ -87,7 +87,7 @@ impl TileGraphic {
     fn pack_color_buf(color_buf: &[(u8, u8, u8, u8); NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize]) -> [u8; NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * 4] {
         let mut buf: [u8; NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * 4] = [0; NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * 4];
         for color_index in 0..NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize {
-            buf[4 * color_index + 0] = color_buf[color_index].0;
+            buf[4 * color_index] = color_buf[color_index].0;
             buf[4 * color_index + 1] = color_buf[color_index].1;
             buf[4 * color_index + 2] = color_buf[color_index].2;
             buf[4 * color_index + 3] = color_buf[color_index].3;
@@ -230,17 +230,15 @@ impl TileGraphic {
 
     pub fn _print_image_buf(self, ctx: &mut Context) {
         let image_buf: Vec<u8> = self.image.to_rgba8(ctx).expect("Failed to create image buffer");
-        for index in 0..image_buf.len() {
+        for (index, image) in image_buf.iter().enumerate() {
             if index % 4 == 0 {
                 if index % 32 == 0 {
                     print!("\n");
-                } else {
-                    if index != 0 {
-                        print!(" ");
-                    }
+                } else if index != 0 {
+                    print!(" ");
                 }
             }
-            print!("{:02x}", image_buf[index]);
+            print!("{:02x}", image);
         }
         print!("\n");
     }

@@ -1,4 +1,4 @@
-use ggez;
+
 use ggez::{Context, ContextBuilder, GameResult};
 use ggez::event::{self, EventHandler};
 use ggez::graphics::{self, DrawParam, spritebatch};
@@ -66,7 +66,7 @@ struct Rustrisnt {
 }
 
 impl Rustrisnt {
-    pub fn new(mut ctx: &mut Context, num_players: u8) -> Rustrisnt {
+    pub fn new(ctx: &mut Context, num_players: u8) -> Rustrisnt {
         // Load/create resources here: images, fonts, sounds, etc.
         let image = TileGraphic::new_empty(ctx).image;
         let batch_empty_tile = spritebatch::SpriteBatch::new(image);
@@ -75,13 +75,13 @@ impl Rustrisnt {
             vec_batch_player_tile.push(spritebatch::SpriteBatch::new(TileGraphic::new_player(ctx, player).image));
         }
         Self {
-            num_players: num_players,
+            num_players,
             board: Board::new(14u8, 20u8),
             active_piece: piece::Piece::new(Shapes::None, 0u8),
             text: graphics::Text::new(("Hello world!", graphics::Font::default(), 24.0)),
             tile_size: 0.0,
-            batch_empty_tile: batch_empty_tile,
-            vec_batch_player_tile: vec_batch_player_tile,
+            batch_empty_tile,
+            vec_batch_player_tile,
         }
     }
 }

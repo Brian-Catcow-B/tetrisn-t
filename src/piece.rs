@@ -34,10 +34,10 @@ pub struct Piece {
 impl Piece {
     pub fn new(shape: Shapes, player: u8) -> Self {
         Self {
-            shape: shape,
+            shape,
             positions: [(0xff, 0xff); 4],
             rotation: 0,
-            player: player,
+            player,
         }
     }
 
@@ -46,57 +46,57 @@ impl Piece {
             Shapes::None => println!("[!] tried to spawn a piece with shape type Shapes::None"),
             Shapes::I => {
                 self.positions = [
-                    (spawn_column - 2, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][0][-]
-                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][1][-]
-                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [0][1][2][3] | [-][-][2][-]
-                    (spawn_column + 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][3][-]
+                    (spawn_column - 2, BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][0][-]
+                    (spawn_column - 1, BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][1][-]
+                    (spawn_column, BOARD_HEIGHT_BUFFER_U),     // [0][1][2][3] | [-][-][2][-]
+                    (spawn_column + 1, BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][3][-]
                 ]
             },
             Shapes::O => {
                 self.positions = [
-                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-]
-                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][0][1][-]
-                    (spawn_column + 0, 1 + BOARD_HEIGHT_BUFFER_U), // [-][2][3][-]
-                    (spawn_column + 0, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-]
+                    (spawn_column - 1, BOARD_HEIGHT_BUFFER_U), // [-][-][-][-]
+                    (spawn_column - 1, BOARD_HEIGHT_BUFFER_U), // [-][0][1][-]
+                    (spawn_column, 1 + BOARD_HEIGHT_BUFFER_U), // [-][2][3][-]
+                    (spawn_column, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-]
                 ]
             },
             Shapes::T => {
                 self.positions = [
-                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][0][-] | [-][-][3][-] | [-][-][2][-]
-                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [-][0][1][2] | [-][3][1][-] | [-][2][1][0] | [-][-][1][3]
-                    (spawn_column + 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][3][-] | [-][-][2][-] | [-][-][-][-] | [-][-][0][-]
-                    (spawn_column + 0, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
+                    (spawn_column - 1, BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][0][-] | [-][-][3][-] | [-][-][2][-]
+                    (spawn_column, BOARD_HEIGHT_BUFFER_U),     // [-][0][1][2] | [-][3][1][-] | [-][2][1][0] | [-][-][1][3]
+                    (spawn_column + 1, BOARD_HEIGHT_BUFFER_U), // [-][-][3][-] | [-][-][2][-] | [-][-][-][-] | [-][-][0][-]
+                    (spawn_column, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
                 ]
             },
             Shapes::J => {
                 self.positions = [
-                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][0][-] | [-][3][-][-] | [-][-][2][3]
-                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [-][0][1][2] | [-][-][1][-] | [-][2][1][0] | [-][-][1][-]
-                    (spawn_column + 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][3] | [-][3][2][-] | [-][-][-][-] | [-][-][0][-]
+                    (spawn_column - 1, BOARD_HEIGHT_BUFFER_U),     // [-][-][-][-] | [-][-][0][-] | [-][3][-][-] | [-][-][2][3]
+                    (spawn_column, BOARD_HEIGHT_BUFFER_U),         // [-][0][1][2] | [-][-][1][-] | [-][2][1][0] | [-][-][1][-]
+                    (spawn_column + 1, BOARD_HEIGHT_BUFFER_U),     // [-][-][-][3] | [-][3][2][-] | [-][-][-][-] | [-][-][0][-]
                     (spawn_column + 1, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
                 ]
             },
             Shapes::L => {
                 self.positions = [
-                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][3][0][-] | [-][-][-][3] | [-][-][2][-]
-                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [-][0][1][2] | [-][-][1][-] | [-][2][1][0] | [-][-][1][-]
-                    (spawn_column + 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][3][-][-] | [-][-][2][-] | [-][-][-][-] | [-][-][0][3]
+                    (spawn_column - 1, BOARD_HEIGHT_BUFFER_U),     // [-][-][-][-] | [-][3][0][-] | [-][-][-][3] | [-][-][2][-]
+                    (spawn_column, BOARD_HEIGHT_BUFFER_U),         // [-][0][1][2] | [-][-][1][-] | [-][2][1][0] | [-][-][1][-]
+                    (spawn_column + 1, BOARD_HEIGHT_BUFFER_U),     // [-][3][-][-] | [-][-][2][-] | [-][-][-][-] | [-][-][0][3]
                     (spawn_column - 1, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
                 ]
             },
             Shapes::S => {
                 self.positions = [
-                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][1][-]
-                    (spawn_column + 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][0][1] | [-][-][0][3]
+                    (spawn_column, BOARD_HEIGHT_BUFFER_U),         // [-][-][-][-] | [-][-][1][-]
+                    (spawn_column + 1, BOARD_HEIGHT_BUFFER_U),     // [-][-][0][1] | [-][-][0][3]
                     (spawn_column - 1, 1 + BOARD_HEIGHT_BUFFER_U), // [-][2][3][-] | [-][-][-][2]
-                    (spawn_column + 0, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][-][-]
+                    (spawn_column, 1 + BOARD_HEIGHT_BUFFER_U),     // [-][-][-][-] | [-][-][-][-]
                 ]
             },
             Shapes::Z => {
                 self.positions = [
-                    (spawn_column - 1, 0 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][-][3]
-                    (spawn_column + 0, 0 + BOARD_HEIGHT_BUFFER_U), // [-][0][1][-] | [-][-][1][2]
-                    (spawn_column + 0, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][2][3] | [-][-][0][-]
+                    (spawn_column - 1, BOARD_HEIGHT_BUFFER_U),     // [-][-][-][-] | [-][-][-][3]
+                    (spawn_column, BOARD_HEIGHT_BUFFER_U),         // [-][0][1][-] | [-][-][1][2]
+                    (spawn_column, 1 + BOARD_HEIGHT_BUFFER_U),     // [-][-][2][3] | [-][-][0][-]
                     (spawn_column + 1, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][-][-]
                 ]
             },
@@ -157,7 +157,7 @@ impl Piece {
                         return [
                             self.positions[0],
                             (self.positions[1].0 - 1, self.positions[1].1 - 1),
-                            (self.positions[2].0 + 2, self.positions[2].1 + 0),
+                            (self.positions[2].0 + 2, self.positions[2].1),
                             (self.positions[3].0 + 1, self.positions[3].1 - 1),
                         ];
                     } else {
@@ -165,7 +165,7 @@ impl Piece {
                         return [
                             self.positions[0],
                             (self.positions[1].0 + 1, self.positions[1].1 + 1),
-                            (self.positions[2].0 - 2, self.positions[2].1 - 0),
+                            (self.positions[2].0 - 2, self.positions[2].1),
                             (self.positions[3].0 - 1, self.positions[3].1 + 1),
                         ];
                     }
@@ -177,7 +177,7 @@ impl Piece {
                             (self.positions[0].0 + 1, self.positions[0].1 + 1),
                             self.positions[1],
                             (self.positions[2].0 + 1, self.positions[2].1 - 1),
-                            (self.positions[3].0 - 2, self.positions[3].1 + 0),
+                            (self.positions[3].0 - 2, self.positions[3].1),
                         ];
                     } else {
                         self.rotation = 0;
@@ -185,7 +185,7 @@ impl Piece {
                             (self.positions[0].0 - 1, self.positions[0].1 - 1),
                             self.positions[1],
                             (self.positions[2].0 - 1, self.positions[2].1 + 1),
-                            (self.positions[3].0 + 2, self.positions[3].1 + 0),
+                            (self.positions[3].0 + 2, self.positions[3].1),
                         ];
                     }
                 }
