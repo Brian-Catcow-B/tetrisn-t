@@ -46,9 +46,9 @@ pub struct Tile {
 impl Tile {
     pub fn new(empty: bool, active: bool, player: u8) -> Self {
         Self {
-            empty: empty,
-            active: active,
-            player: player,
+            empty,
+            active,
+            player,
         }
     }
 
@@ -64,8 +64,8 @@ impl Tile {
     pub fn modify_fill(&mut self, active: bool, player: u8) -> Self {
         Self {
             empty: false,
-            active: active,
-            player: player,
+            active,
+            player,
         }
     }
 

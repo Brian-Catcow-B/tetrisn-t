@@ -34,10 +34,10 @@ pub struct Piece {
 impl Piece {
     pub fn new(shape: Shapes, player: u8) -> Self {
         Self {
-            shape: shape,
+            shape,
             positions: [(0xff, 0xff); 4],
             rotation: 0,
-            player: player,
+            player,
         }
     }
 
