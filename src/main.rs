@@ -82,7 +82,7 @@ impl Rustrisnt {
         Self {
             num_players,
             board: Board::new(6 + 4 * num_players, 20u8),
-            control_scheme: ControlScheme::new(0u8, KeyCode::Left, KeyCode::Right, KeyCode::Down, KeyCode::Z, KeyCode::X),
+            control_scheme: ControlScheme::new(0u8, KeyCode::Left, KeyCode::Right, KeyCode::Down, KeyCode::X, KeyCode::Z),
             input: controls::Input::new(),
             spawn_piece_flag: true,
             active_piece: piece::Piece::new(Shapes::None, 0u8),
@@ -105,22 +105,20 @@ impl EventHandler for Rustrisnt {
 
         if self.spawn_piece_flag {
             self.spawn_piece_flag = false;
-            self.active_piece = piece::Piece::new(Shapes::I, 0);
+            self.active_piece = piece::Piece::new(Shapes::O, 0);
             self.active_piece.spawn(9u8);
         }
 
         if !self.input.keydown_rotate_cw.1 {
-            println!("here 0");
             self.board.emptify_piece(&self.active_piece.positions);
             self.board.playerify_piece(0u8, &self.active_piece.positions);
         } else {
-            println!("here 1");
             self.board.emptify_piece(&self.active_piece.positions);
             self.active_piece.positions = self.active_piece.piece_pos(Movement::RotateCw);
             self.board.playerify_piece(0u8, &self.active_piece.positions);
         }
 
-        // update controls (always do last in update)
+        // update controls (always do last in update for each player)
         self.input.was_unpressed_previous_frame_setfalse();
 
         Ok(())
