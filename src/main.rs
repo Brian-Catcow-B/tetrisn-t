@@ -1,6 +1,7 @@
 
 use ggez::{Context, ContextBuilder, GameResult};
 use ggez::event::{self, EventHandler};
+use ggez::event::{Axis, Button, GamepadId, KeyCode, KeyMods};
 use ggez::graphics::{self, DrawParam, spritebatch};
 use ggez::nalgebra as na;
 use na::Point2;
@@ -14,12 +15,16 @@ mod tile;
 use tile::NUM_PIXEL_ROWS_PER_TILEGRAPHIC;
 use tile::{Tile, TileGraphic};
 
-mod piece;
-use piece::{Shapes, Movement};
+// mod piece;
+// use piece::{Shapes, Movement};
 
 mod board;
 use board::BOARD_HEIGHT_BUFFER_U;
 use board::Board;
+
+mod controls;
+use controls::ControlScheme;
+use controls::piece::{self, Shapes, Movement};
 
 fn main() {
     let mut context = ContextBuilder::new("Rustrisn-t", "Catcow");
@@ -57,6 +62,7 @@ struct Rustrisnt {
     // logic (mostly)
     num_players: u8,
     board: Board,
+    controls: ControlScheme,
     active_piece: piece::Piece,
     // drawing
     text: graphics::Text,
@@ -76,7 +82,8 @@ impl Rustrisnt {
         }
         Self {
             num_players,
-            board: Board::new(14u8, 20u8),
+            board: Board::new(6 + 4 * num_players, 20u8),
+            controls: ControlScheme::new(0u8, KeyCode::Left, KeyCode::Right, KeyCode::Down, KeyCode::Z, KeyCode::X),
             active_piece: piece::Piece::new(Shapes::None, 0u8),
             text: graphics::Text::new(("Hello world!", graphics::Font::default(), 24.0)),
             tile_size: 0.0,
@@ -103,6 +110,23 @@ impl EventHandler for Rustrisnt {
         self.board.playerify_piece(0u8, &self.active_piece.positions);
 
         Ok(())
+    }
+
+    fn key_down_event(
+        &mut self,
+        _ctx: &mut Context,
+        keycode: KeyCode,
+        keymod: KeyMods,
+        repeat: bool,
+    ) {
+        println!(
+            "Key pressed: {:?}, modifier {:?}, repeat: {}",
+            keycode, keymod, repeat
+        );
+    }
+
+    fn key_up_event(&mut self, _ctx: &mut Context, keycode: KeyCode, keymod: KeyMods) {
+        println!("Key released: {:?}, modifier {:?}", keycode, keymod);
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
