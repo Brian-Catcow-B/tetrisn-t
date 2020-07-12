@@ -230,17 +230,15 @@ impl TileGraphic {
 
     pub fn _print_image_buf(self, ctx: &mut Context) {
         let image_buf: Vec<u8> = self.image.to_rgba8(ctx).expect("Failed to create image buffer");
-        for index in 0..image_buf.len() {
+        for (index, image) in image_buf.iter().enumerate() {
             if index % 4 == 0 {
                 if index % 32 == 0 {
                     print!("\n");
-                } else {
-                    if index != 0 {
-                        print!(" ");
-                    }
+                } else if index != 0 {
+                    print!(" ");
                 }
             }
-            print!("{:02x}", image_buf[index]);
+            print!("{:02x}", image);
         }
         print!("\n");
     }
