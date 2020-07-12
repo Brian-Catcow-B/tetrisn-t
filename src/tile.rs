@@ -87,7 +87,7 @@ impl TileGraphic {
     fn pack_color_buf(color_buf: &[(u8, u8, u8, u8); NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize]) -> [u8; NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * 4] {
         let mut buf: [u8; NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * 4] = [0; NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * 4];
         for color_index in 0..NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize {
-            buf[4 * color_index + 0] = color_buf[color_index].0;
+            buf[4 * color_index] = color_buf[color_index].0;
             buf[4 * color_index + 1] = color_buf[color_index].1;
             buf[4 * color_index + 2] = color_buf[color_index].2;
             buf[4 * color_index + 3] = color_buf[color_index].3;
