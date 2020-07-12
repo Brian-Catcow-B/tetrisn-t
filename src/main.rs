@@ -61,6 +61,7 @@ struct Rustrisnt {
     board: Board,
     control_scheme: ControlScheme,
     input: controls::Input,
+    spawn_piece_flag: bool,
     active_piece: piece::Piece,
     // drawing
     text: graphics::Text,
@@ -83,6 +84,7 @@ impl Rustrisnt {
             board: Board::new(6 + 4 * num_players, 20u8),
             control_scheme: ControlScheme::new(0u8, KeyCode::Left, KeyCode::Right, KeyCode::Down, KeyCode::Z, KeyCode::X),
             input: controls::Input::new(),
+            spawn_piece_flag: true,
             active_piece: piece::Piece::new(Shapes::None, 0u8),
             text: graphics::Text::new(("Hello world!", graphics::Font::default(), 24.0)),
             tile_size: 0.0,
@@ -101,15 +103,25 @@ impl EventHandler for Rustrisnt {
             self.board.matrix[player as usize][0] = Tile::new(false, true, player);
         }
 
-        if !self.input.keydown_rotate_cw.0 {
+        if self.spawn_piece_flag {
+            self.spawn_piece_flag = false;
             self.active_piece = piece::Piece::new(Shapes::I, 0);
             self.active_piece.spawn(9u8);
+        }
+
+        if !self.input.keydown_rotate_cw.1 {
+            println!("here 0");
+            self.board.emptify_piece(&self.active_piece.positions);
             self.board.playerify_piece(0u8, &self.active_piece.positions);
         } else {
+            println!("here 1");
             self.board.emptify_piece(&self.active_piece.positions);
             self.active_piece.positions = self.active_piece.piece_pos(Movement::RotateCw);
             self.board.playerify_piece(0u8, &self.active_piece.positions);
         }
+
+        // update controls (always do last in update)
+        self.input.was_unpressed_previous_frame_setfalse();
 
         Ok(())
     }
@@ -121,10 +133,6 @@ impl EventHandler for Rustrisnt {
         _keymod: KeyMods,
         repeat: bool,
     ) {
-        println!(
-            "Key pressed: {:?}, modifier {:?}, repeat: {}",
-            keycode, _keymod, repeat
-        );
         if !repeat {
             match self.control_scheme.find_move(keycode) {
                 Movement::Left => self.input.keydown_left = (true, true),
@@ -137,8 +145,7 @@ impl EventHandler for Rustrisnt {
         }
     }
 
-    fn key_up_event(&mut self, _ctx: &mut Context, keycode: KeyCode, keymod: KeyMods) {
-        println!("Key released: {:?}, modifier {:?}", keycode, keymod);
+    fn key_up_event(&mut self, _ctx: &mut Context, keycode: KeyCode, _keymod: KeyMods) {
         match self.control_scheme.find_move(keycode) {
             Movement::Left => self.input.keydown_left = (false, false),
             Movement::Right => self.input.keydown_right = (false, false),

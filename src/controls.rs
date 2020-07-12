@@ -20,6 +20,14 @@ impl Input {
             keydown_rotate_ccw: (false, false),
         }
     }
+
+    pub fn was_unpressed_previous_frame_setfalse(&mut self) {
+        self.keydown_left.1 = false;
+        self.keydown_right.1 = false;
+        self.keydown_down.1 = false;
+        self.keydown_rotate_cw.1 = false;
+        self.keydown_rotate_ccw.1 = false;
+    }
 }
 
 pub struct ControlScheme {
