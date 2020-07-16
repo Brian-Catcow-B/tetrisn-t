@@ -46,7 +46,7 @@ fn main() {
     // Create an instance of your event handler.
     // Usually, you should provide it with the Context object
     // so it can load resources like images during setup.
-    let mut rustrisnt = Rustrisnt::new(ctx, 6u8);
+    let mut rustrisnt = Rustrisnt::new(ctx, 18u8);
 
     // Run!
     match event::run(ctx, event_loop, &mut rustrisnt) {
@@ -99,22 +99,42 @@ impl EventHandler for Rustrisnt {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         // Update code here...
         // just some example/testing things rn
-        for player in 0..self.board.width {
+        for player in 0..self.num_players {
             self.board.matrix[player as usize][0] = Tile::new(false, true, player);
         }
 
+        // piece spawning
         if self.spawn_piece_flag {
             self.spawn_piece_flag = false;
-            self.active_piece = piece::Piece::new(Shapes::O, 0);
+            self.active_piece = piece::Piece::new(Shapes::L, 0);
             self.active_piece.spawn(9u8);
         }
 
-        if !self.input.keydown_rotate_cw.1 {
-            self.board.emptify_piece(&self.active_piece.positions);
-            self.board.playerify_piece(0u8, &self.active_piece.positions);
-        } else {
+        // piece movement
+        // CW / CCW
+        if self.input.keydown_rotate_cw.1 {
             self.board.emptify_piece(&self.active_piece.positions);
             self.active_piece.positions = self.active_piece.piece_pos(Movement::RotateCw);
+            self.board.playerify_piece(0u8, &self.active_piece.positions);
+        } else if self.input.keydown_rotate_ccw.1 {
+            self.board.emptify_piece(&self.active_piece.positions);
+            self.active_piece.positions = self.active_piece.piece_pos(Movement::RotateCcw);
+            self.board.playerify_piece(0u8, &self.active_piece.positions);
+        }
+        // LEFT / RIGHT
+        if self.input.keydown_left.1 {
+            self.board.emptify_piece(&self.active_piece.positions);
+            self.active_piece.positions = self.active_piece.piece_pos(Movement::Left);
+            self.board.playerify_piece(0u8, &self.active_piece.positions);
+        } else if self.input.keydown_right.1 {
+            self.board.emptify_piece(&self.active_piece.positions);
+            self.active_piece.positions = self.active_piece.piece_pos(Movement::Right);
+            self.board.playerify_piece(0u8, &self.active_piece.positions);
+        }
+        // DOWN
+        if self.input.keydown_down.1 {
+            self.board.emptify_piece(&self.active_piece.positions);
+            self.active_piece.positions = self.active_piece.piece_pos(Movement::Down);
             self.board.playerify_piece(0u8, &self.active_piece.positions);
         }
 
