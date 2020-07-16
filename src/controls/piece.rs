@@ -54,10 +54,10 @@ impl Piece {
             },
             Shapes::O => {
                 self.positions = [
-                    (spawn_column - 1, BOARD_HEIGHT_BUFFER_U), // [-][-][-][-]
-                    (spawn_column - 1, BOARD_HEIGHT_BUFFER_U), // [-][0][1][-]
-                    (spawn_column, 1 + BOARD_HEIGHT_BUFFER_U), // [-][2][3][-]
-                    (spawn_column, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-]
+                    (spawn_column - 1, BOARD_HEIGHT_BUFFER_U),     // [-][-][-][-]
+                    (spawn_column, BOARD_HEIGHT_BUFFER_U),         // [-][0][1][-]
+                    (spawn_column - 1, 1 + BOARD_HEIGHT_BUFFER_U), // [-][2][3][-]
+                    (spawn_column, 1 + BOARD_HEIGHT_BUFFER_U),     // [-][-][-][-]
                 ]
             },
             Shapes::T => {
@@ -177,7 +177,7 @@ impl Piece {
                             (self.positions[0].0 + 1, self.positions[0].1 + 1),
                             self.positions[1],
                             (self.positions[2].0 + 1, self.positions[2].1 - 1),
-                            (self.positions[3].0 - 2, self.positions[3].1),
+                            (self.positions[3].0, self.positions[3].1 - 2),
                         ];
                     } else {
                         self.rotation = 0;
@@ -185,7 +185,7 @@ impl Piece {
                             (self.positions[0].0 - 1, self.positions[0].1 - 1),
                             self.positions[1],
                             (self.positions[2].0 - 1, self.positions[2].1 + 1),
-                            (self.positions[3].0 + 2, self.positions[3].1),
+                            (self.positions[3].0, self.positions[3].1 + 2),
                         ];
                     }
                 }
@@ -195,19 +195,19 @@ impl Piece {
                         self.rotation = (self.rotation + 1) % 4;
                         // some dark magic (symmetry)
                         return [
-                            (pivot.0 + (pivot.1 - self.positions[0].1), pivot.1 + (pivot.0 - self.positions[0].0)),
+                            (pivot.0 + (pivot.1 - self.positions[0].1), pivot.1 + (self.positions[0].0 - pivot.0)),
                             pivot,
-                            (pivot.0 + (pivot.1 - self.positions[2].1), pivot.1 + (pivot.0 - self.positions[2].0)),
-                            (pivot.0 + (pivot.1 - self.positions[3].1), pivot.1 + (pivot.0 - self.positions[3].0)),
+                            (pivot.0 + (pivot.1 - self.positions[2].1), pivot.1 + (self.positions[2].0 - pivot.0)),
+                            (pivot.0 + (pivot.1 - self.positions[3].1), pivot.1 + (self.positions[3].0 - pivot.0)),
                         ];
                     } else {
                         self.rotation = (self.rotation + 3) % 4;
                         // some of that same dark magic (still just symmetry)
                         return [
-                            (pivot.0 + (self.positions[0].1 - pivot.1), pivot.1 + (self.positions[0].0 - pivot.0)),
+                            (pivot.0 + (self.positions[0].1 - pivot.1), pivot.1 + (pivot.0 - self.positions[0].0)),
                             pivot,
-                            (pivot.0 + (self.positions[2].1 - pivot.1), pivot.1 + (self.positions[2].0 - pivot.0)),
-                            (pivot.0 + (self.positions[3].1 - pivot.1), pivot.1 + (self.positions[3].0 - pivot.0)),
+                            (pivot.0 + (self.positions[2].1 - pivot.1), pivot.1 + (pivot.0 - self.positions[2].0)),
+                            (pivot.0 + (self.positions[3].1 - pivot.1), pivot.1 + (pivot.0 - self.positions[3].0)),
                         ];
                     }
                 }

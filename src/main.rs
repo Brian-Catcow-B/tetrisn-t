@@ -1,6 +1,7 @@
 
 use ggez::{Context, ContextBuilder, GameResult};
 use ggez::event::{self, EventHandler};
+use ggez::event::{Axis, Button, GamepadId, KeyCode, KeyMods};
 use ggez::graphics::{self, DrawParam, spritebatch};
 use ggez::nalgebra as na;
 use na::Point2;
@@ -14,12 +15,13 @@ mod tile;
 use tile::NUM_PIXEL_ROWS_PER_TILEGRAPHIC;
 use tile::{Tile, TileGraphic};
 
-mod piece;
-use piece::{Shapes, Movement};
-
 mod board;
 use board::BOARD_HEIGHT_BUFFER_U;
 use board::Board;
+
+mod controls;
+use controls::ControlScheme;
+use controls::piece::{self, Shapes, Movement};
 
 fn main() {
     let mut context = ContextBuilder::new("Rustrisn-t", "Catcow");
@@ -44,7 +46,7 @@ fn main() {
     // Create an instance of your event handler.
     // Usually, you should provide it with the Context object
     // so it can load resources like images during setup.
-    let mut rustrisnt = Rustrisnt::new(ctx, 15u8);
+    let mut rustrisnt = Rustrisnt::new(ctx, 18u8);
 
     // Run!
     match event::run(ctx, event_loop, &mut rustrisnt) {
@@ -57,6 +59,9 @@ struct Rustrisnt {
     // logic (mostly)
     num_players: u8,
     board: Board,
+    control_scheme: ControlScheme,
+    input: controls::Input,
+    spawn_piece_flag: bool,
     active_piece: piece::Piece,
     // drawing
     text: graphics::Text,
@@ -76,7 +81,10 @@ impl Rustrisnt {
         }
         Self {
             num_players,
-            board: Board::new(14u8, 20u8),
+            board: Board::new(6 + 4 * num_players, 20u8),
+            control_scheme: ControlScheme::new(0u8, KeyCode::Left, KeyCode::Right, KeyCode::Down, KeyCode::X, KeyCode::Z),
+            input: controls::Input::new(),
+            spawn_piece_flag: true,
             active_piece: piece::Piece::new(Shapes::None, 0u8),
             text: graphics::Text::new(("Hello world!", graphics::Font::default(), 24.0)),
             tile_size: 0.0,
@@ -91,18 +99,79 @@ impl EventHandler for Rustrisnt {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         // Update code here...
         // just some example/testing things rn
-        for player in 0..self.board.width {
+        for player in 0..self.num_players {
             self.board.matrix[player as usize][0] = Tile::new(false, true, player);
         }
 
-        self.active_piece = piece::Piece::new(Shapes::I, 0);
-        self.active_piece.spawn(6u8);
-        self.board.playerify_piece(0u8, &self.active_piece.positions);
-        self.board.emptify_piece(&self.active_piece.positions);
-        self.active_piece.positions = self.active_piece.piece_pos(Movement::RotateCw);
-        self.board.playerify_piece(0u8, &self.active_piece.positions);
+        // piece spawning
+        if self.spawn_piece_flag {
+            self.spawn_piece_flag = false;
+            self.active_piece = piece::Piece::new(Shapes::L, 0);
+            self.active_piece.spawn(9u8);
+        }
+
+        // piece movement
+        // CW / CCW
+        if self.input.keydown_rotate_cw.1 {
+            self.board.emptify_piece(&self.active_piece.positions);
+            self.active_piece.positions = self.active_piece.piece_pos(Movement::RotateCw);
+            self.board.playerify_piece(0u8, &self.active_piece.positions);
+        } else if self.input.keydown_rotate_ccw.1 {
+            self.board.emptify_piece(&self.active_piece.positions);
+            self.active_piece.positions = self.active_piece.piece_pos(Movement::RotateCcw);
+            self.board.playerify_piece(0u8, &self.active_piece.positions);
+        }
+        // LEFT / RIGHT
+        if self.input.keydown_left.1 {
+            self.board.emptify_piece(&self.active_piece.positions);
+            self.active_piece.positions = self.active_piece.piece_pos(Movement::Left);
+            self.board.playerify_piece(0u8, &self.active_piece.positions);
+        } else if self.input.keydown_right.1 {
+            self.board.emptify_piece(&self.active_piece.positions);
+            self.active_piece.positions = self.active_piece.piece_pos(Movement::Right);
+            self.board.playerify_piece(0u8, &self.active_piece.positions);
+        }
+        // DOWN
+        if self.input.keydown_down.1 {
+            self.board.emptify_piece(&self.active_piece.positions);
+            self.active_piece.positions = self.active_piece.piece_pos(Movement::Down);
+            self.board.playerify_piece(0u8, &self.active_piece.positions);
+        }
+
+        // update controls (always do last in update for each player)
+        self.input.was_unpressed_previous_frame_setfalse();
 
         Ok(())
+    }
+
+    fn key_down_event(
+        &mut self,
+        _ctx: &mut Context,
+        keycode: KeyCode,
+        _keymod: KeyMods,
+        repeat: bool,
+    ) {
+        if !repeat {
+            match self.control_scheme.find_move(keycode) {
+                Movement::Left => self.input.keydown_left = (true, true),
+                Movement::Right => self.input.keydown_right = (true, true),
+                Movement::Down => self.input.keydown_down = (true, true),
+                Movement::RotateCw => self.input.keydown_rotate_cw = (true, true),
+                Movement::RotateCcw => self.input.keydown_rotate_ccw = (true, true),
+                Movement::None => return,
+            }
+        }
+    }
+
+    fn key_up_event(&mut self, _ctx: &mut Context, keycode: KeyCode, _keymod: KeyMods) {
+        match self.control_scheme.find_move(keycode) {
+            Movement::Left => self.input.keydown_left = (false, false),
+            Movement::Right => self.input.keydown_right = (false, false),
+            Movement::Down => self.input.keydown_down = (false, false),
+            Movement::RotateCw => self.input.keydown_rotate_cw = (false, false),
+            Movement::RotateCcw => self.input.keydown_rotate_ccw = (false, false),
+            Movement::None => return,
+        }
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {

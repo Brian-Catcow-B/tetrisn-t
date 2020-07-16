@@ -4,7 +4,6 @@ pub const NUM_PIXEL_ROWS_PER_TILEGRAPHIC: u16 = 8u16;
 
 const BASE_PLAYER_COLOR: (u8, u8, u8, u8) = (69u8, 125u8, 225u8, 0xffu8);
 
-const BLACK: (u8, u8, u8, u8) = (0u8, 0u8, 0u8, 0xffu8);
 const DARK_GRAY: (u8, u8, u8, u8) = (60u8, 60u8, 60u8, 0xffu8);
 const GRAY: (u8, u8, u8, u8) = (120u8, 120u8, 120u8, 0xffu8);
 const WHITE: (u8, u8, u8, u8) = (255u8, 255u8, 255u8, 0xffu8);
