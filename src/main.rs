@@ -97,45 +97,59 @@ impl Rustrisnt {
 // draw and update are done every frame
 impl EventHandler for Rustrisnt {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
+        // Debug stuff...
+
+        // draws all the active player tiles on the top row
+        // for player in 0..self.num_players {
+        //     self.board.matrix[player as usize][BOARD_HEIGHT_BUFFER_U] = Tile::new(false, true, player);
+        // }
+
         // Update code here...
-        // just some example/testing things rn
-        for player in 0..self.num_players {
-            self.board.matrix[player as usize][0] = Tile::new(false, true, player);
-        }
 
         // piece spawning
         if self.spawn_piece_flag {
             self.spawn_piece_flag = false;
             self.active_piece = piece::Piece::new(Shapes::L, 0);
             self.active_piece.spawn(9u8);
+            self.board.playerify_piece(0u8, &self.active_piece.positions);
         }
 
         // piece movement
         // CW / CCW
         if self.input.keydown_rotate_cw.1 {
-            self.board.emptify_piece(&self.active_piece.positions);
-            self.active_piece.positions = self.active_piece.piece_pos(Movement::RotateCw);
-            self.board.playerify_piece(0u8, &self.active_piece.positions);
+            if self.board.is_valid_piece_pos(&self.active_piece.piece_pos(Movement::RotateCw)) {
+                self.board.emptify_piece(&self.active_piece.positions);
+                self.active_piece.positions = self.active_piece.piece_pos(Movement::RotateCw);
+                self.board.playerify_piece(0u8, &self.active_piece.positions);
+            }
         } else if self.input.keydown_rotate_ccw.1 {
-            self.board.emptify_piece(&self.active_piece.positions);
-            self.active_piece.positions = self.active_piece.piece_pos(Movement::RotateCcw);
-            self.board.playerify_piece(0u8, &self.active_piece.positions);
+            if self.board.is_valid_piece_pos(&self.active_piece.piece_pos(Movement::RotateCcw)) {
+                self.board.emptify_piece(&self.active_piece.positions);
+                self.active_piece.positions = self.active_piece.piece_pos(Movement::RotateCcw);
+                self.board.playerify_piece(0u8, &self.active_piece.positions);
+            }
         }
         // LEFT / RIGHT
         if self.input.keydown_left.1 {
-            self.board.emptify_piece(&self.active_piece.positions);
-            self.active_piece.positions = self.active_piece.piece_pos(Movement::Left);
-            self.board.playerify_piece(0u8, &self.active_piece.positions);
+            if self.board.is_valid_piece_pos(&self.active_piece.piece_pos(Movement::Left)) {
+                self.board.emptify_piece(&self.active_piece.positions);
+                self.active_piece.positions = self.active_piece.piece_pos(Movement::Left);
+                self.board.playerify_piece(0u8, &self.active_piece.positions);
+            }
         } else if self.input.keydown_right.1 {
-            self.board.emptify_piece(&self.active_piece.positions);
-            self.active_piece.positions = self.active_piece.piece_pos(Movement::Right);
-            self.board.playerify_piece(0u8, &self.active_piece.positions);
+            if self.board.is_valid_piece_pos(&self.active_piece.piece_pos(Movement::Right)) {
+                self.board.emptify_piece(&self.active_piece.positions);
+                self.active_piece.positions = self.active_piece.piece_pos(Movement::Right);
+                self.board.playerify_piece(0u8, &self.active_piece.positions);
+            }
         }
         // DOWN
         if self.input.keydown_down.1 {
-            self.board.emptify_piece(&self.active_piece.positions);
-            self.active_piece.positions = self.active_piece.piece_pos(Movement::Down);
-            self.board.playerify_piece(0u8, &self.active_piece.positions);
+            if self.board.is_valid_piece_pos(&self.active_piece.piece_pos(Movement::Down)) {
+                self.board.emptify_piece(&self.active_piece.positions);
+                self.active_piece.positions = self.active_piece.piece_pos(Movement::Down);
+                self.board.playerify_piece(0u8, &self.active_piece.positions);
+            }
         }
 
         // update controls (always do last in update for each player)
@@ -182,17 +196,17 @@ impl EventHandler for Rustrisnt {
         for x in 0..self.board.width {
             for y in 0..self.board.height {
                 // empty tiles
-                if self.board.matrix[x as usize][y as usize].empty {
+                if self.board.matrix[x as usize][(y + BOARD_HEIGHT_BUFFER_U) as usize].empty {
                     let x = x as f32;
-                    let y = y as f32;
+                    let y = (y + BOARD_HEIGHT_BUFFER_U) as f32;
                     let empty_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
                     self.batch_empty_tile.add(empty_tile);
                 } else {
                     // player tiles
                     for player in 0..self.num_players {
-                        if self.board.matrix[x as usize][y as usize].player == player {
+                        if self.board.matrix[x as usize][(y + BOARD_HEIGHT_BUFFER_U) as usize].player == player {
                             let x = x as f32;
-                            let y = y as f32;
+                            let y = (y + BOARD_HEIGHT_BUFFER_U) as f32;
                             let player_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
                             self.vec_batch_player_tile[player as usize].add(player_tile);
                         }

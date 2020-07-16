@@ -38,4 +38,18 @@ impl Board {
             }
         }
     }
+
+    pub fn is_valid_piece_pos(&self, positions: &[(u8, u8); 4]) -> bool {
+        for position in positions.iter().take(4) {
+            // due to integer underflow (u8 board width and u8 board height), we must only check the positive side of x and y positions
+            if position.0 >= self.width {
+                return false;
+            }
+            if position.1 >= self.height + BOARD_HEIGHT_BUFFER_U {
+                return false;
+            }
+        }
+
+        true
+    }
 }
