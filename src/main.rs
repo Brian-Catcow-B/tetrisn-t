@@ -99,56 +99,64 @@ impl EventHandler for Rustrisnt {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         // Debug stuff...
 
-        // draws all the active player tiles on the top row
+        // draws all the active players' tiles on the top row
         // for player in 0..self.num_players {
         //     self.board.matrix[player as usize][BOARD_HEIGHT_BUFFER_U] = Tile::new(false, true, player);
         // }
 
         // Update code here...
 
-        // piece spawning
-        if self.spawn_piece_flag {
-            self.spawn_piece_flag = false;
-            self.active_piece = piece::Piece::new(Shapes::L, 0);
-            self.active_piece.spawn(9u8);
-            self.board.playerify_piece(0u8, &self.active_piece.positions);
-        }
-
-        // piece movement
-        // CW / CCW
-        if self.input.keydown_rotate_cw.1 {
-            if self.board.is_valid_piece_pos(&self.active_piece.piece_pos(Movement::RotateCw)) {
-                self.board.emptify_piece(&self.active_piece.positions);
-                self.active_piece.positions = self.active_piece.piece_pos(Movement::RotateCw);
-                self.board.playerify_piece(0u8, &self.active_piece.positions);
+        for player in 0..1 { // TODO: eventually replace `1` with `self.num_players`
+            // piece spawning
+            if self.spawn_piece_flag {
+                self.spawn_piece_flag = false;
+                self.active_piece = piece::Piece::new(Shapes::L, player); // TODO: make random sometime
+                self.active_piece.spawn(9u8); // TODO: base this on `player` with the Tetrisnt thing but only the left half and then use symmetry for right half
+                self.board.playerify_piece(player, &self.active_piece.positions);
             }
-        } else if self.input.keydown_rotate_ccw.1 {
-            if self.board.is_valid_piece_pos(&self.active_piece.piece_pos(Movement::RotateCcw)) {
-                self.board.emptify_piece(&self.active_piece.positions);
-                self.active_piece.positions = self.active_piece.piece_pos(Movement::RotateCcw);
-                self.board.playerify_piece(0u8, &self.active_piece.positions);
+    
+            // piece movement
+            // CW / CCW
+            if self.input.keydown_rotate_cw.1 {
+                if self.board.is_valid_piece_pos(&self.active_piece.piece_pos(Movement::RotateCw), player) {
+                    self.board.emptify_piece(&self.active_piece.positions);
+                    self.active_piece.positions = self.active_piece.piece_pos(Movement::RotateCw);
+                    self.board.playerify_piece(player, &self.active_piece.positions);
+                }
             }
-        }
-        // LEFT / RIGHT
-        if self.input.keydown_left.1 {
-            if self.board.is_valid_piece_pos(&self.active_piece.piece_pos(Movement::Left)) {
-                self.board.emptify_piece(&self.active_piece.positions);
-                self.active_piece.positions = self.active_piece.piece_pos(Movement::Left);
-                self.board.playerify_piece(0u8, &self.active_piece.positions);
+            if self.input.keydown_rotate_ccw.1 {
+                if self.board.is_valid_piece_pos(&self.active_piece.piece_pos(Movement::RotateCcw), player) {
+                    self.board.emptify_piece(&self.active_piece.positions);
+                    self.active_piece.positions = self.active_piece.piece_pos(Movement::RotateCcw);
+                    self.board.playerify_piece(player, &self.active_piece.positions);
+                }
             }
-        } else if self.input.keydown_right.1 {
-            if self.board.is_valid_piece_pos(&self.active_piece.piece_pos(Movement::Right)) {
-                self.board.emptify_piece(&self.active_piece.positions);
-                self.active_piece.positions = self.active_piece.piece_pos(Movement::Right);
-                self.board.playerify_piece(0u8, &self.active_piece.positions);
+            // LEFT / RIGHT
+            if self.input.keydown_left.1 {
+                if self.board.is_valid_piece_pos(&self.active_piece.piece_pos(Movement::Left), player) {
+                    self.board.emptify_piece(&self.active_piece.positions);
+                    self.active_piece.positions = self.active_piece.piece_pos(Movement::Left);
+                    self.board.playerify_piece(player, &self.active_piece.positions);
+                }
             }
-        }
-        // DOWN
-        if self.input.keydown_down.1 {
-            if self.board.is_valid_piece_pos(&self.active_piece.piece_pos(Movement::Down)) {
-                self.board.emptify_piece(&self.active_piece.positions);
-                self.active_piece.positions = self.active_piece.piece_pos(Movement::Down);
-                self.board.playerify_piece(0u8, &self.active_piece.positions);
+            if self.input.keydown_right.1 {
+                if self.board.is_valid_piece_pos(&self.active_piece.piece_pos(Movement::Right), player) {
+                    self.board.emptify_piece(&self.active_piece.positions);
+                    self.active_piece.positions = self.active_piece.piece_pos(Movement::Right);
+                    self.board.playerify_piece(player, &self.active_piece.positions);
+                }
+            }
+            // DOWN
+            // down is interesting because every time the downwards position is false we have to check if it's running into the bottom or an inactive tile so we know if we should lock it
+            if self.input.keydown_down.1 {
+                if self.board.is_valid_piece_pos(&self.active_piece.piece_pos(Movement::Down), player) {
+                    self.board.emptify_piece(&self.active_piece.positions);
+                    self.active_piece.positions = self.active_piece.piece_pos(Movement::Down);
+                    self.board.playerify_piece(player, &self.active_piece.positions);
+                } else if self.board.should_lock(&self.active_piece.positions) {
+                    self.board.lock_piece(&self.active_piece.positions, player);
+                    self.spawn_piece_flag = true;
+                }
             }
         }
 
@@ -199,7 +207,7 @@ impl EventHandler for Rustrisnt {
                 if self.board.matrix[x as usize][(y + BOARD_HEIGHT_BUFFER_U) as usize].empty {
                     let x = x as f32;
                     let y = (y + BOARD_HEIGHT_BUFFER_U) as f32;
-                    let empty_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
+                    let empty_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, (y - BOARD_HEIGHT_BUFFER_U as f32) * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
                     self.batch_empty_tile.add(empty_tile);
                 } else {
                     // player tiles
@@ -207,7 +215,7 @@ impl EventHandler for Rustrisnt {
                         if self.board.matrix[x as usize][(y + BOARD_HEIGHT_BUFFER_U) as usize].player == player {
                             let x = x as f32;
                             let y = (y + BOARD_HEIGHT_BUFFER_U) as f32;
-                            let player_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
+                            let player_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, (y - BOARD_HEIGHT_BUFFER_U as f32) * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
                             self.vec_batch_player_tile[player as usize].add(player_tile);
                         }
                     }
