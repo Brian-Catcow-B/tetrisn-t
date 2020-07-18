@@ -38,4 +38,44 @@ impl Board {
             }
         }
     }
+
+    // TODO: perhaps here I should pass in &Piece, but not sure exactly how to do that rn. Too bad
+    pub fn is_valid_piece_pos(&self, positions: &[(u8, u8); 4], player: u8) -> bool {
+        for position in positions.iter().take(4) {
+            // due to integer underflow (u8 board width and u8 board height), we must only check the positive side of x and y positions
+            if position.0 >= self.width {
+                return false;
+            }
+            if position.1 >= self.height + BOARD_HEIGHT_BUFFER_U {
+                return false;
+            }
+            // make sure the position is not empty and is not part of the piece being moved
+            if !self.matrix[position.0 as usize][position.1 as usize].empty && !(self.matrix[position.0 as usize][position.1 as usize].active && self.matrix[position.0 as usize][position.1 as usize].player == player) {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    pub fn should_lock(&self, positions: &[(u8, u8); 4]) -> bool {
+        for position in positions.iter().take(4) {
+            // we just want to know if moving down by 1 will run the piece into the bottom of the board or an inactive tile
+            if position.1 as usize + 1 >= (self.height + BOARD_HEIGHT_BUFFER_U) as usize {
+                return true;
+            }
+            if self.matrix[position.0 as usize][position.1 as usize + 1].active {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    // TODO: perhaps here I should pass in &Piece, but not sure exactly how to do that rn. Too bad
+    pub fn lock_piece(&mut self, positions: &[(u8, u8); 4], player: u8) {
+        for position in positions.iter().take(4) {
+            self.matrix[position.0 as usize][position.1 as usize] = Tile::new(false, false, player);
+        }
+    }
 }
