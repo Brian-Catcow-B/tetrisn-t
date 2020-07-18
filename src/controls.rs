@@ -1,5 +1,5 @@
 use ggez::event::{Axis, Button, GamepadId, KeyCode, KeyMods};
-pub mod piece;
+use crate::piece;
 
 // (is pressed down, was unpressed previous frame)
 pub struct Input {
@@ -39,7 +39,7 @@ pub struct ControlScheme {
 }
 
 impl ControlScheme {
-    pub fn new(player: u8, left: KeyCode, right: KeyCode,down: KeyCode, rotate_cw: KeyCode, rotate_ccw: KeyCode) -> Self {
+    pub fn new(left: KeyCode, right: KeyCode,down: KeyCode, rotate_cw: KeyCode, rotate_ccw: KeyCode) -> Self {
         Self {
             left: left,
             right: right,
