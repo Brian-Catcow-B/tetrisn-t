@@ -185,7 +185,7 @@ impl EventHandler for Rustrisnt {
         repeat: bool,
     ) {
         if !repeat {
-            for mut player in self.vec_players.iter_mut() {
+            for player in self.vec_players.iter_mut() {
                 // POTENTIAL OPTIMIZATION: have a check elsewhere that makes sure no two input overlap and then just return after it finds what an input goes to; also in key_up_event()
                 match player.control_scheme.find_move(keycode) {
                     Movement::Left => player.input.keydown_left = (true, true),
@@ -200,7 +200,7 @@ impl EventHandler for Rustrisnt {
     }
 
     fn key_up_event(&mut self, _ctx: &mut Context, keycode: KeyCode, _keymod: KeyMods) {
-        for mut player in self.vec_players.iter_mut() {
+        for player in self.vec_players.iter_mut() {
             match player.control_scheme.find_move(keycode) {
                 Movement::Left => player.input.keydown_left = (false, false),
                 Movement::Right => player.input.keydown_right = (false, false),
