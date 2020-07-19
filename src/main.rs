@@ -128,34 +128,50 @@ impl EventHandler for Rustrisnt {
 
             // piece movement
             // CW / CCW
-            if player.input.keydown_rotate_cw.1 {
-                if self.board.is_valid_piece_pos(&player.active_piece.piece_pos(Movement::RotateCw), player.player_num) {
-                    self.board.emptify_piece(&player.active_piece.positions);
-                    player.active_piece.positions = player.active_piece.piece_pos(Movement::RotateCw);
-                    self.board.playerify_piece(player.player_num, &player.active_piece.positions);
-                }
+            if player.input.keydown_rotate_cw.1
+                && self.board.is_valid_piece_pos(
+                    &player.active_piece.piece_pos(Movement::RotateCw),
+                    player.player_num,
+                )
+            {
+                self.board.emptify_piece(&player.active_piece.positions);
+                player.active_piece.positions = player.active_piece.piece_pos(Movement::RotateCw);
+                self.board
+                    .playerify_piece(player.player_num, &player.active_piece.positions);
             }
-            if player.input.keydown_rotate_ccw.1 {
-                if self.board.is_valid_piece_pos(&player.active_piece.piece_pos(Movement::RotateCcw), player.player_num) {
-                    self.board.emptify_piece(&player.active_piece.positions);
-                    player.active_piece.positions = player.active_piece.piece_pos(Movement::RotateCcw);
-                    self.board.playerify_piece(player.player_num, &player.active_piece.positions);
-                }
+            if player.input.keydown_rotate_ccw.1
+                && self.board.is_valid_piece_pos(
+                    &player.active_piece.piece_pos(Movement::RotateCcw),
+                    player.player_num,
+                )
+            {
+                self.board.emptify_piece(&player.active_piece.positions);
+                player.active_piece.positions = player.active_piece.piece_pos(Movement::RotateCcw);
+                self.board
+                    .playerify_piece(player.player_num, &player.active_piece.positions);
             }
             // LEFT / RIGHT
-            if player.input.keydown_left.1 {
-                if self.board.is_valid_piece_pos(&player.active_piece.piece_pos(Movement::Left), player.player_num) {
-                    self.board.emptify_piece(&player.active_piece.positions);
-                    player.active_piece.positions = player.active_piece.piece_pos(Movement::Left);
-                    self.board.playerify_piece(player.player_num, &player.active_piece.positions);
-                }
+            if player.input.keydown_left.1
+                && self.board.is_valid_piece_pos(
+                    &player.active_piece.piece_pos(Movement::Left),
+                    player.player_num,
+                )
+            {
+                self.board.emptify_piece(&player.active_piece.positions);
+                player.active_piece.positions = player.active_piece.piece_pos(Movement::Left);
+                self.board
+                    .playerify_piece(player.player_num, &player.active_piece.positions);
             }
-            if player.input.keydown_right.1 {
-                if self.board.is_valid_piece_pos(&player.active_piece.piece_pos(Movement::Right), player.player_num) {
-                    self.board.emptify_piece(&player.active_piece.positions);
-                    player.active_piece.positions = player.active_piece.piece_pos(Movement::Right);
-                    self.board.playerify_piece(player.player_num, &player.active_piece.positions);
-                }
+            if player.input.keydown_right.1
+                && self.board.is_valid_piece_pos(
+                    &player.active_piece.piece_pos(Movement::Right),
+                    player.player_num,
+                )
+            {
+                self.board.emptify_piece(&player.active_piece.positions);
+                player.active_piece.positions = player.active_piece.piece_pos(Movement::Right);
+                self.board
+                    .playerify_piece(player.player_num, &player.active_piece.positions);
             }
             // DOWN
             // down is interesting because every time the downwards position is false we have to check if it's running into the bottom or an inactive tile so we know if we should lock it
