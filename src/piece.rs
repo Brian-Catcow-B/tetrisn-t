@@ -25,7 +25,7 @@ pub enum Movement {
 }
 
 pub struct Piece {
-    shape: Shapes,
+    pub shape: Shapes,
     pub positions: [(u8, u8); 4],
     rotation: u8, // 0, 1, 2, 3: 0, 90, 180, 270; CW
     player: u8,

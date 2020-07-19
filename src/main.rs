@@ -23,7 +23,7 @@ use piece::{Shapes, Movement};
 
 mod board;
 use board::BOARD_HEIGHT_BUFFER_U;
-use board::Board;
+use board::{Board, FullLine};
 
 mod controls;
 use controls::ControlScheme;
@@ -51,7 +51,7 @@ fn main() {
     // Create an instance of your event handler.
     // Usually, you should provide it with the Context object
     // so it can load resources like images during setup.
-    let mut rustrisnt = Rustrisnt::new(ctx, 18u8);
+    let mut rustrisnt = Rustrisnt::new(ctx, 2u8);
 
     // Run!
     match event::run(ctx, event_loop, &mut rustrisnt) {
@@ -65,12 +65,9 @@ struct Rustrisnt {
     board: Board,
     num_players: u8,
     vec_players: Vec<Player>,
-    // control_scheme: ControlScheme,
-    // input: controls::Input,
-    // spawn_piece_flag: bool,
-    // active_piece: piece::Piece,
+    vec_full_lines: Vec<FullLine>,
     // drawing
-    text: graphics::Text,
+    // text: graphics::Text,
     tile_size: f32,
     batch_empty_tile: spritebatch::SpriteBatch,
     vec_batch_player_tile: Vec<spritebatch::SpriteBatch>,
@@ -79,25 +76,25 @@ struct Rustrisnt {
 impl Rustrisnt {
     pub fn new(ctx: &mut Context, num_players: u8) -> Rustrisnt {
         // Load/create resources here: images, fonts, sounds, etc.
+        let board_width = 6 + 4 * num_players;
         let mut vec_players: Vec<Player> = vec![];
-        for player in 0..num_players {
-            vec_players.push(Player::new(player, ControlScheme::new(KeyCode::Left, KeyCode::Right, KeyCode::Down, KeyCode::X, KeyCode::Z)));
-        }
-        let image = TileGraphic::new_empty(ctx).image;
-        let batch_empty_tile = spritebatch::SpriteBatch::new(image);
+        // implementing this later when a config file with saved ControlScheme's for each player is added with menu UI (rip); will slightly change spawn_column logic
+        // for player in 0..num_players {
+        //     vec_players.push(Player::new(player, control_scheme[player], (player as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8));
+        // }
+        vec_players.push(Player::new(0, ControlScheme::new(KeyCode::Left, KeyCode::Right, KeyCode::Down, KeyCode::Numpad2, KeyCode::Numpad1), (0 as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8));
+        vec_players.push(Player::new(1, ControlScheme::new(KeyCode::A, KeyCode::D, KeyCode::S, KeyCode::E, KeyCode::Q), (1 as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8));
+        let batch_empty_tile = spritebatch::SpriteBatch::new(TileGraphic::new_empty(ctx).image);
         let mut vec_batch_player_tile: Vec<spritebatch::SpriteBatch> = vec![];
         for player in 0..num_players {
             vec_batch_player_tile.push(spritebatch::SpriteBatch::new(TileGraphic::new_player(ctx, player).image));
         }
         Self {
-            board: Board::new(6 + 4 * num_players, 20u8),
+            board: Board::new(board_width, 20u8),
             num_players,
             vec_players,
-            // control_scheme: ControlScheme::new(KeyCode::Left, KeyCode::Right, KeyCode::Down, KeyCode::X, KeyCode::Z),
-            // input: controls::Input::new(),
-            // spawn_piece_flag: true,
-            // active_piece: piece::Piece::new(Shapes::None, 0u8),
-            text: graphics::Text::new(("Hello world!", graphics::Font::default(), 24.0)),
+            vec_full_lines: vec![],
+            // text: graphics::Text::new(("Hello world!", graphics::Font::default(), 24.0)),
             tile_size: 0.0,
             batch_empty_tile,
             vec_batch_player_tile,
@@ -118,11 +115,16 @@ impl EventHandler for Rustrisnt {
         // Update code here...
 
         for player in self.vec_players.iter_mut() {
+            if !player.spawn_piece_flag && player.active_piece.shape == Shapes::None {
+                player.input.was_unpressed_previous_frame_setfalse();
+                continue;
+            }
+
             // piece spawning
             if player.spawn_piece_flag {
                 player.spawn_piece_flag = false;
                 player.active_piece = piece::Piece::new(Shapes::L, player.player_num); // TODO: make random sometime
-                player.active_piece.spawn(3u8 + player.player_num);
+                player.active_piece.spawn(player.spawn_column);
                 self.board.playerify_piece(player.player_num, &player.active_piece.positions);
             }
 
@@ -181,8 +183,17 @@ impl EventHandler for Rustrisnt {
                     player.active_piece.positions = player.active_piece.piece_pos(Movement::Down);
                     self.board.playerify_piece(player.player_num, &player.active_piece.positions);
                 } else if self.board.should_lock(&player.active_piece.positions) {
-                    self.board.lock_piece(&player.active_piece.positions, player.player_num);
-                    player.spawn_piece_flag = true;
+                    // lock piece and iterate through y positions returned, testing each row to see if it is full
+                    let mut override_spawn_piece_flag_with_false_flag = false;
+                    for row in self.board.lock_piece(&player.active_piece.positions, player.player_num).iter() {
+                        if self.board.is_row_full(*row) {
+                            override_spawn_piece_flag_with_false_flag = true;
+                            player.active_piece.shape = Shapes::None;
+                            self.vec_full_lines.push(FullLine::new(*row, player.player_num));
+                            println!("pushed a thing to the thing with row {}, player {}", row, player.player_num);
+                        }
+                    }
+                    player.spawn_piece_flag = true ^ override_spawn_piece_flag_with_false_flag;
                 }
             }
 
@@ -209,8 +220,10 @@ impl EventHandler for Rustrisnt {
                     Movement::Down => player.input.keydown_down = (true, true),
                     Movement::RotateCw => player.input.keydown_rotate_cw = (true, true),
                     Movement::RotateCcw => player.input.keydown_rotate_ccw = (true, true),
-                    Movement::None => return,
+                    Movement::None => {},
                 }
+                // debug inputs
+                // player.input._print_inputs();
             }
         }
     }

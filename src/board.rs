@@ -64,7 +64,7 @@ impl Board {
             if position.1 as usize + 1 >= (self.height + BOARD_HEIGHT_BUFFER_U) as usize {
                 return true;
             }
-            if self.matrix[position.0 as usize][position.1 as usize + 1].active {
+            if !self.matrix[position.0 as usize][position.1 as usize + 1].active && !self.matrix[position.0 as usize][position.1 as usize + 1].empty {
                 return true;
             }
         }
@@ -73,9 +73,49 @@ impl Board {
     }
 
     // TODO: perhaps here I should pass in &Piece, but not sure exactly how to do that rn. Too bad
-    pub fn lock_piece(&mut self, positions: &[(u8, u8); 4], player: u8) {
+    // returns y position(s) of the locked piece to test if it filled a line
+    pub fn lock_piece(&mut self, positions: &[(u8, u8); 4], player: u8) -> Vec<u8> {
         for position in positions.iter().take(4) {
             self.matrix[position.0 as usize][position.1 as usize] = Tile::new(false, false, player);
+        }
+
+        let mut y_vals: Vec<u8> = vec![positions[0].1];
+        if positions[1].1 != positions[0].1 {
+            y_vals.push(positions[1].1);
+        }
+        if positions[2].1 != positions[1].1 && positions[2].1 != positions[0].1 {
+            y_vals.push(positions[2].1);
+        }
+        if positions[3].1 != positions[2].1 && positions[3].1 != positions[1].1 && positions[3].1 != positions[0].1 {
+            y_vals.push(positions[3].1);
+        }
+
+        y_vals
+    }
+
+    pub fn is_row_full(&self, row: u8) -> bool {
+        for col in 0..self.width {
+            if self.matrix[col as usize][row as usize].empty {
+                return false;
+            }
+        }
+
+        true
+    }
+}
+
+pub struct FullLine {
+    pub row_index: u8,
+    pub player: u8,
+    pub clear_delay: i8
+}
+
+impl FullLine {
+    pub fn new(row_index: u8, player: u8) -> Self {
+        Self {
+            row_index,
+            player,
+            clear_delay: 20,
         }
     }
 }

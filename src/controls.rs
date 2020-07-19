@@ -28,6 +28,14 @@ impl Input {
         self.keydown_rotate_cw.1 = false;
         self.keydown_rotate_ccw.1 = false;
     }
+
+    pub fn _print_inputs(&self) {
+        println!("Left:  ({}, {})", self.keydown_left.0, self.keydown_left.1);
+        println!("Right: ({}, {})", self.keydown_right.0, self.keydown_right.1);
+        println!("Down:  ({}, {})", self.keydown_down.0, self.keydown_down.1);
+        println!("Cw:    ({}, {})", self.keydown_rotate_cw.0, self.keydown_rotate_cw.1);
+        println!("Ccw:   ({}, {})", self.keydown_rotate_ccw.0, self.keydown_rotate_ccw.1);
+    }
 }
 
 pub struct ControlScheme {
