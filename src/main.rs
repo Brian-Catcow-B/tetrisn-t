@@ -78,7 +78,7 @@ impl Rustrisnt {
         // Load/create resources here: images, fonts, sounds, etc.
         let board_width = 6 + 4 * num_players;
         let mut vec_players: Vec<Player> = vec![];
-        // implementing this later when a config file with saved ControlScheme's for each player is added with menu UI (rip); will slightly change spawn_column logic
+        // implementing this later when a config file with saved ControlScheme's for each player is added with menu UI (rip); will slightly change spawn_column logic later
         // for player in 0..num_players {
         //     vec_players.push(Player::new(player, control_scheme[player], (player as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8));
         // }

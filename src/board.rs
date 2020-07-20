@@ -102,6 +102,13 @@ impl Board {
 
         true
     }
+
+    pub fn clear_line(&mut self, row: u8) {
+        self.matrix
+        for col in 0..self.width {
+            self.matrix[col as usize][self.height + BOARD_HEIGHT_BUFFER_U] = Tile::new_empty();
+        }
+    }
 }
 
 pub struct FullLine {
