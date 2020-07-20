@@ -79,23 +79,23 @@ impl Board {
             self.matrix[position.0 as usize][position.1 as usize] = Tile::new(false, false, player);
         }
 
-        let mut y_vals: Vec<u8> = vec![positions[0].1];
-        if positions[1].1 != positions[0].1 {
-            y_vals.push(positions[1].1);
+        let mut y_vals: Vec<u8> = vec![positions[0].0];
+        if positions[1].0 != positions[0].0 {
+            y_vals.push(positions[1].0);
         }
-        if positions[2].1 != positions[1].1 && positions[2].1 != positions[0].1 {
-            y_vals.push(positions[2].1);
+        if positions[2].0 != positions[1].0 && positions[2].0 != positions[0].0 {
+            y_vals.push(positions[2].0);
         }
-        if positions[3].1 != positions[2].1 && positions[3].1 != positions[1].1 && positions[3].1 != positions[0].1 {
-            y_vals.push(positions[3].1);
+        if positions[3].0 != positions[2].0 && positions[3].0 != positions[1].0 && positions[3].0 != positions[0].0 {
+            y_vals.push(positions[3].0);
         }
 
         y_vals
     }
 
     pub fn is_row_full(&self, row: u8) -> bool {
-        for col in 0..self.width {
-            if self.matrix[col as usize][row as usize].empty {
+        for tile in self.matrix[row as usize].iter() {
+            if tile.empty || tile.active {
                 return false;
             }
         }
@@ -103,24 +103,34 @@ impl Board {
         true
     }
 
-    // pub fn clear_line(&mut self, row: u8) {
-    //     self.matrix
-    //     for col in 0..self.width {
-    //         self.matrix[col as usize][self.height + BOARD_HEIGHT_BUFFER_U] = Tile::new_empty();
-    //     }
-    // }
+    pub fn clear_line(&mut self, row: u8) {
+        self.matrix.remove(row as usize);
+        self.matrix.insert(0, vec![Tile::new_empty(); self.width as usize]);
+        // TODO: this is a bad way of doing this. it will cause a crash later
+        // not actually though, it just pulls down active pieces as well
+    }
+
+    pub fn is_row_empty(&self, row: u8) -> bool {
+        for tile in self.matrix[row as usize].iter() {
+            if !tile.empty {
+                return false;
+            }
+        }
+
+        true
+    }
 }
 
 pub struct FullLine {
-    pub row_index: u8,
+    pub row: u8,
     pub player: u8,
     pub clear_delay: i8
 }
 
 impl FullLine {
-    pub fn new(row_index: u8, player: u8) -> Self {
+    pub fn new(row: u8, player: u8) -> Self {
         Self {
-            row_index,
+            row,
             player,
             clear_delay: 20,
         }

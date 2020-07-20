@@ -133,7 +133,6 @@ impl Piece {
             match self.shape {
                 Shapes::O => return self.positions,
                 Shapes::I => {
-                    println!("rotation = {}", self.rotation);
                     if self.rotation % 2 == 0 {
                         return [
                             (self.positions[0].0 - 2, self.positions[0].1 + 2),

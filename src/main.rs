@@ -187,20 +187,30 @@ impl EventHandler for Rustrisnt {
                 } else if self.board.should_lock(&player.active_piece.positions) {
                     // lock piece and iterate through y positions returned, testing each row to see if it is full
                     let mut override_spawn_piece_flag_with_false_flag = false;
-                    for row in self.board.lock_piece(&player.active_piece.positions, player.player_num).iter() {
-                        if self.board.is_row_full(*row) {
+                    for col_index in self.board.lock_piece(&player.active_piece.positions, player.player_num).iter() {
+                        if self.board.is_row_full(*col_index) {
                             override_spawn_piece_flag_with_false_flag = true;
                             player.active_piece.shape = Shapes::None;
-                            self.vec_full_lines.push(FullLine::new(*row, player.player_num));
-                            println!("pushed a thing to the thing with row {}, player {}", row, player.player_num);
+                            self.vec_full_lines.push(FullLine::new(*col_index, player.player_num));
+                            println!("pushed a thing to the thing with row {}, player {}", *col_index, player.player_num);
                         }
                     }
                     player.spawn_piece_flag = true ^ override_spawn_piece_flag_with_false_flag;
                 }
             }
 
-            // update controls (always do last in update for each player)
+            // update controls (always do after all player player input for each player)
             player.input.was_unpressed_previous_frame_setfalse();
+        }
+
+        for full_line_index in 0..self.vec_full_lines.len() {
+            if self.vec_full_lines[full_line_index].clear_delay <= 0 {
+                self.board.clear_line(self.vec_full_lines[full_line_index].row);
+                self.vec_players[self.vec_full_lines[full_line_index].player as usize].spawn_piece_flag = true;
+                self.vec_full_lines.remove(full_line_index);
+            } else {
+                self.vec_full_lines[full_line_index].clear_delay -= 1;
+            }
         }
 
         Ok(())
