@@ -123,7 +123,7 @@ impl EventHandler for Rustrisnt {
             // piece spawning
             if player.spawn_piece_flag {
                 player.spawn_piece_flag = false;
-                player.active_piece = piece::Piece::new(Shapes::L, player.player_num); // TODO: make random sometime
+                player.active_piece = piece::Piece::new(Shapes::I, player.player_num); // TODO: make random sometime
                 player.active_piece.spawn(player.spawn_column);
                 self.board.playerify_piece(player.player_num, &player.active_piece.positions);
             }
@@ -138,6 +138,7 @@ impl EventHandler for Rustrisnt {
             {
                 self.board.emptify_piece(&player.active_piece.positions);
                 player.active_piece.positions = player.active_piece.piece_pos(Movement::RotateCw);
+                player.active_piece.rotation = (player.active_piece.rotation + 1) % 4;
                 self.board
                     .playerify_piece(player.player_num, &player.active_piece.positions);
             }
@@ -149,6 +150,7 @@ impl EventHandler for Rustrisnt {
             {
                 self.board.emptify_piece(&player.active_piece.positions);
                 player.active_piece.positions = player.active_piece.piece_pos(Movement::RotateCcw);
+                player.active_piece.rotation = (player.active_piece.rotation + 3) % 4;
                 self.board
                     .playerify_piece(player.player_num, &player.active_piece.positions);
             }
@@ -249,7 +251,7 @@ impl EventHandler for Rustrisnt {
         for x in 0..self.board.width {
             for y in 0..self.board.height {
                 // empty tiles
-                if self.board.matrix[x as usize][(y + BOARD_HEIGHT_BUFFER_U) as usize].empty {
+                if self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].empty {
                     let x = x as f32;
                     let y = (y + BOARD_HEIGHT_BUFFER_U) as f32;
                     let empty_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, (y - BOARD_HEIGHT_BUFFER_U as f32) * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
@@ -257,7 +259,7 @@ impl EventHandler for Rustrisnt {
                 } else {
                     // player tiles
                     for player in 0..self.num_players {
-                        if self.board.matrix[x as usize][(y + BOARD_HEIGHT_BUFFER_U) as usize].player == player {
+                        if self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].player == player {
                             let x = x as f32;
                             let y = (y + BOARD_HEIGHT_BUFFER_U) as f32;
                             let player_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, (y - BOARD_HEIGHT_BUFFER_U as f32) * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));

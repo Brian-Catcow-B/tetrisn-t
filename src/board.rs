@@ -15,7 +15,7 @@ impl Board {
         Self {
             width: board_width,
             height: board_height,
-            matrix: vec![vec![Tile::new_empty(); (board_height + BOARD_HEIGHT_BUFFER_U) as usize]; board_width as usize],
+            matrix: vec![vec![Tile::new_empty(); board_width as usize]; (board_height + BOARD_HEIGHT_BUFFER_U) as usize],
         }
     }
 
@@ -43,10 +43,10 @@ impl Board {
     pub fn is_valid_piece_pos(&self, positions: &[(u8, u8); 4], player: u8) -> bool {
         for position in positions.iter().take(4) {
             // due to integer underflow (u8 board width and u8 board height), we must only check the positive side of x and y positions
-            if position.0 >= self.width {
+            if position.0 >= self.height + BOARD_HEIGHT_BUFFER_U {
                 return false;
             }
-            if position.1 >= self.height + BOARD_HEIGHT_BUFFER_U {
+            if position.1 >= self.width {
                 return false;
             }
             // make sure the position is not empty and is not part of the piece being moved
@@ -61,7 +61,7 @@ impl Board {
     pub fn should_lock(&self, positions: &[(u8, u8); 4]) -> bool {
         for position in positions.iter().take(4) {
             // we just want to know if moving down by 1 will run the piece into the bottom of the board or an inactive tile
-            if position.1 as usize + 1 >= (self.height + BOARD_HEIGHT_BUFFER_U) as usize {
+            if position.1 as usize + 1 >= BOARD_HEIGHT_BUFFER_U as usize {
                 return true;
             }
             if !self.matrix[position.0 as usize][position.1 as usize + 1].active && !self.matrix[position.0 as usize][position.1 as usize + 1].empty {
@@ -103,12 +103,12 @@ impl Board {
         true
     }
 
-    pub fn clear_line(&mut self, row: u8) {
-        self.matrix
-        for col in 0..self.width {
-            self.matrix[col as usize][self.height + BOARD_HEIGHT_BUFFER_U] = Tile::new_empty();
-        }
-    }
+    // pub fn clear_line(&mut self, row: u8) {
+    //     self.matrix
+    //     for col in 0..self.width {
+    //         self.matrix[col as usize][self.height + BOARD_HEIGHT_BUFFER_U] = Tile::new_empty();
+    //     }
+    // }
 }
 
 pub struct FullLine {
