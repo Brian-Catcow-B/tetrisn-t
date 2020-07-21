@@ -1,4 +1,4 @@
-use ggez::event::{Axis, Button, GamepadId, KeyCode, KeyMods};
+use ggez::event::KeyCode;
 use crate::piece;
 
 // (is pressed down, was unpressed previous frame)

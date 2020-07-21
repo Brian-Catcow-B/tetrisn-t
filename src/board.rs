@@ -61,10 +61,10 @@ impl Board {
     pub fn should_lock(&self, positions: &[(u8, u8); 4]) -> bool {
         for position in positions.iter().take(4) {
             // we just want to know if moving down by 1 will run the piece into the bottom of the board or an inactive tile
-            if position.1 as usize + 1 >= BOARD_HEIGHT_BUFFER_U as usize {
+            if position.0 as usize + 1 >= (self.height + BOARD_HEIGHT_BUFFER_U) as usize {
                 return true;
             }
-            if !self.matrix[position.0 as usize][position.1 as usize + 1].active && !self.matrix[position.0 as usize][position.1 as usize + 1].empty {
+            if !self.matrix[position.0 as usize + 1][position.1 as usize].active && !self.matrix[position.0 as usize + 1][position.1 as usize].empty {
                 return true;
             }
         }
@@ -109,22 +109,13 @@ impl Board {
         // TODO: this is a bad way of doing this. it will cause a crash later
         // not actually though, it just pulls down active pieces as well
     }
-
-    pub fn is_row_empty(&self, row: u8) -> bool {
-        for tile in self.matrix[row as usize].iter() {
-            if !tile.empty {
-                return false;
-            }
-        }
-
-        true
-    }
 }
 
 pub struct FullLine {
     pub row: u8,
     pub player: u8,
-    pub clear_delay: i8
+    pub clear_delay: i8,
+    pub remove_flag: bool,
 }
 
 impl FullLine {
@@ -133,6 +124,7 @@ impl FullLine {
             row,
             player,
             clear_delay: 20,
+            remove_flag: false,
         }
     }
 }

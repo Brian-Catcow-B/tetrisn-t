@@ -22,6 +22,7 @@ pub enum Movement {
     Down,
     RotateCw,
     RotateCcw,
+    // Up, // implemented where Board::clear_line() is called (in main.rs) to fix a weird case; TODO: move the Piece class to be part of the Board class
 }
 
 pub struct Piece {
@@ -129,6 +130,13 @@ impl Piece {
                 (self.positions[2].0 + 1, self.positions[2].1),
                 (self.positions[3].0 + 1, self.positions[3].1),
             ];
+        // } else if r#move == Movement::Up {
+        //     return [
+        //         (self.positions[0].0 - 1, self.positions[0].1),
+        //         (self.positions[1].0 - 1, self.positions[1].1),
+        //         (self.positions[2].0 - 1, self.positions[2].1),
+        //         (self.positions[3].0 - 1, self.positions[3].1),
+        //     ];
         } else {
             match self.shape {
                 Shapes::O => return self.positions,

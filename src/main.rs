@@ -16,7 +16,7 @@ use player::Player;
 
 mod tile;
 use tile::NUM_PIXEL_ROWS_PER_TILEGRAPHIC;
-use tile::{Tile, TileGraphic};
+use tile::TileGraphic;
 
 mod piece;
 use piece::{Shapes, Movement};
@@ -67,7 +67,6 @@ struct Rustrisnt {
     vec_players: Vec<Player>,
     vec_full_lines: Vec<FullLine>,
     // drawing
-    // text: graphics::Text,
     tile_size: f32,
     batch_empty_tile: spritebatch::SpriteBatch,
     vec_batch_player_tile: Vec<spritebatch::SpriteBatch>,
@@ -78,12 +77,16 @@ impl Rustrisnt {
         // Load/create resources here: images, fonts, sounds, etc.
         let board_width = 6 + 4 * num_players;
         let mut vec_players: Vec<Player> = vec![];
-        // implementing this later when a config file with saved ControlScheme's for each player is added with menu UI (rip); will slightly change spawn_column logic later
-        // for player in 0..num_players {
-        //     vec_players.push(Player::new(player, control_scheme[player], (player as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8));
+        // implementing this later when a config file with saved ControlScheme's for each player is added with menu UI (rip)
+        // for player in 0..(num_players + 1) / 2 {
+        //     vec_players.push(Player::new(player, control_scheme[player], (player as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8 + 1));
         // }
-        vec_players.push(Player::new(0, ControlScheme::new(KeyCode::Left, KeyCode::Right, KeyCode::Down, KeyCode::Numpad2, KeyCode::Numpad1), (0 as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8));
-        vec_players.push(Player::new(1, ControlScheme::new(KeyCode::A, KeyCode::D, KeyCode::S, KeyCode::E, KeyCode::Q), (1 as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8));
+        // for player in (num_players + 1) / 2..num_players {
+        //     vec_players.push(Player::new(player, control_scheme[player], board_width - 1 - ((num_players - 1 - player) as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8));
+        // }
+        // ...and will get rid of the following two...
+        vec_players.push(Player::new(0, ControlScheme::new(KeyCode::A, KeyCode::D, KeyCode::S, KeyCode::E, KeyCode::Q), (0 as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8 + 1));
+        vec_players.push(Player::new(1, ControlScheme::new(KeyCode::J, KeyCode::L, KeyCode::K, KeyCode::U, KeyCode::O), board_width - 1 - ((num_players - 1 - 1) as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8));
         let batch_empty_tile = spritebatch::SpriteBatch::new(TileGraphic::new_empty(ctx).image);
         let mut vec_batch_player_tile: Vec<spritebatch::SpriteBatch> = vec![];
         for player in 0..num_players {
@@ -94,7 +97,6 @@ impl Rustrisnt {
             num_players,
             vec_players,
             vec_full_lines: vec![],
-            // text: graphics::Text::new(("Hello world!", graphics::Font::default(), 24.0)),
             tile_size: 0.0,
             batch_empty_tile,
             vec_batch_player_tile,
@@ -104,7 +106,7 @@ impl Rustrisnt {
 
 // draw and update are done every frame
 impl EventHandler for Rustrisnt {
-    fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
+    fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
         // Debug stuff...
 
         // draws all the active players' tiles on the top row
@@ -203,15 +205,52 @@ impl EventHandler for Rustrisnt {
             player.input.was_unpressed_previous_frame_setfalse();
         }
 
-        for full_line_index in 0..self.vec_full_lines.len() {
+        // clear lines; TODO: this is dumb
+        // removing from vectors is weird which is why we iterate in reverse, but then we have to pull down the rows of all the other FullLine's, which
+        // to be fair we would have to do anyways, and this actually might be easier, but Board should have a Vec<Piece> field for active pieces because this sucks
+        for full_line_index in (0..self.vec_full_lines.len()).rev() {
             if self.vec_full_lines[full_line_index].clear_delay <= 0 {
+                // the following weirdness is to make sure that pieces move down when the board moves down, but only when the piece is under an overhang
+                // it could probably be very much optimized if the Piece class were part of the Board class, so that self.board holds the positions of each active_piece
+                // and this stuff could be implemented into the method Board::clear_line()
+                // go through each piece and remove the graphic...
+                println!("here 0!");
+                for player in self.vec_players.iter() {
+                    if player.active_piece.shape != Shapes::None {
+                        self.board.emptify_piece(&player.active_piece.positions);
+                    }
+                }
+                // ...clear the line...
+                println!("here 1!");
                 self.board.clear_line(self.vec_full_lines[full_line_index].row);
+                println!("here 2!");
+                // ...add the graphic back
+                for player in self.vec_players.iter_mut() {
+                    if player.active_piece.shape != Shapes::None {
+                        self.board.playerify_piece(player.player_num, &player.active_piece.positions);
+                    }
+                }
+                println!("here 3!");
                 self.vec_players[self.vec_full_lines[full_line_index].player as usize].spawn_piece_flag = true;
+                println!("here 4!");
                 self.vec_full_lines.remove(full_line_index);
+                // move the other FullLine objects' rows down 1
+                for index in 0..self.vec_full_lines.len() {
+                    if self.vec_full_lines[index as usize].row ???//??/??//??/!#R#$#%@#% self.vec_full_lines[full_line_index].row {
+                        self.vec_full_lines[index as usize].row -= 1;
+                    }
+                }
+                println!("here 5!");
             } else {
                 self.vec_full_lines[full_line_index].clear_delay -= 1;
             }
         }
+        // remove the full lines that where full_line.remove_flag == true
+        // for (index, line) in self.vec_full_lines.iter_mut().rev() {
+        //     if line.remove_flag {
+        //         self.vec_full_lines.remove(index);
+        //     }
+        // }
 
         Ok(())
     }
@@ -232,7 +271,7 @@ impl EventHandler for Rustrisnt {
                     Movement::Down => player.input.keydown_down = (true, true),
                     Movement::RotateCw => player.input.keydown_rotate_cw = (true, true),
                     Movement::RotateCcw => player.input.keydown_rotate_ccw = (true, true),
-                    Movement::None => {},
+                    _ => {},
                 }
                 // debug inputs
                 // player.input._print_inputs();
@@ -248,13 +287,13 @@ impl EventHandler for Rustrisnt {
                 Movement::Down => player.input.keydown_down = (false, false),
                 Movement::RotateCw => player.input.keydown_rotate_cw = (false, false),
                 Movement::RotateCcw => player.input.keydown_rotate_ccw = (false, false),
-                Movement::None => return,
+                _ => return,
             }
         }
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
-        let (window_width, window_height) = graphics::size(ctx);
+        let (window_width, _window_height) = graphics::size(ctx);
         graphics::clear(ctx, graphics::BLACK);
         self.tile_size = TileGraphic::get_size(ctx, self.board.width, self.board.height);
 
