@@ -58,23 +58,6 @@ impl Tile {
             player: 0xffu8,
         }
     }
-
-    // TODO: figure out how to fill the rest of the `Self` arguments as what they are and optimize modify_fill and modify_empty
-    pub fn modify_fill(&mut self, active: bool, player: u8) -> Self {
-        Self {
-            empty: false,
-            active,
-            player,
-        }
-    }
-
-    pub fn modify_empty(&mut self) -> Self {
-        Self {
-            empty: false,
-            active: false,
-            player: 0xffu8,
-        }
-    }
 }
 
 pub struct TileGraphic {

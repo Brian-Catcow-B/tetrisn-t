@@ -22,12 +22,13 @@ pub enum Movement {
     Down,
     RotateCw,
     RotateCcw,
+    // Up, // implemented where Board::clear_line() is called (in main.rs) to fix a weird case; TODO: move the Piece class to be part of the Board class
 }
 
 pub struct Piece {
-    shape: Shapes,
+    pub shape: Shapes,
     pub positions: [(u8, u8); 4],
-    rotation: u8, // 0, 1, 2, 3: 0, 90, 180, 270; CW
+    pub rotation: u8, // 0, 1, 2, 3: 0, 90, 180, 270; CW
     player: u8,
 }
 
@@ -46,58 +47,58 @@ impl Piece {
             Shapes::None => println!("[!] tried to spawn a piece with shape type Shapes::None"),
             Shapes::I => {
                 self.positions = [
-                    (spawn_column - 2, BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][0][-]
-                    (spawn_column - 1, BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][1][-]
-                    (spawn_column, BOARD_HEIGHT_BUFFER_U),     // [0][1][2][3] | [-][-][2][-]
-                    (spawn_column + 1, BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][3][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column - 2), // [-][-][-][-] | [-][-][0][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column - 1), // [-][-][-][-] | [-][-][1][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column),     // [0][1][2][3] | [-][-][2][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column + 1), // [-][-][-][-] | [-][-][3][-]
                 ]
             },
             Shapes::O => {
                 self.positions = [
-                    (spawn_column - 1, BOARD_HEIGHT_BUFFER_U),     // [-][-][-][-]
-                    (spawn_column, BOARD_HEIGHT_BUFFER_U),         // [-][0][1][-]
-                    (spawn_column - 1, 1 + BOARD_HEIGHT_BUFFER_U), // [-][2][3][-]
-                    (spawn_column, 1 + BOARD_HEIGHT_BUFFER_U),     // [-][-][-][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column - 1),     // [-][-][-][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column),         // [-][0][1][-]
+                    (1 + BOARD_HEIGHT_BUFFER_U, spawn_column - 1), // [-][2][3][-]
+                    (1 + BOARD_HEIGHT_BUFFER_U, spawn_column),     // [-][-][-][-]
                 ]
             },
             Shapes::T => {
                 self.positions = [
-                    (spawn_column - 1, BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][0][-] | [-][-][3][-] | [-][-][2][-]
-                    (spawn_column, BOARD_HEIGHT_BUFFER_U),     // [-][0][1][2] | [-][3][1][-] | [-][2][1][0] | [-][-][1][3]
-                    (spawn_column + 1, BOARD_HEIGHT_BUFFER_U), // [-][-][3][-] | [-][-][2][-] | [-][-][-][-] | [-][-][0][-]
-                    (spawn_column, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column - 1), // [-][-][-][-] | [-][-][0][-] | [-][-][3][-] | [-][-][2][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column),     // [-][0][1][2] | [-][3][1][-] | [-][2][1][0] | [-][-][1][3]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column + 1), // [-][-][3][-] | [-][-][2][-] | [-][-][-][-] | [-][-][0][-]
+                    (1 + BOARD_HEIGHT_BUFFER_U, spawn_column), // [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
                 ]
             },
             Shapes::J => {
                 self.positions = [
-                    (spawn_column - 1, BOARD_HEIGHT_BUFFER_U),     // [-][-][-][-] | [-][-][0][-] | [-][3][-][-] | [-][-][2][3]
-                    (spawn_column, BOARD_HEIGHT_BUFFER_U),         // [-][0][1][2] | [-][-][1][-] | [-][2][1][0] | [-][-][1][-]
-                    (spawn_column + 1, BOARD_HEIGHT_BUFFER_U),     // [-][-][-][3] | [-][3][2][-] | [-][-][-][-] | [-][-][0][-]
-                    (spawn_column + 1, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column - 1),     // [-][-][-][-] | [-][-][0][-] | [-][3][-][-] | [-][-][2][3]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column),         // [-][0][1][2] | [-][-][1][-] | [-][2][1][0] | [-][-][1][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column + 1),     // [-][-][-][3] | [-][3][2][-] | [-][-][-][-] | [-][-][0][-]
+                    (1 + BOARD_HEIGHT_BUFFER_U, spawn_column + 1), // [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
                 ]
             },
             Shapes::L => {
                 self.positions = [
-                    (spawn_column - 1, BOARD_HEIGHT_BUFFER_U),     // [-][-][-][-] | [-][3][0][-] | [-][-][-][3] | [-][-][2][-]
-                    (spawn_column, BOARD_HEIGHT_BUFFER_U),         // [-][0][1][2] | [-][-][1][-] | [-][2][1][0] | [-][-][1][-]
-                    (spawn_column + 1, BOARD_HEIGHT_BUFFER_U),     // [-][3][-][-] | [-][-][2][-] | [-][-][-][-] | [-][-][0][3]
-                    (spawn_column - 1, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column - 1),     // [-][-][-][-] | [-][3][0][-] | [-][-][-][3] | [-][-][2][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column),         // [-][0][1][2] | [-][-][1][-] | [-][2][1][0] | [-][-][1][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column + 1),     // [-][3][-][-] | [-][-][2][-] | [-][-][-][-] | [-][-][0][3]
+                    (1 + BOARD_HEIGHT_BUFFER_U, spawn_column - 1), // [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
                 ]
             },
             Shapes::S => {
                 self.positions = [
-                    (spawn_column, BOARD_HEIGHT_BUFFER_U),         // [-][-][-][-] | [-][-][1][-]
-                    (spawn_column + 1, BOARD_HEIGHT_BUFFER_U),     // [-][-][0][1] | [-][-][0][3]
-                    (spawn_column - 1, 1 + BOARD_HEIGHT_BUFFER_U), // [-][2][3][-] | [-][-][-][2]
-                    (spawn_column, 1 + BOARD_HEIGHT_BUFFER_U),     // [-][-][-][-] | [-][-][-][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column),         // [-][-][-][-] | [-][-][1][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column + 1),     // [-][-][0][1] | [-][-][0][3]
+                    (1 + BOARD_HEIGHT_BUFFER_U, spawn_column - 1), // [-][2][3][-] | [-][-][-][2]
+                    (1 + BOARD_HEIGHT_BUFFER_U, spawn_column),     // [-][-][-][-] | [-][-][-][-]
                 ]
             },
             Shapes::Z => {
                 self.positions = [
-                    (spawn_column - 1, BOARD_HEIGHT_BUFFER_U),     // [-][-][-][-] | [-][-][-][3]
-                    (spawn_column, BOARD_HEIGHT_BUFFER_U),         // [-][0][1][-] | [-][-][1][2]
-                    (spawn_column, 1 + BOARD_HEIGHT_BUFFER_U),     // [-][-][2][3] | [-][-][0][-]
-                    (spawn_column + 1, 1 + BOARD_HEIGHT_BUFFER_U), // [-][-][-][-] | [-][-][-][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column - 1),     // [-][-][-][-] | [-][-][-][3]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column),         // [-][0][1][-] | [-][-][1][2]
+                    (1 + BOARD_HEIGHT_BUFFER_U, spawn_column),     // [-][-][2][3] | [-][-][0][-]
+                    (1 + BOARD_HEIGHT_BUFFER_U, spawn_column + 1), // [-][-][-][-] | [-][-][-][-]
                 ]
             },
         }
@@ -110,50 +111,54 @@ impl Piece {
             return self.positions;
         } else if r#move == Movement::Left {
             return [
-                (self.positions[0].0 - 1, self.positions[0].1),
-                (self.positions[1].0 - 1, self.positions[1].1),
-                (self.positions[2].0 - 1, self.positions[2].1),
-                (self.positions[3].0 - 1, self.positions[3].1),
+                (self.positions[0].0, self.positions[0].1 - 1),
+                (self.positions[1].0, self.positions[1].1 - 1),
+                (self.positions[2].0, self.positions[2].1 - 1),
+                (self.positions[3].0, self.positions[3].1 - 1),
             ];
         } else if r#move == Movement::Right {
-            return [
-                (self.positions[0].0 + 1, self.positions[0].1),
-                (self.positions[1].0 + 1, self.positions[1].1),
-                (self.positions[2].0 + 1, self.positions[2].1),
-                (self.positions[3].0 + 1, self.positions[3].1),
-            ];
-        } else if r#move == Movement::Down {
             return [
                 (self.positions[0].0, self.positions[0].1 + 1),
                 (self.positions[1].0, self.positions[1].1 + 1),
                 (self.positions[2].0, self.positions[2].1 + 1),
                 (self.positions[3].0, self.positions[3].1 + 1),
             ];
+        } else if r#move == Movement::Down {
+            return [
+                (self.positions[0].0 + 1, self.positions[0].1),
+                (self.positions[1].0 + 1, self.positions[1].1),
+                (self.positions[2].0 + 1, self.positions[2].1),
+                (self.positions[3].0 + 1, self.positions[3].1),
+            ];
+        // } else if r#move == Movement::Up {
+        //     return [
+        //         (self.positions[0].0 - 1, self.positions[0].1),
+        //         (self.positions[1].0 - 1, self.positions[1].1),
+        //         (self.positions[2].0 - 1, self.positions[2].1),
+        //         (self.positions[3].0 - 1, self.positions[3].1),
+        //     ];
         } else {
             match self.shape {
                 Shapes::O => return self.positions,
                 Shapes::I => {
-                    if self.rotation == 0 {
-                        self.rotation = 1;
-                        return [
-                            (self.positions[0].0 + 2, self.positions[0].1 - 2),
-                            (self.positions[1].0 + 1, self.positions[1].1 - 1),
-                            self.positions[2],
-                            (self.positions[3].0 - 1, self.positions[3].1 + 1),
-                        ];
-                    } else {
-                        self.rotation = 0;
+                    if self.rotation % 2 == 0 {
                         return [
                             (self.positions[0].0 - 2, self.positions[0].1 + 2),
                             (self.positions[1].0 - 1, self.positions[1].1 + 1),
                             self.positions[2],
                             (self.positions[3].0 + 1, self.positions[3].1 - 1),
                         ];
+                    } else {
+                        return [
+                            (self.positions[0].0 + 2, self.positions[0].1 - 2),
+                            (self.positions[1].0 + 1, self.positions[1].1 - 1),
+                            self.positions[2],
+                            (self.positions[3].0 - 1, self.positions[3].1 + 1),
+                        ];
                     }
                 },
                 Shapes::S => {
-                    if self.rotation == 0 {
-                        self.rotation = 1;
+                    if self.rotation % 2 == 0 {
                         return [
                             self.positions[0],
                             (self.positions[1].0 - 1, self.positions[1].1 - 1),
@@ -161,7 +166,6 @@ impl Piece {
                             (self.positions[3].0 + 1, self.positions[3].1 - 1),
                         ];
                     } else {
-                        self.rotation = 0;
                         return [
                             self.positions[0],
                             (self.positions[1].0 + 1, self.positions[1].1 + 1),
@@ -171,8 +175,7 @@ impl Piece {
                     }
                 }
                 Shapes::Z => {
-                    if self.rotation == 0 {
-                        self.rotation = 1;
+                    if self.rotation % 2 == 0 {
                         return [
                             (self.positions[0].0 + 1, self.positions[0].1 + 1),
                             self.positions[1],
@@ -180,7 +183,6 @@ impl Piece {
                             (self.positions[3].0, self.positions[3].1 - 2),
                         ];
                     } else {
-                        self.rotation = 0;
                         return [
                             (self.positions[0].0 - 1, self.positions[0].1 - 1),
                             self.positions[1],
@@ -192,7 +194,6 @@ impl Piece {
                 _ => {
                     let pivot = self.positions[1];
                     if r#move == Movement::RotateCw {
-                        self.rotation = (self.rotation + 1) % 4;
                         // some dark magic (symmetry)
                         return [
                             (pivot.0 + (pivot.1 - self.positions[0].1), pivot.1 + (self.positions[0].0 - pivot.0)),
@@ -201,7 +202,6 @@ impl Piece {
                             (pivot.0 + (pivot.1 - self.positions[3].1), pivot.1 + (self.positions[3].0 - pivot.0)),
                         ];
                     } else {
-                        self.rotation = (self.rotation + 3) % 4;
                         // some of that same dark magic (still just symmetry)
                         return [
                             (pivot.0 + (self.positions[0].1 - pivot.1), pivot.1 + (pivot.0 - self.positions[0].0)),

@@ -15,7 +15,7 @@ impl Board {
         Self {
             width: board_width,
             height: board_height,
-            matrix: vec![vec![Tile::new_empty(); (board_height + BOARD_HEIGHT_BUFFER_U) as usize]; board_width as usize],
+            matrix: vec![vec![Tile::new_empty(); board_width as usize]; (board_height + BOARD_HEIGHT_BUFFER_U) as usize],
         }
     }
 
@@ -43,10 +43,10 @@ impl Board {
     pub fn is_valid_piece_pos(&self, positions: &[(u8, u8); 4], player: u8) -> bool {
         for position in positions.iter().take(4) {
             // due to integer underflow (u8 board width and u8 board height), we must only check the positive side of x and y positions
-            if position.0 >= self.width {
+            if position.0 >= self.height + BOARD_HEIGHT_BUFFER_U {
                 return false;
             }
-            if position.1 >= self.height + BOARD_HEIGHT_BUFFER_U {
+            if position.1 >= self.width {
                 return false;
             }
             // make sure the position is not empty and is not part of the piece being moved
@@ -61,10 +61,10 @@ impl Board {
     pub fn should_lock(&self, positions: &[(u8, u8); 4]) -> bool {
         for position in positions.iter().take(4) {
             // we just want to know if moving down by 1 will run the piece into the bottom of the board or an inactive tile
-            if position.1 as usize + 1 >= (self.height + BOARD_HEIGHT_BUFFER_U) as usize {
+            if position.0 as usize + 1 >= (self.height + BOARD_HEIGHT_BUFFER_U) as usize {
                 return true;
             }
-            if self.matrix[position.0 as usize][position.1 as usize + 1].active {
+            if !self.matrix[position.0 as usize + 1][position.1 as usize].active && !self.matrix[position.0 as usize + 1][position.1 as usize].empty {
                 return true;
             }
         }
@@ -73,9 +73,58 @@ impl Board {
     }
 
     // TODO: perhaps here I should pass in &Piece, but not sure exactly how to do that rn. Too bad
-    pub fn lock_piece(&mut self, positions: &[(u8, u8); 4], player: u8) {
+    // returns y position(s) of the locked piece to test if it filled a line
+    pub fn lock_piece(&mut self, positions: &[(u8, u8); 4], player: u8) -> Vec<u8> {
         for position in positions.iter().take(4) {
             self.matrix[position.0 as usize][position.1 as usize] = Tile::new(false, false, player);
+        }
+
+        let mut y_vals: Vec<u8> = vec![positions[0].0];
+        if positions[1].0 != positions[0].0 {
+            y_vals.push(positions[1].0);
+        }
+        if positions[2].0 != positions[1].0 && positions[2].0 != positions[0].0 {
+            y_vals.push(positions[2].0);
+        }
+        if positions[3].0 != positions[2].0 && positions[3].0 != positions[1].0 && positions[3].0 != positions[0].0 {
+            y_vals.push(positions[3].0);
+        }
+
+        y_vals
+    }
+
+    pub fn is_row_full(&self, row: u8) -> bool {
+        for tile in self.matrix[row as usize].iter() {
+            if tile.empty || tile.active {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    pub fn clear_line(&mut self, row: u8) {
+        self.matrix.remove(row as usize);
+        self.matrix.insert(0, vec![Tile::new_empty(); self.width as usize]);
+        // TODO: this is a bad way of doing this. it will cause a crash later
+        // not actually though, it just pulls down active pieces as well
+    }
+}
+
+pub struct FullLine {
+    pub row: u8,
+    pub player: u8,
+    pub clear_delay: i8,
+    pub remove_flag: bool,
+}
+
+impl FullLine {
+    pub fn new(row: u8, player: u8) -> Self {
+        Self {
+            row,
+            player,
+            clear_delay: 20,
+            remove_flag: false,
         }
     }
 }
