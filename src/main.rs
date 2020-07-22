@@ -23,7 +23,7 @@ use piece::{Shapes, Movement};
 
 mod board;
 use board::BOARD_HEIGHT_BUFFER_U;
-use board::{Board, FullLine};
+use board::Board;
 
 mod controls;
 use controls::ControlScheme;
@@ -65,7 +65,6 @@ struct Rustrisnt {
     board: Board,
     num_players: u8,
     vec_players: Vec<Player>,
-    vec_full_lines: Vec<FullLine>,
     // drawing
     tile_size: f32,
     batch_empty_tile: spritebatch::SpriteBatch,
@@ -96,7 +95,6 @@ impl Rustrisnt {
             board: Board::new(board_width, 20u8, num_players),
             num_players,
             vec_players,
-            vec_full_lines: vec![],
             tile_size: 0.0,
             batch_empty_tile,
             vec_batch_player_tile,
@@ -125,7 +123,7 @@ impl EventHandler for Rustrisnt {
             // piece spawning
             if player.spawn_piece_flag {
                 player.spawn_piece_flag = false;
-                self.board.vec_active_piece[player.player_num as usize] = piece::Piece::new(Shapes::I, player.player_num); // TODO: make random sometime
+                self.board.vec_active_piece[player.player_num as usize] = piece::Piece::new(Shapes::I); // TODO: make random sometime
                 self.board.vec_active_piece[player.player_num as usize].spawn(player.spawn_column);
                 self.board.playerify_piece(player.player_num);
                 continue;
@@ -133,73 +131,24 @@ impl EventHandler for Rustrisnt {
 
             // piece movement
             // CW / CCW
-            if player.input.keydown_rotate_cw.1
-                && self.board.attempt_piece_movement(
-                    Movement::RotateCw,
-                    player.player_num,
-                )
-            {
-                self.board.emptify_piece(player.player_num);
-                self.board.vec_active_piece[player.player_num as usize].positions = self.board.vec_active_piece[player.player_num as usize].piece_pos(Movement::RotateCw);
-                self.board.vec_active_piece[player.player_num as usize].rotation = (self.board.vec_active_piece[player.player_num as usize].rotation + 1) % 4;
-                self.board
-                    .playerify_piece(player.player_num);
+            if player.input.keydown_rotate_cw.1 {
+                self.board.attempt_piece_movement(Movement::RotateCw, player.player_num);
             }
-            if player.input.keydown_rotate_ccw.1
-                && self.board.attempt_piece_movement(
-                    Movement::RotateCcw,
-                    player.player_num,
-                )
-            {
-                self.board.emptify_piece(player.player_num);
-                self.board.vec_active_piece[player.player_num as usize].positions = self.board.vec_active_piece[player.player_num as usize].piece_pos(Movement::RotateCcw);
-                self.board.vec_active_piece[player.player_num as usize].rotation = (self.board.vec_active_piece[player.player_num as usize].rotation + 3) % 4;
-                self.board
-                    .playerify_piece(player.player_num);
+            if player.input.keydown_rotate_ccw.1 {
+                self.board.attempt_piece_movement(Movement::RotateCcw, player.player_num);
             }
             // LEFT / RIGHT
-            if player.input.keydown_left.1
-                && self.board.attempt_piece_movement(
-                    Movement::Left,
-                    player.player_num,
-                )
-            {
-                self.board.emptify_piece(player.player_num);
-                self.board.vec_active_piece[player.player_num as usize].positions = self.board.vec_active_piece[player.player_num as usize].piece_pos(Movement::Left);
-                self.board
-                    .playerify_piece(player.player_num);
+            if player.input.keydown_left.1 {
+                self.board.attempt_piece_movement(Movement::Left, player.player_num);
             }
-            if player.input.keydown_right.1
-                && self.board.attempt_piece_movement(
-                    Movement::Right,
-                    player.player_num,
-                )
-            {
-                self.board.emptify_piece(player.player_num);
-                self.board.vec_active_piece[player.player_num as usize].positions = self.board.vec_active_piece[player.player_num as usize].piece_pos(Movement::Right);
-                self.board
-                    .playerify_piece(player.player_num);
+            if player.input.keydown_right.1 {
+                self.board.attempt_piece_movement(Movement::Right, player.player_num);
             }
             // DOWN
             // down is interesting because every time the downwards position is false we have to check if it's running into the bottom or an inactive tile so we know if we should lock it
             if player.input.keydown_down.1 {
-                if self.board.attempt_piece_movement(Movement::Down, player.player_num) {
-                    self.board.emptify_piece(player.player_num);
-                    self.board.vec_active_piece[player.player_num as usize].positions = self.board.vec_active_piece[player.player_num as usize].piece_pos(Movement::Down);
-                    self.board.playerify_piece(player.player_num);
-                } else if self.board.should_lock(player.player_num) {
-                    // lock piece and iterate through y positions returned, testing each row to see if it is full
-                    let mut override_spawn_piece_flag_with_false_flag = false;
-                    for col_index in self.board.lock_piece(player.player_num).iter() {
-                        if self.board.is_row_full(*col_index) {
-                            override_spawn_piece_flag_with_false_flag = true;
-                            self.board.vec_active_piece[player.player_num as usize].shape = Shapes::None;
-                            self.vec_full_lines.push(FullLine::new(*col_index, player.player_num));
-                            println!("pushed a thing to the thing with row {}, player {}", *col_index, player.player_num);
-                        }
-                    }
-                    player.spawn_piece_flag = true ^ override_spawn_piece_flag_with_false_flag;
-                }
+                // do I need the return of this?
+                self.board.attempt_piece_movement(Movement::Down, player.player_num);
             }
 
             // update controls (always do after all player player input for each player)
@@ -209,31 +158,31 @@ impl EventHandler for Rustrisnt {
         // clear lines; TODO: this is dumb
         // removing from vectors is weird which is why we iterate in reverse, but then we have to pull down the rows of all the other FullLine's, which
         // to be fair we would have to do anyways, and this actually might be easier, but Board should have a Vec<Piece> field for active pieces because this sucks
-        for full_line_index in (0..self.vec_full_lines.len()).rev() {
-            if self.vec_full_lines[full_line_index].clear_delay <= 0 {
-                // the following weirdness is to make sure that pieces move down when the board moves down, but only when the piece is under an overhang
-                // it could probably be very much optimized if the Piece class were part of the Board class, so that self.board holds the positions of each active_piece
-                // and this stuff could be implemented into the method Board::clear_line()
-                // go through each piece and remove the graphic...
-                for player in self.vec_players.iter() {
-                    if self.board.vec_active_piece[player.player_num as usize].shape != Shapes::None {
-                        self.board.emptify_piece(player.player_num);
-                    }
-                }
-                // ...clear the line...
-                self.board.clear_line(self.vec_full_lines[full_line_index].row);
-                // ...add the graphic back
-                for player in self.vec_players.iter_mut() {
-                    if self.board.vec_active_piece[player.player_num as usize].shape != Shapes::None {
-                        self.board.playerify_piece(player.player_num);
-                    }
-                }
-                self.vec_players[self.vec_full_lines[full_line_index].player as usize].spawn_piece_flag = true;
-                self.vec_full_lines.remove(full_line_index);
-            } else {
-                self.vec_full_lines[full_line_index].clear_delay -= 1;
-            }
-        }
+        // for full_line_index in (0..self.vec_full_lines.len()).rev() {
+        //     if self.vec_full_lines[full_line_index].clear_delay <= 0 {
+        //         // the following weirdness is to make sure that pieces move down when the board moves down, but only when the piece is under an overhang
+        //         // it could probably be very much optimized if the Piece class were part of the Board class, so that self.board holds the positions of each active_piece
+        //         // and this stuff could be implemented into the method Board::clear_line()
+        //         // go through each piece and remove the graphic...
+        //         for player in self.vec_players.iter() {
+        //             if self.board.vec_active_piece[player.player_num as usize].shape != Shapes::None {
+        //                 self.board.emptify_piece(player.player_num);
+        //             }
+        //         }
+        //         // ...clear the line...
+        //         self.board.clear_line(self.vec_full_lines[full_line_index].row);
+        //         // ...add the graphic back
+        //         for player in self.vec_players.iter_mut() {
+        //             if self.board.vec_active_piece[player.player_num as usize].shape != Shapes::None {
+        //                 self.board.playerify_piece(player.player_num);
+        //             }
+        //         }
+        //         self.vec_players[self.vec_full_lines[full_line_index].player as usize].spawn_piece_flag = true;
+        //         self.vec_full_lines.remove(full_line_index);
+        //     } else {
+        //         self.vec_full_lines[full_line_index].clear_delay -= 1;
+        //     }
+        // }
         // remove the full lines that where full_line.remove_flag == true
         // for (index, line) in self.vec_full_lines.iter_mut().rev() {
         //     if line.remove_flag {

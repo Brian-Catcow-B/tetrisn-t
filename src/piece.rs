@@ -14,7 +14,7 @@ pub enum Shapes {
 }
 
 #[repr(u8)]
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Copy, Clone)]
 pub enum Movement {
     None,
     Left,
@@ -29,16 +29,14 @@ pub struct Piece {
     pub shape: Shapes,
     pub positions: [(u8, u8); 4],
     pub rotation: u8, // 0, 1, 2, 3: 0, 90, 180, 270; CW
-    player: u8,
 }
 
 impl Piece {
-    pub fn new(shape: Shapes, player: u8) -> Self {
+    pub fn new(shape: Shapes) -> Self {
         Self {
             shape,
             positions: [(0xff, 0xff); 4],
             rotation: 0,
-            player,
         }
     }
 

@@ -1,5 +1,4 @@
 use crate::controls::{Input, ControlScheme};
-use crate::piece::{Piece, Shapes};
 
 pub struct Player {
     pub player_num: u8,
