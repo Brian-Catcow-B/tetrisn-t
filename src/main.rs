@@ -214,33 +214,21 @@ impl EventHandler for Rustrisnt {
                 // it could probably be very much optimized if the Piece class were part of the Board class, so that self.board holds the positions of each active_piece
                 // and this stuff could be implemented into the method Board::clear_line()
                 // go through each piece and remove the graphic...
-                println!("here 0!");
                 for player in self.vec_players.iter() {
                     if player.active_piece.shape != Shapes::None {
                         self.board.emptify_piece(&player.active_piece.positions);
                     }
                 }
                 // ...clear the line...
-                println!("here 1!");
                 self.board.clear_line(self.vec_full_lines[full_line_index].row);
-                println!("here 2!");
                 // ...add the graphic back
                 for player in self.vec_players.iter_mut() {
                     if player.active_piece.shape != Shapes::None {
                         self.board.playerify_piece(player.player_num, &player.active_piece.positions);
                     }
                 }
-                println!("here 3!");
                 self.vec_players[self.vec_full_lines[full_line_index].player as usize].spawn_piece_flag = true;
-                println!("here 4!");
                 self.vec_full_lines.remove(full_line_index);
-                // move the other FullLine objects' rows down 1
-                for index in 0..self.vec_full_lines.len() {
-                    if self.vec_full_lines[index as usize].row ???//??/??//??/!#R#$#%@#% self.vec_full_lines[full_line_index].row {
-                        self.vec_full_lines[index as usize].row -= 1;
-                    }
-                }
-                println!("here 5!");
             } else {
                 self.vec_full_lines[full_line_index].clear_delay -= 1;
             }
