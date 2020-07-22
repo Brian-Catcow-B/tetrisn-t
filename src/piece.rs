@@ -105,7 +105,7 @@ impl Piece {
     }
 
     // returns the position based on the given Movement type
-    pub fn piece_pos(&mut self, r#move: Movement) -> [(u8, u8); 4] {
+    pub fn piece_pos(&self, r#move: Movement) -> [(u8, u8); 4] {
         // for movements and rotations, we don't have to worry about integer underflow because we will assume the board width is nowhere close to 0xff
         if r#move == Movement::None {
             return self.positions;
