@@ -172,41 +172,6 @@ impl EventHandler for Rustrisnt {
         // attempt to line clear (go through the vector of FullLine's and decrement clear_delay if > 0, clear and return score (TODO) for <= 0)
         self.board.attempt_clear_lines(self.num_players);
 
-        // clear lines; TODO: this is dumb
-        // removing from vectors is weird which is why we iterate in reverse, but then we have to pull down the rows of all the other FullLine's, which
-        // to be fair we would have to do anyways, and this actually might be easier, but Board should have a Vec<Piece> field for active pieces because this sucks
-        // for full_line_index in (0..self.vec_full_lines.len()).rev() {
-        //     if self.vec_full_lines[full_line_index].clear_delay <= 0 {
-        //         // the following weirdness is to make sure that pieces move down when the board moves down, but only when the piece is under an overhang
-        //         // it could probably be very much optimized if the Piece class were part of the Board class, so that self.board holds the positions of each active_piece
-        //         // and this stuff could be implemented into the method Board::clear_line()
-        //         // go through each piece and remove the graphic...
-        //         for player in self.vec_players.iter() {
-        //             if self.board.vec_active_piece[player.player_num as usize].shape != Shapes::None {
-        //                 self.board.emptify_piece(player.player_num);
-        //             }
-        //         }
-        //         // ...clear the line...
-        //         self.board.clear_line(self.vec_full_lines[full_line_index].row);
-        //         // ...add the graphic back
-        //         for player in self.vec_players.iter_mut() {
-        //             if self.board.vec_active_piece[player.player_num as usize].shape != Shapes::None {
-        //                 self.board.playerify_piece(player.player_num);
-        //             }
-        //         }
-        //         self.vec_players[self.vec_full_lines[full_line_index].player as usize].spawn_piece_flag = true;
-        //         self.vec_full_lines.remove(full_line_index);
-        //     } else {
-        //         self.vec_full_lines[full_line_index].clear_delay -= 1;
-        //     }
-        // }
-        // remove the full lines that where full_line.remove_flag == true
-        // for (index, line) in self.vec_full_lines.iter_mut().rev() {
-        //     if line.remove_flag {
-        //         self.vec_full_lines.remove(index);
-        //     }
-        // }
-
         Ok(())
     }
 
