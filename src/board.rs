@@ -48,7 +48,7 @@ impl Board {
         }
     }
 
-    // returns bool based on if piece is locked
+    // returns bool based on if (piece is locked && filled some line)
     pub fn attempt_piece_movement(&mut self, movement: Movement, player: u8) -> bool {
         let mut cant_move_flag = false;
         // determine if it can move
@@ -74,18 +74,21 @@ impl Board {
         if cant_move_flag {
             println!("(movement == Movement::Down) = {}, self.should_lock(player) == {}", movement == Movement::Down, self.should_lock(player));
             if movement == Movement::Down && self.should_lock(player) {
-                // lock piece
-                println!("locking piece");
-                let mut lock_bool = false;
-                for col_index in self.lock_piece(player).iter() {
-                    if self.is_row_full(*col_index) {
-                        lock_bool = true;
-                        self.vec_active_piece[player as usize].shape = Shapes::None;
-                        self.vec_full_lines.push(FullLine::new(*col_index, player));
-                        println!("pushed a thing to the thing with row {}, player {}", *col_index, player);
+                // lock piece and push any full lines to vec_full_lines
+                self.vec_active_piece[player as usize].shape = Shapes::None;
+                let mut is_full_line = false;
+                for row in self.lock_piece(player).iter() {
+                    if self.is_row_full(*row) {
+                        is_full_line = true;
+                        self.vec_full_lines.push(FullLine::new(*row, player));
+                        println!("pushed a thing to the thing with row {}, player {}", *row, player);
                     }
                 }
-                return lock_bool;
+                if is_full_line {
+                    self.vec_full_lines.sort();
+                }
+
+                return is_full_line;
             }
 
             return false;
@@ -151,15 +154,44 @@ impl Board {
         true
     }
 
-    pub fn clear_line(&mut self, row: u8) {
-        self.matrix.remove(row as usize);
-        self.matrix.insert(0, vec![Tile::new_empty(); self.width as usize]);
-        // TODO: this is a bad way of doing this. it will cause a crash later
-        // not actually though, it just pulls down active pieces as well
-        // it also sucks
+    pub fn attempt_clear_lines(&mut self, num_players: u8) {
+        // go through the clear delays and dec if > 0, push index to vec_clearing_now_indices if <= 0
+        let mut vec_clearing_now_indices: Vec<usize> = vec![];
+        for (full_line_index, full_line) in self.vec_full_lines.iter_mut().enumerate() {
+            if full_line.clear_delay > 0 {
+                // you must construct additional pylons
+                full_line.clear_delay -= 1;
+            } else {
+                // you have constructed additional pylons
+                vec_clearing_now_indices.push(full_line_index);
+            }
+        }
+
+        // it is very helpful that we sort self.vec_full_lines because then the lines that are waiting to be cleared are easy to find
+        // (just iterate backwards from where we are in self.vec_full_lines because we are removing clearing_now_lines by iterating forward,
+        // so any line being cleared now will have been cleared up to the offset we are at in self.vec_full_lines);
+        // we do have to worry about getting the right index as we do this, since we are removing from a vector as we parse it, so
+        // we simply have a variable that increments each time we remove an element from the vector, and then subtract that variable
+        // from whatever index we are trying to access, since each index beyond what we removed will be incremented
+        let mut indices_destroyed = 0;
+        for index in vec_clearing_now_indices.iter() {
+            self.matrix.remove(self.vec_full_lines[index - indices_destroyed].row as usize);
+            self.matrix.insert(0, vec![Tile::new_empty(); self.width as usize]);
+            self.vec_full_lines.remove(index - indices_destroyed);
+            indices_destroyed += 1;
+            // now is when we step backwards through the self.vec_full_lines vector,
+            // incrementing the row value of each element so when it gets cleared it lines up correctly
+            let mut backwards_inc_row_index = 0;
+            // help this feels like magic
+            while (*index - indices_destroyed) as isize >= 0 && (vec_clearing_now_indices[*index - indices_destroyed] - backwards_inc_row_index - 1) as isize >= 0 {
+                self.vec_full_lines[vec_clearing_now_indices[*index - indices_destroyed] - backwards_inc_row_index - 1].row += 1;
+                backwards_inc_row_index += 1;
+            }
+        }
     }
 }
 
+#[derive(Ord, Eq, PartialOrd, PartialEq)]
 struct FullLine {
     pub row: u8,
     pub player: u8,
@@ -172,7 +204,7 @@ impl FullLine {
         Self {
             row,
             player,
-            clear_delay: 20,
+            clear_delay: crate::CLEAR_DELAY,
             remove_flag: false,
         }
     }

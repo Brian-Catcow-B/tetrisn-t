@@ -12,7 +12,7 @@ use std::path;
 use std::env;
 
 mod player;
-use player::Player;
+use player::{Player, SPAWN_DELAY};
 
 mod tile;
 use tile::NUM_PIXEL_ROWS_PER_TILEGRAPHIC;
@@ -27,6 +27,8 @@ use board::Board;
 
 mod controls;
 use controls::ControlScheme;
+
+pub const CLEAR_DELAY: i8 = 60i8;
 
 fn main() {
     let mut context = ContextBuilder::new("Rustrisn-t", "Catcow");
@@ -112,8 +114,7 @@ impl EventHandler for Rustrisnt {
         //     self.board.matrix[player as usize][BOARD_HEIGHT_BUFFER_U] = Tile::new(false, true, player.player_num);
         // }
 
-        // Update code here...
-
+        // Update code...
         for player in self.vec_players.iter_mut() {
             if !player.spawn_piece_flag && self.board.vec_active_piece[player.player_num as usize].shape == Shapes::None {
                 player.input.was_unpressed_previous_frame_setfalse();
@@ -122,10 +123,16 @@ impl EventHandler for Rustrisnt {
 
             // piece spawning
             if player.spawn_piece_flag {
-                player.spawn_piece_flag = false;
-                self.board.vec_active_piece[player.player_num as usize] = piece::Piece::new(Shapes::I); // TODO: make random sometime
-                self.board.vec_active_piece[player.player_num as usize].spawn(player.spawn_column);
-                self.board.playerify_piece(player.player_num);
+                if player.spawn_delay <= 0 {
+                    // TODO: check if spawning collides with anything (if it overlaps board, self.game_over_flag = true;, if it only collides with active tiles, wait)
+                    player.spawn_piece_flag = false;
+                    self.board.vec_active_piece[player.player_num as usize] = piece::Piece::new(Shapes::I); // TODO: make random sometime
+                    self.board.vec_active_piece[player.player_num as usize].spawn(player.spawn_column);
+                    self.board.playerify_piece(player.player_num);
+                    player.spawn_delay = SPAWN_DELAY;
+                } else {
+                    player.spawn_delay -=1;
+                }
                 continue;
             }
 
@@ -147,13 +154,23 @@ impl EventHandler for Rustrisnt {
             // DOWN
             // down is interesting because every time the downwards position is false we have to check if it's running into the bottom or an inactive tile so we know if we should lock it
             if player.input.keydown_down.1 {
-                // do I need the return of this?
-                self.board.attempt_piece_movement(Movement::Down, player.player_num);
+                let caused_full_line_flag: bool = self.board.attempt_piece_movement(Movement::Down, player.player_num);
+                // if the piece got locked, piece.shape gets set to Shapes::None, so set the spawn piece flag
+                if self.board.vec_active_piece[player.player_num as usize].shape == Shapes::None {
+                    player.spawn_piece_flag = true;
+                    // add more spawn delay if locking the piece caused a line clear
+                    if caused_full_line_flag {
+                        player.spawn_delay += CLEAR_DELAY as i16;
+                    }
+                }
             }
 
             // update controls (always do after all player player input for each player)
             player.input.was_unpressed_previous_frame_setfalse();
         }
+
+        // attempt to line clear (go through the vector of FullLine's and decrement clear_delay if > 0, clear and return score (TODO) for <= 0)
+        self.board.attempt_clear_lines(self.num_players);
 
         // clear lines; TODO: this is dumb
         // removing from vectors is weird which is why we iterate in reverse, but then we have to pull down the rows of all the other FullLine's, which
