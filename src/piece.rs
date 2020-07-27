@@ -14,7 +14,7 @@ pub enum Shapes {
 }
 
 #[repr(u8)]
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Copy, Clone)]
 pub enum Movement {
     None,
     Left,
@@ -29,16 +29,14 @@ pub struct Piece {
     pub shape: Shapes,
     pub positions: [(u8, u8); 4],
     pub rotation: u8, // 0, 1, 2, 3: 0, 90, 180, 270; CW
-    player: u8,
 }
 
 impl Piece {
-    pub fn new(shape: Shapes, player: u8) -> Self {
+    pub fn new(shape: Shapes) -> Self {
         Self {
             shape,
             positions: [(0xff, 0xff); 4],
             rotation: 0,
-            player,
         }
     }
 
@@ -105,7 +103,7 @@ impl Piece {
     }
 
     // returns the position based on the given Movement type
-    pub fn piece_pos(&mut self, r#move: Movement) -> [(u8, u8); 4] {
+    pub fn piece_pos(&self, r#move: Movement) -> [(u8, u8); 4] {
         // for movements and rotations, we don't have to worry about integer underflow because we will assume the board width is nowhere close to 0xff
         if r#move == Movement::None {
             return self.positions;
