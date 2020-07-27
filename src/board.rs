@@ -235,7 +235,7 @@ impl Board {
             // incrementing the row value of each element so when it gets cleared it lines up correctly
             let mut backwards_inc_row_index = 0;
             // help this feels like magic
-            while (*index - indices_destroyed) as isize >= 0 && (vec_clearing_now_indices[*index - indices_destroyed] - backwards_inc_row_index - 1) as isize >= 0 {
+            while *index as isize - indices_destroyed as isize >= 0 && (vec_clearing_now_indices[*index - indices_destroyed] as isize - backwards_inc_row_index as isize - 1) >= 0 {
                 self.vec_full_lines[vec_clearing_now_indices[*index - indices_destroyed] - backwards_inc_row_index - 1].row += 1;
                 backwards_inc_row_index += 1;
             }
@@ -267,17 +267,14 @@ impl FullLine {
 
 #[cfg(test)]
 mod tests {
-    use crate::piece::{Piece, Shapes, Movement};
-    use crate::{Board, BOARD_HEIGHT_BUFFER_U};
+    use super::*;
     use crate::CLEAR_DELAY;
-    use crate::{SCORE_SINGLE_BASE, SCORE_DOUBLE_BASE, SCORE_TRIPLE_BASE, SCORE_QUADRUPLE_BASE};
 
     #[test]
     fn test_testing() {
         assert_eq!(0, 0);
     }
 
-    // only passes with `cargo test --release` due to integer underflow
     #[test]
     fn clearing_and_scoring() {
         let mut test: bool = true;
@@ -350,6 +347,10 @@ mod tests {
                 num_cleared_lines += returned_lines as u16;
                 score += returned_score as u64;
             }
+        }
+
+        if board.matrix[16 + BOARD_HEIGHT_BUFFER_U as usize][0].empty {
+            test = false;
         }
 
         assert_eq!((num_cleared_lines, score, test), (8, (2 * SCORE_QUADRUPLE_BASE as u32 * (0 + 1)) as u64, true));
