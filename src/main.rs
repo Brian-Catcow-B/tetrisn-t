@@ -30,6 +30,11 @@ use controls::ControlScheme;
 
 pub const CLEAR_DELAY: i8 = 60i8;
 
+pub const SCORE_SINGLE_BASE: u8 = 40u8;
+pub const SCORE_DOUBLE_BASE: u8 = 100u8;
+pub const SCORE_TRIPLE_BASE: u16 = 300u16;
+pub const SCORE_QUADRUPLE_BASE: u16 = 1200u16;
+
 fn main() {
     let mut context = ContextBuilder::new("Rustrisn-t", "Catcow");
 
@@ -53,7 +58,7 @@ fn main() {
     // Create an instance of your event handler.
     // Usually, you should provide it with the Context object
     // so it can load resources like images during setup.
-    let mut rustrisnt = Rustrisnt::new(ctx, 2u8);
+    let mut rustrisnt = Rustrisnt::new(ctx, 2u8, 0u8);
 
     // Run!
     match event::run(ctx, event_loop, &mut rustrisnt) {
@@ -67,6 +72,9 @@ struct Rustrisnt {
     board: Board,
     num_players: u8,
     vec_players: Vec<Player>,
+    level: u8,
+    num_cleared_lines: u16,
+    score: u64,
     // drawing
     tile_size: f32,
     batch_empty_tile: spritebatch::SpriteBatch,
@@ -74,7 +82,7 @@ struct Rustrisnt {
 }
 
 impl Rustrisnt {
-    pub fn new(ctx: &mut Context, num_players: u8) -> Rustrisnt {
+    pub fn new(ctx: &mut Context, num_players: u8, level: u8) -> Rustrisnt {
         // Load/create resources here: images, fonts, sounds, etc.
         let board_width = 6 + 4 * num_players;
         let mut vec_players: Vec<Player> = vec![];
@@ -93,11 +101,16 @@ impl Rustrisnt {
         for player in 0..num_players {
             vec_batch_player_tile.push(spritebatch::SpriteBatch::new(TileGraphic::new_player(ctx, player).image));
         }
+
+        println!("[+] starting game with {} players and at level {}", num_players, level);
         Self {
             board: Board::new(board_width, 20u8, num_players),
             num_players,
             vec_players,
-            tile_size: 0.0,
+            level: level,
+            num_cleared_lines: 0u16,
+            score: 0u64,
+            tile_size: 0f32,
             batch_empty_tile,
             vec_batch_player_tile,
         }
@@ -169,8 +182,13 @@ impl EventHandler for Rustrisnt {
             player.input.was_unpressed_previous_frame_setfalse();
         }
 
-        // attempt to line clear (go through the vector of FullLine's and decrement clear_delay if > 0, clear and return score (TODO) for <= 0)
-        self.board.attempt_clear_lines(self.num_players);
+        // attempt to line clear (go through the vector of FullLine's and decrement clear_delay if > 0, clear and return (lines_cleared, score) for <= 0)
+        let (returned_lines, returned_score) = self.board.attempt_clear_lines(self.level);
+        if returned_lines > 0 {
+            self.num_cleared_lines += returned_lines as u16;
+            self.score += returned_score as u64;
+            println!("[+] lines: {}; score: {}", self.num_cleared_lines, self.score);
+        }
 
         Ok(())
     }
@@ -246,7 +264,7 @@ impl EventHandler for Rustrisnt {
             graphics::draw(ctx, &self.vec_batch_player_tile[player as usize], DrawParam::new().dest(Point2::new(window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * self.board.width as f32 / (2.0 * 8.5)), 0.0)).scale(Vector2::new(self.tile_size / 8.5, self.tile_size / 8.5)))?;           
         }
 
-        // clear sprite batches; this is a bit inefficient and should maybe be changed to using sprite indices
+        // clear sprite batches; this is a bit inefficient and should maybe be changed to using sprite indices; TODO
         self.batch_empty_tile.clear();
         for player in 0..self.num_players {
             self.vec_batch_player_tile[player as usize].clear();

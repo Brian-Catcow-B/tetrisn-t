@@ -1,5 +1,6 @@
 use crate::tile::Tile;
 use crate::piece::{Piece, Shapes, Movement};
+use crate::{SCORE_SINGLE_BASE, SCORE_DOUBLE_BASE, SCORE_TRIPLE_BASE, SCORE_QUADRUPLE_BASE};
 
 // this constant is for the two unseen columns above the board so that when an I piece is rotated
 // right after spawning, the two tiles that go above the board are kept track of
@@ -15,7 +16,7 @@ pub struct Board {
 
 impl Board {
     pub fn new(board_width: u8, board_height: u8, num_players: u8) -> Self {
-        let mut vec_active_piece: Vec<Piece> = Vec::with_capacity(num_players);
+        let mut vec_active_piece: Vec<Piece> = Vec::with_capacity(num_players as usize);
         for _ in 0..num_players {
             vec_active_piece.push(Piece::new(Shapes::None));
         }
@@ -72,7 +73,6 @@ impl Board {
         }
 
         if cant_move_flag {
-            println!("(movement == Movement::Down) = {}, self.should_lock(player) == {}", movement == Movement::Down, self.should_lock(player));
             if movement == Movement::Down && self.should_lock(player) {
                 // lock piece and push any full lines to vec_full_lines
                 self.vec_active_piece[player as usize].shape = Shapes::None;
@@ -154,7 +154,14 @@ impl Board {
         true
     }
 
-    pub fn attempt_clear_lines(&mut self, num_players: u8) {
+    // returns (num_lines_cleared, score_from_cleared_lines)
+    // TODO: get these return values to be smaller types and cast them as they are +='d on return; (u8, u32) should always be enough
+    pub fn attempt_clear_lines(&mut self, level: u8) -> (u8, u32) {
+        if self.vec_full_lines.len() == 0 {
+            // nothing to see here
+            return (0, 0);
+        }
+
         // go through the clear delays and dec if > 0, push index to vec_clearing_now_indices if <= 0
         let mut vec_clearing_now_indices: Vec<usize> = vec![];
         for (full_line_index, full_line) in self.vec_full_lines.iter_mut().enumerate() {
@@ -165,6 +172,51 @@ impl Board {
                 // you have constructed additional pylons
                 vec_clearing_now_indices.push(full_line_index);
             }
+        }
+
+        if vec_clearing_now_indices.len() == 0 {
+            // not much to see here
+            return (0, 0);
+        }
+
+        // for the return value, we need to know how many lines are being cleared (the first return in the tuple)
+        // and we need to know the amount of points from the lines clearing right now (the second in the tuple)
+        // but we only want to score based on how many lines each individual player cleared, so for the scoring,
+        // we must find a player who is clearing now, then go through the vector finding all the full lines which
+        // that specific player filled, and count accordingly until we get the number of lines that player filled
+        // at once; we then repeat until we have covered every player that has lines that are clearing this frame;
+        // the nice thing here is, self.vec_full_lines is sorted by row every time a new FullLine is added, and it
+        // is not possible in classic tetris to have one player clear 2+ lines while another player clears 1+ lines
+        // inbetween the first player's lines (on the same frame (or at all?)); therefore, we can just start at whatever
+        // our `checked_lines_for_scoring` variable is as the index of the `vec_clearing_now_indices` vector;
+        // this is fine
+        let lines_cleared = vec_clearing_now_indices.len();
+        let mut score = 0;
+        let mut checked_lines_for_scoring = 0;
+        while checked_lines_for_scoring < lines_cleared {
+            // find player number in question
+            let player_num = self.vec_full_lines[vec_clearing_now_indices[checked_lines_for_scoring]].player;
+            let mut lines_player_cleared = 1;
+            // go through and determine how many lines this player cleared this time
+            while checked_lines_for_scoring + lines_player_cleared < lines_cleared {
+                if self.vec_full_lines[vec_clearing_now_indices[checked_lines_for_scoring + lines_player_cleared]].player == player_num {
+                    lines_player_cleared += 1;
+                } else {
+                    break;
+                }
+            }
+            checked_lines_for_scoring += lines_player_cleared;
+            println!("adding appropriate score for being at level {}, clearing {} lines", level, lines_player_cleared);
+            score += match lines_player_cleared {
+                1 => SCORE_SINGLE_BASE as u32 * (level as u32 + 1),
+                2 => SCORE_DOUBLE_BASE as u32 * (level as u32 + 1),
+                3 => SCORE_TRIPLE_BASE as u32 * (level as u32 + 1),
+                4 => SCORE_QUADRUPLE_BASE as u32 * (level as u32 + 1),
+                _ => {
+                    println!("[!] player was attributed a number of lines too large maybe, what the heck? lines_player_cleared: {}", lines_player_cleared);
+                    0u32
+                },
+            };
         }
 
         // it is very helpful that we sort self.vec_full_lines because then the lines that are waiting to be cleared are easy to find
@@ -188,6 +240,9 @@ impl Board {
                 backwards_inc_row_index += 1;
             }
         }
+
+        println!("[+] cleared {} lines, scored {} points", lines_cleared, score);
+        (lines_cleared as u8, score)
     }
 }
 
