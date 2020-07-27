@@ -264,3 +264,94 @@ impl FullLine {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::piece::{Piece, Shapes, Movement};
+    use crate::{Board, BOARD_HEIGHT_BUFFER_U};
+    use crate::CLEAR_DELAY;
+    use crate::{SCORE_SINGLE_BASE, SCORE_DOUBLE_BASE, SCORE_TRIPLE_BASE, SCORE_QUADRUPLE_BASE};
+
+    #[test]
+    fn test_testing() {
+        assert_eq!(0, 0);
+    }
+
+    // only passes with `cargo test --release` due to integer underflow
+    #[test]
+    fn clearing_and_scoring() {
+        let mut test: bool = true;
+        let mut score: u64 = 0;
+        let mut num_cleared_lines: u16 = 0;
+        let mut board = Board::new(5, 20, 3);
+        for player_0_place_count in 0..8 {
+            board.vec_active_piece[0] = Piece::new(Shapes::I);
+            board.vec_active_piece[0].spawn(2);
+            for _ in 0..20 - player_0_place_count {
+                board.attempt_piece_movement(Movement::Down, 0);
+            }
+            if board.matrix[19 + BOARD_HEIGHT_BUFFER_U as usize - player_0_place_count][0].player == 0xffu8 {
+                test = false;
+            }
+        }
+        board.vec_active_piece[0] = Piece::new(Shapes::I);
+        board.vec_active_piece[0].spawn(2);
+        board.attempt_piece_movement(Movement::RotateCw, 0);
+        board.attempt_piece_movement(Movement::Left, 0);
+        board.attempt_piece_movement(Movement::Left, 0);
+        for _ in 0..11 {
+            board.attempt_piece_movement(Movement::Down, 0);
+        }
+
+        // now it should be like this
+        // [-][-][-][-][-]
+        // [-][-][-][-][-]
+        // [-][-][-][-][-]
+        // [-][-][-][-][-]
+        // [-][-][-][-][-]
+        // [-][-][-][-][-]
+        // [-][-][-][-][-]
+        // [-][-][-][-][-]
+        // [0][-][-][-][-]
+        // [0][-][-][-][-]
+        // [0][-][-][-][-]
+        // [0][-][-][-][-]
+        // [0][0][0][0][-]
+        // [0][0][0][0][-]
+        // [0][0][0][0][-]
+        // [0][0][0][0][-]
+        // [0][0][0][0][-]
+        // [0][0][0][0][-]
+        // [0][0][0][0][-]
+        // [0][0][0][0][-]
+
+        board.vec_active_piece[1] = Piece::new(Shapes::I);
+        board.vec_active_piece[1].spawn(2);
+        board.attempt_piece_movement(Movement::RotateCw, 1);
+        board.attempt_piece_movement(Movement::Right, 1);
+        board.attempt_piece_movement(Movement::Right, 1);
+        for _ in 0..19 {
+            board.attempt_piece_movement(Movement::Down, 1);
+        }
+
+        board.vec_active_piece[2] = Piece::new(Shapes::I);
+        board.vec_active_piece[2].spawn(2);
+        board.attempt_piece_movement(Movement::RotateCw, 2);
+        board.attempt_piece_movement(Movement::Right, 2);
+        board.attempt_piece_movement(Movement::Right, 2);
+        for _ in 0..15 {
+            board.attempt_piece_movement(Movement::Down, 2);
+        }
+
+        // now to clear 2 Tetrises on the same frame and see what happens
+        for _ in 0..CLEAR_DELAY + 1 {
+            let (returned_lines, returned_score) = board.attempt_clear_lines(0);
+            if returned_lines > 0 {
+                num_cleared_lines += returned_lines as u16;
+                score += returned_score as u64;
+            }
+        }
+
+        assert_eq!((num_cleared_lines, score, test), (8, (2 * SCORE_QUADRUPLE_BASE as u32 * (0 + 1)) as u64, true));
+    }
+}
