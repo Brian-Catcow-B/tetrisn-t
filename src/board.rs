@@ -81,7 +81,6 @@ impl Board {
                     if self.is_row_full(*row) {
                         is_full_line = true;
                         self.vec_full_lines.push(FullLine::new(*row, player));
-                        println!("pushed a thing to the thing with row {}, player {}", *row, player);
                     }
                 }
                 if is_full_line {
@@ -206,7 +205,6 @@ impl Board {
                 }
             }
             checked_lines_for_scoring += lines_player_cleared;
-            println!("adding appropriate score for being at level {}, clearing {} lines", level, lines_player_cleared);
             score += match lines_player_cleared {
                 1 => SCORE_SINGLE_BASE as u32 * (level as u32 + 1),
                 2 => SCORE_DOUBLE_BASE as u32 * (level as u32 + 1),

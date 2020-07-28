@@ -1,7 +1,7 @@
 use crate::board::BOARD_HEIGHT_BUFFER_U;
 
 #[repr(u8)]
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Copy, Clone)]
 pub enum Shapes {
     None,
     I,
@@ -37,6 +37,51 @@ impl Piece {
             shape,
             positions: [(0xff, 0xff); 4],
             rotation: 0,
+        }
+    }
+
+    pub fn new_next(shape: Shapes) -> Self {
+        match shape {
+            Shapes::None => return Self {
+                shape,
+                positions: [(0xff, 0xff); 4],
+                rotation: 0,
+            },
+            Shapes::I => return Self {
+                shape,
+                positions: [(0, 0), (0, 1), (0, 2), (0, 3)],
+                rotation: 0,
+            },
+            Shapes::O => return Self {
+                shape,
+                positions: [(0, 1), (0, 2), (1, 1), (1, 2)],
+                rotation: 0,
+            },
+            Shapes::T => return Self {
+                shape,
+                positions: [(0, 1), (0, 2), (0, 3), (1, 2)],
+                rotation: 0,
+            },
+            Shapes::J => return Self {
+                shape,
+                positions: [(0, 1), (0, 2), (0, 3), (1, 3)],
+                rotation: 0,
+            },
+            Shapes::L => return Self {
+                shape,
+                positions: [(0, 1), (0, 2), (0, 3), (1, 1)],
+                rotation: 0,
+            },
+            Shapes::S => return Self {
+                shape,
+                positions: [(0, 2), (0, 3), (1, 1), (1, 2)],
+                rotation: 0,
+            },
+            Shapes::Z => return Self {
+                shape,
+                positions: [(0, 0), (0, 1), (0, 2), (1, 1)],
+                rotation: 0,
+            },
         }
     }
 
@@ -210,6 +255,31 @@ impl Piece {
                     }
                 }
             }
+        }
+    }
+}
+
+#[derive(PartialEq, Eq)]
+pub struct NextPiece {
+    pub shape: Shapes,
+    pub matrix: [[bool; 4]; 2],
+}
+
+impl NextPiece {
+    pub fn new(shape: Shapes) -> Self {
+        if shape == Shapes::None {
+            return Self {
+                shape,
+                matrix: [[false; 4]; 2],
+            }
+        }
+        let mut matrix: [[bool; 4]; 2] = [[false; 4]; 2];
+        for position in Piece::new_next(shape).positions.iter().take(4) {
+            matrix[position.0 as usize][position.1 as usize] = true;
+        }
+        Self {
+            shape,
+            matrix,
         }
     }
 }

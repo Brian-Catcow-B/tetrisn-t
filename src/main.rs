@@ -19,7 +19,7 @@ use tile::NUM_PIXEL_ROWS_PER_TILEGRAPHIC;
 use tile::TileGraphic;
 
 mod piece;
-use piece::{Shapes, Movement};
+use piece::{Shapes, Movement, NextPiece};
 
 mod board;
 use board::BOARD_HEIGHT_BUFFER_U;
@@ -34,6 +34,9 @@ pub const SCORE_SINGLE_BASE: u8 = 40u8;
 pub const SCORE_DOUBLE_BASE: u8 = 100u8;
 pub const SCORE_TRIPLE_BASE: u16 = 300u16;
 pub const SCORE_QUADRUPLE_BASE: u16 = 1200u16;
+
+// space up of the board that is not the board in tiles
+pub const NON_BOARD_SPACE_U: u8 = 4u8;
 
 fn main() {
     let mut context = ContextBuilder::new("Rustrisn-t", "Catcow");
@@ -72,6 +75,7 @@ struct Rustrisnt {
     board: Board,
     num_players: u8,
     vec_players: Vec<Player>,
+    vec_next_piece: Vec<NextPiece>,
     level: u8,
     num_cleared_lines: u16,
     score: u64,
@@ -79,13 +83,14 @@ struct Rustrisnt {
     tile_size: f32,
     batch_empty_tile: spritebatch::SpriteBatch,
     vec_batch_player_tile: Vec<spritebatch::SpriteBatch>,
+    vec_batch_next_piece: Vec<spritebatch::SpriteBatch>,
 }
 
 impl Rustrisnt {
-    pub fn new(ctx: &mut Context, num_players: u8, level: u8) -> Rustrisnt {
+    pub fn new(ctx: &mut Context, num_players: u8, starting_level: u8) -> Rustrisnt {
         // Load/create resources here: images, fonts, sounds, etc.
         let board_width = 6 + 4 * num_players;
-        let mut vec_players: Vec<Player> = vec![];
+        let mut vec_players: Vec<Player> = Vec::with_capacity(num_players as usize);
         // implementing this later when a config file with saved ControlScheme's for each player is added with menu UI (rip)
         // for player in 0..(num_players + 1) / 2 {
         //     vec_players.push(Player::new(player, control_scheme[player], (player as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8 + 1));
@@ -97,22 +102,28 @@ impl Rustrisnt {
         vec_players.push(Player::new(0, ControlScheme::new(KeyCode::A, KeyCode::D, KeyCode::S, KeyCode::E, KeyCode::Q), (0 as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8 + 1));
         vec_players.push(Player::new(1, ControlScheme::new(KeyCode::J, KeyCode::L, KeyCode::K, KeyCode::U, KeyCode::O), board_width - 1 - ((num_players - 1 - 1) as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8));
         let batch_empty_tile = spritebatch::SpriteBatch::new(TileGraphic::new_empty(ctx).image);
-        let mut vec_batch_player_tile: Vec<spritebatch::SpriteBatch> = vec![];
+        let mut vec_next_piece: Vec<NextPiece> = Vec::with_capacity(num_players as usize);
+        let mut vec_batch_player_tile: Vec<spritebatch::SpriteBatch> = Vec::with_capacity(num_players as usize);
+        let mut vec_batch_next_piece: Vec<spritebatch::SpriteBatch> = Vec::with_capacity(num_players as usize);
         for player in 0..num_players {
+            vec_next_piece.push(NextPiece::new(Shapes::None));
             vec_batch_player_tile.push(spritebatch::SpriteBatch::new(TileGraphic::new_player(ctx, player).image));
+            vec_batch_next_piece.push(spritebatch::SpriteBatch::new(TileGraphic::new_player(ctx, player).image));
         }
 
-        println!("[+] starting game with {} players and at level {}", num_players, level);
+        println!("[+] starting game with {} players and at level {}", num_players, starting_level);
         Self {
             board: Board::new(board_width, 20u8, num_players),
             num_players,
             vec_players,
-            level: level,
+            vec_next_piece,
+            level: starting_level,
             num_cleared_lines: 0u16,
             score: 0u64,
             tile_size: 0f32,
             batch_empty_tile,
             vec_batch_player_tile,
+            vec_batch_next_piece,
         }
     }
 }
@@ -139,7 +150,12 @@ impl EventHandler for Rustrisnt {
                 if player.spawn_delay <= 0 {
                     // TODO: check if spawning collides with anything (if it overlaps board, self.game_over_flag = true;, if it only collides with active tiles, wait)
                     player.spawn_piece_flag = false;
-                    self.board.vec_active_piece[player.player_num as usize] = piece::Piece::new(Shapes::I); // TODO: make random sometime
+                    if self.vec_next_piece[player.player_num as usize].shape == Shapes::None {
+                        player.next_piece = piece::Piece::new(Shapes::L); // TODO: make random sometime
+                    }
+                    self.board.vec_active_piece[player.player_num as usize] = piece::Piece::new(player.next_piece.shape);
+                    player.next_piece = piece::Piece::new(Shapes::J); // TODO: make random sometime
+                    self.vec_next_piece[player.player_num as usize] = NextPiece::new(player.next_piece.shape); // TODO: is there a way to make this not need copy?
                     self.board.vec_active_piece[player.player_num as usize].spawn(player.spawn_column);
                     self.board.playerify_piece(player.player_num);
                     player.spawn_delay = SPAWN_DELAY;
@@ -233,8 +249,10 @@ impl EventHandler for Rustrisnt {
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
         let (window_width, _window_height) = graphics::size(ctx);
         graphics::clear(ctx, graphics::BLACK);
-        self.tile_size = TileGraphic::get_size(ctx, self.board.width, self.board.height);
+        self.tile_size = TileGraphic::get_size(ctx, self.board.width, self.board.height + NON_BOARD_SPACE_U);
 
+        // create correct SpriteBatch for each
+        // board
         for x in 0..self.board.width {
             for y in 0..self.board.height {
                 // empty tiles
@@ -244,7 +262,7 @@ impl EventHandler for Rustrisnt {
                     let empty_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, (y - BOARD_HEIGHT_BUFFER_U as f32) * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
                     self.batch_empty_tile.add(empty_tile);
                 } else {
-                    // player tiles
+                    // player tiles; TODO: this can be more efficient without even using sprite index stuff
                     for player in 0..self.num_players {
                         if self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].player == player {
                             let x = x as f32;
@@ -256,12 +274,39 @@ impl EventHandler for Rustrisnt {
                 }
             }
         }
+        // next pieces
+        for player in 0..self.num_players {
+            for x in 0..4 {
+                for y in 0..2 {
+                    if self.vec_next_piece[player as usize].matrix[y][x] {
+                        let x = x as f32;
+                        let y = y as f32;
+                        let next_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
+                        self.vec_batch_next_piece[player as usize].add(next_tile);
+                    }
+                }
+            }
+        }
 
+        const TILE_SIZE_INVERSE_SCALE: f32 = 8.5;
+
+        // draw each SpriteBatch
+        let board_top_left_corner = window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * self.board.width as f32 / (2.0 * TILE_SIZE_INVERSE_SCALE));
         // empty tiles
-        graphics::draw(ctx, &self.batch_empty_tile, DrawParam::new().dest(Point2::new(window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * self.board.width as f32 / (2.0 * 8.5)), 0.0)).scale(Vector2::new(self.tile_size / 8.5, self.tile_size / 8.5)))?;
+        graphics::draw(ctx, &self.batch_empty_tile, DrawParam::new()
+            .dest(Point2::new(board_top_left_corner, NON_BOARD_SPACE_U as f32 * self.tile_size))
+            .scale(Vector2::new(self.tile_size / TILE_SIZE_INVERSE_SCALE, self.tile_size / TILE_SIZE_INVERSE_SCALE)))?;
         // player tiles
         for player in 0..self.num_players {
-            graphics::draw(ctx, &self.vec_batch_player_tile[player as usize], DrawParam::new().dest(Point2::new(window_width / 2.0 - (self.tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * self.board.width as f32 / (2.0 * 8.5)), 0.0)).scale(Vector2::new(self.tile_size / 8.5, self.tile_size / 8.5)))?;           
+            graphics::draw(ctx, &self.vec_batch_player_tile[player as usize], DrawParam::new()
+                .dest(Point2::new(board_top_left_corner, NON_BOARD_SPACE_U as f32 * self.tile_size))
+                .scale(Vector2::new(self.tile_size / TILE_SIZE_INVERSE_SCALE, self.tile_size / TILE_SIZE_INVERSE_SCALE)))?;
+        }
+        // next piece tiles
+        for player in self.vec_players.iter() {
+            graphics::draw(ctx, &self.vec_batch_next_piece[player.player_num as usize], DrawParam::new()
+                .dest(Point2::new(board_top_left_corner + (player.spawn_column - 2) as f32 * self.tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 / TILE_SIZE_INVERSE_SCALE, 1f32 * self.tile_size))
+                .scale(Vector2::new(self.tile_size / TILE_SIZE_INVERSE_SCALE, self.tile_size / TILE_SIZE_INVERSE_SCALE)))?;
         }
 
         // clear sprite batches; this is a bit inefficient and should maybe be changed to using sprite indices; TODO

@@ -1,4 +1,5 @@
 use crate::controls::{Input, ControlScheme};
+use crate::piece::{Piece, Shapes};
 
 pub const SPAWN_DELAY: i16 = 20i16;
 
@@ -9,6 +10,7 @@ pub struct Player {
     pub spawn_piece_flag: bool,
     pub spawn_column: u8,
     pub spawn_delay: i16,
+    pub next_piece: Piece,
 }
 
 impl Player {
@@ -20,6 +22,7 @@ impl Player {
             spawn_piece_flag: true,
             spawn_column,
             spawn_delay: SPAWN_DELAY,
+            next_piece: Piece::new_next(Shapes::None),
         }
     }
 }
