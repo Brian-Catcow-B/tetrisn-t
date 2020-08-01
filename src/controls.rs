@@ -1,7 +1,7 @@
 use ggez::event::KeyCode;
 use crate::piece;
 
-// (is pressed down, was unpressed previous frame)
+// (is pressed down, was pressed this frame)
 pub struct Input {
     pub keydown_left: (bool, bool),
     pub keydown_right: (bool, bool),
@@ -49,11 +49,11 @@ pub struct ControlScheme {
 impl ControlScheme {
     pub fn new(left: KeyCode, right: KeyCode,down: KeyCode, rotate_cw: KeyCode, rotate_ccw: KeyCode) -> Self {
         Self {
-            left: left,
-            right: right,
-            down: down,
-            rotate_cw: rotate_cw,
-            rotate_ccw: rotate_ccw,
+            left,
+            right,
+            down,
+            rotate_cw,
+            rotate_ccw,
         }
     }
 

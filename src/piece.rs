@@ -239,18 +239,18 @@ impl Piece {
                     if r#move == Movement::RotateCw {
                         // some dark magic (symmetry)
                         return [
-                            (pivot.0 + (pivot.1 - self.positions[0].1), pivot.1 + (self.positions[0].0 - pivot.0)),
-                            pivot,
-                            (pivot.0 + (pivot.1 - self.positions[2].1), pivot.1 + (self.positions[2].0 - pivot.0)),
-                            (pivot.0 + (pivot.1 - self.positions[3].1), pivot.1 + (self.positions[3].0 - pivot.0)),
-                        ];
-                    } else {
-                        // some of that same dark magic (still just symmetry)
-                        return [
                             (pivot.0 + (self.positions[0].1 - pivot.1), pivot.1 + (pivot.0 - self.positions[0].0)),
                             pivot,
                             (pivot.0 + (self.positions[2].1 - pivot.1), pivot.1 + (pivot.0 - self.positions[2].0)),
                             (pivot.0 + (self.positions[3].1 - pivot.1), pivot.1 + (pivot.0 - self.positions[3].0)),
+                        ];
+                    } else {
+                        // some of that same dark magic (still just symmetry)
+                        return [
+                            (pivot.0 + (pivot.1 - self.positions[0].1), pivot.1 + (self.positions[0].0 - pivot.0)),
+                            pivot,
+                            (pivot.0 + (pivot.1 - self.positions[2].1), pivot.1 + (self.positions[2].0 - pivot.0)),
+                            (pivot.0 + (pivot.1 - self.positions[3].1), pivot.1 + (self.positions[3].0 - pivot.0)),
                         ];
                     }
                 }

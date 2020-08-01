@@ -49,8 +49,8 @@ impl Board {
         }
     }
 
-    // returns bool based on if (piece is locked && filled some line)
-    pub fn attempt_piece_movement(&mut self, movement: Movement, player: u8) -> bool {
+    // returns (bool, bool) based on (if piece moved successfully, if (piece is locked && filled some line))
+    pub fn attempt_piece_movement(&mut self, movement: Movement, player: u8) -> (bool, bool) {
         let mut cant_move_flag = false;
         // determine if it can move
         for position in self.vec_active_piece[player as usize].piece_pos(movement).iter().take(4) {
@@ -87,10 +87,10 @@ impl Board {
                     self.vec_full_lines.sort();
                 }
 
-                return is_full_line;
+                return (false, is_full_line);
             }
 
-            return false;
+            return (false, false);
         }
 
         // move it
@@ -106,7 +106,7 @@ impl Board {
             self.vec_active_piece[player as usize].rotation = (self.vec_active_piece[player as usize].rotation + 3) % 4;
         }
 
-        false
+        (!cant_move_flag, false)
     }
 
     fn should_lock(&self, player: u8) -> bool {
