@@ -86,9 +86,6 @@ struct Game {
     batch_empty_tile: spritebatch::SpriteBatch,
     vec_batch_player_piece: Vec<spritebatch::SpriteBatch>,
     vec_batch_next_piece: Vec<spritebatch::SpriteBatch>,
-    sprite_index_matrix: Vec<Vec<(spritebatch::SpriteIdx, u8)>>, // (sprite_index, player_num) with player_num = 0xff for empty tiles
-    rebuild_sprite_index_matrix_flag: bool,
-    rebuild_sprite_index_matrix_counter: i16,
 }
 
 impl Game {
@@ -107,6 +104,14 @@ impl Game {
         vec_players.push(Player::new(0, ControlScheme::new(KeyCode::A, KeyCode::D, KeyCode::S, KeyCode::E, KeyCode::Q), (0 as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8 + 1));
         vec_players.push(Player::new(1, ControlScheme::new(KeyCode::J, KeyCode::L, KeyCode::K, KeyCode::O, KeyCode::U), board_width - 1 - ((num_players - 1 - 1) as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8));
         let mut batch_empty_tile = spritebatch::SpriteBatch::new(TileGraphic::new_empty(ctx).image);
+        // the emtpy tile batch will be constant once the game starts with the player tile batches drawing on top of it, so just set that up here
+        for x in 0..board_width {
+            for y in 0..BOARD_HEIGHT as usize {
+                // empty tiles
+                let empty_tile = graphics::DrawParam::new().dest(Point2::new(x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
+                batch_empty_tile.add(empty_tile);
+            }
+        }
         let mut vec_next_piece: Vec<NextPiece> = Vec::with_capacity(num_players as usize);
         let mut vec_batch_player_piece: Vec<spritebatch::SpriteBatch> = Vec::with_capacity(num_players as usize);
         let mut vec_batch_next_piece: Vec<spritebatch::SpriteBatch> = Vec::with_capacity(num_players as usize);
@@ -114,19 +119,6 @@ impl Game {
             vec_next_piece.push(NextPiece::new(Shapes::None));
             vec_batch_player_piece.push(spritebatch::SpriteBatch::new(TileGraphic::new_player(ctx, player).image));
             vec_batch_next_piece.push(spritebatch::SpriteBatch::new(TileGraphic::new_player(ctx, player).image));
-        }
-
-        // create empty tile sprite index matrix
-        let mut sprite_index_matrix: Vec<Vec<(spritebatch::SpriteIdx, u8)>> = Vec::with_capacity((BOARD_HEIGHT) as usize);
-        for x in 0..board_width {
-            for y in 0..BOARD_HEIGHT {
-                sprite_index_matrix.push(Vec::with_capacity(board_width as usize));
-                let empty_tile = graphics::DrawParam::new().dest(Point2::new(x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
-                // if y < BOARD_HEIGHT_BUFFER_U {
-                //     empty_tile.scale(Vector2::new(0.0, 0.0));
-                // }
-                sprite_index_matrix[y as usize].push((batch_empty_tile.add(empty_tile), 0xff));
-            }
         }
 
         println!("[+] starting game with {} players and at level {}", num_players, starting_level);
@@ -142,63 +134,6 @@ impl Game {
             batch_empty_tile,
             vec_batch_player_piece,
             vec_batch_next_piece,
-            sprite_index_matrix,
-            rebuild_sprite_index_matrix_flag: true,
-            rebuild_sprite_index_matrix_counter: 0i16,
-        }
-    }
-
-    // when a piece is moved successfully, we swap sprite indices of the start and end tiles of the piece movement so we don't have to fully rebuild the sprites each draw() call
-    fn swap_sprite_indices_on_move(&mut self, start_positions: &[(u8, u8); 4], end_positions: &[(u8, u8); 4]) {
-        let mut start_spritebatch_copy: Vec<Option<(spritebatch::SpriteIdx, u8)>> = Vec::with_capacity(4);
-        let mut end_spritebatch_copy: Vec<Option<(spritebatch::SpriteIdx, u8)>> = Vec::with_capacity(4);
-        for index in 0..4 {
-            if start_positions[index].0 < BOARD_HEIGHT_BUFFER_U {
-                start_spritebatch_copy.push(None);
-            } else {
-                start_spritebatch_copy.push(Some(self.sprite_index_matrix[(start_positions[index].0 - BOARD_HEIGHT_BUFFER_U) as usize][start_positions[index].1 as usize]));
-            }
-            if end_positions[index].0 < BOARD_HEIGHT_BUFFER_U {
-                end_spritebatch_copy.push(None);
-            } else {
-                end_spritebatch_copy.push(Some(self.sprite_index_matrix[(start_positions[index].0 - BOARD_HEIGHT_BUFFER_U) as usize][start_positions[index].1 as usize]));
-            }
-        }
-
-        // it'd be really nice if these worked instead :(
-        // let start_spritebatch_copy: [Option<(spritebatch::SpriteIdx, u8)>; 4] = start_positions.iter().take(4).map(|(y, x)| {
-        //     if y < &BOARD_HEIGHT_BUFFER_U {
-        //         return None;
-        //     } else {
-        //         return Some(self.sprite_index_matrix[*y as usize - &BOARD_HEIGHT_BUFFER][*x as usize]);
-        //     }
-        // }).collect();
-        // let end_spritebatch_copy: [Option<(spritebatch::SpriteIdx, u8)>; 4] = start_positions.iter().take(4).map(|(y, x)| {
-        //     if y < &BOARD_HEIGHT_BUFFER_U {
-        //         return None;
-        //     } else {
-        //         return Some(self.sprite_index_matrix[*y as usize - &BOARD_HEIGHT_BUFFER][*x as usize]);
-        //     }
-        // }).collect();
-
-        // this could also be a closure probs; basically just making an array of (start_bool, end_bool) singifying if any position in the corresponding opposite start_positions or end_positions is the same
-        let mut start_end_same: [(bool, bool); 4] = [(false, false); 4];
-        for num_checks in (1..4 + 1).rev() {
-            for check in 0..num_checks {
-                if start_positions[4 - num_checks] == end_positions[check] {
-                    start_end_same[4 - num_checks].0 = true;
-                    start_end_same[check].1 = true;
-                }
-            }
-        }
-        for index in 0..4 {
-            // this testing stuff can be more efficient probably; each start and end position we check to see if
-            if start_spritebatch_copy[index] != None && start_end_same[index].0 {
-                self.sprite_index_matrix[(start_positions[index].0 - BOARD_HEIGHT_BUFFER_U) as usize][start_positions[index].1 as usize] = start_spritebatch_copy[index].unwrap();
-            }
-            if start_spritebatch_copy[index] != None && start_end_same[index].1 {
-                self.sprite_index_matrix[(start_positions[index].0 - BOARD_HEIGHT_BUFFER_U) as usize][start_positions[index].1 as usize] = end_spritebatch_copy[index].unwrap();
-            }
         }
     }
 }
@@ -223,7 +158,7 @@ impl EventHandler for Game {
             // piece spawning
             if player.spawn_piece_flag {
                 if player.spawn_delay <= 0 {
-                    // TODO: check if spawning collides with anything (if it overlaps board, self.game_over_flag = true;, if it only collides with active tiles, wait)
+                    // TODO: check if spawning collides with anything (if it overlaps board, self.game_over_flag = true; if it only collides with active tiles, wait)
                     player.spawn_piece_flag = false;
                     if self.vec_next_piece[player.player_num as usize].shape == Shapes::None {
                         player.next_piece = piece::Piece::new(Shapes::L); // TODO: make random sometime
@@ -234,6 +169,7 @@ impl EventHandler for Game {
                     self.board.vec_active_piece[player.player_num as usize].spawn(player.spawn_column);
                     self.board.playerify_piece(player.player_num);
                     player.spawn_delay = SPAWN_DELAY;
+                    player.redraw_next_piece_flag = true;
                 } else {
                     player.spawn_delay -=1;
                 }
@@ -243,26 +179,22 @@ impl EventHandler for Game {
             // piece movement
             // CW / CCW
             if player.input.keydown_rotate_cw.1 {
-                // if it did move the piece, do spritebatch stuff so the sprite batches don't have to be recalculated
                 if self.board.attempt_piece_movement(Movement::RotateCw, player.player_num).0 {
 
                 }
             }
             if player.input.keydown_rotate_ccw.1 {
-                // if it did move the piece, do spritebatch stuff so the sprite batches don't have to be recalculated
                 if self.board.attempt_piece_movement(Movement::RotateCcw, player.player_num).0 {
 
                 }
             }
             // LEFT / RIGHT
             if player.input.keydown_left.1 {
-                // if it did move the piece, do spritebatch stuff so the sprite batches don't have to be recalculated
                 if self.board.attempt_piece_movement(Movement::Left, player.player_num).0 {
 
                 }
             }
             if player.input.keydown_right.1 {
-                // if it did move the piece, do spritebatch stuff so the sprite batches don't have to be recalculated
                 if self.board.attempt_piece_movement(Movement::Right, player.player_num).0 {
 
                 }
@@ -270,10 +202,9 @@ impl EventHandler for Game {
             // DOWN
             // down is interesting because every time the downwards position is false we have to check if it's running into the bottom or an inactive tile so we know if we should lock it
             if player.input.keydown_down.1 {
-                let (moved_flag, caused_full_line_flag): (bool, bool) = self.board.attempt_piece_movement(Movement::Down, player.player_num);
+                let caused_full_line_flag: bool = self.board.attempt_piece_movement(Movement::Down, player.player_num).1;
                 // if the piece got locked, piece.shape gets set to Shapes::None, so set the spawn piece flag
                 if self.board.vec_active_piece[player.player_num as usize].shape == Shapes::None {
-                    println!("locking piece");
                     player.spawn_piece_flag = true;
                     // add more spawn delay if locking the piece caused a line clear
                     if caused_full_line_flag {
@@ -351,6 +282,7 @@ impl EventHandler for Game {
     }
 
     fn key_up_event(&mut self, _ctx: &mut Context, keycode: KeyCode, _keymod: KeyMods) {
+        // println!("Key released: {:?}, modifier {:?}", keycode, _keymod);
         for player in self.vec_players.iter_mut() {
             match player.control_scheme.find_move(keycode) {
                 Movement::Left => player.input.keydown_left = (false, false),
@@ -358,52 +290,40 @@ impl EventHandler for Game {
                 Movement::Down => player.input.keydown_down = (false, false),
                 Movement::RotateCw => player.input.keydown_rotate_cw = (false, false),
                 Movement::RotateCcw => player.input.keydown_rotate_ccw = (false, false),
-                _ => return,
+                _ => {},
             }
         }
     }
 
+    // when drawing, we make an unscaled board with the tiles (so the pixel dimensions are 8 * num_tiles_wide by 8 * num_tiles_tall)
+    // with the top left of the board at (0, 0), which is the top left corner of the screen;
+    // then when we actually draw the board, we scale it to the appropriate size and place the top left corner of the board at the appropriate place;
+    // there's a sprite batch for each players' tiles and one more for the empty tiles, which is constant, and the player tiles are drawn after so they are on top
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
         let (window_width, _window_height) = graphics::size(ctx);
         graphics::clear(ctx, graphics::BLACK);
         self.tile_size = TileGraphic::get_size(ctx, self.board.width, self.board.height + NON_BOARD_SPACE_U);
 
-        // self.rebuild_sprite_index_matrix_flag is set to true every time a line is completed, since it's easier (and most of the time more efficient) to rebuild everything when lines are cleared
-        if self.rebuild_sprite_index_matrix_flag {
-            self.rebuild_sprite_index_matrix_counter -= 1;
-            if self.rebuild_sprite_index_matrix_counter <= 0 {
-                self.rebuild_sprite_index_matrix_flag = false;
-                self.batch_empty_tile.clear();
-                for batch in self.vec_batch_player_piece.iter_mut().take(self.num_players as usize) {
-                    batch.clear();
-                }
-                // create correct SpriteBatch for each
-                for x in 0..self.board.width {
-                    for y in 0..self.board.height {
-                        // empty tiles
-                        if self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].empty {
-                            let empty_tile = graphics::DrawParam::new().dest(Point2::new(x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
-                            self.sprite_index_matrix[y as usize][x as usize].0 = self.batch_empty_tile.add(empty_tile);
-                        } else {
-                            // player tiles
-                            let player = self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].player;
-                            let player_tile = graphics::DrawParam::new().dest(Point2::new(x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
-                            self.vec_batch_player_piece[player as usize].add(player_tile);
-                        }
-                    }
+        // create correct SpriteBatch for each active piece
+        for x in 0..self.board.width {
+            for y in 0..self.board.height {
+                if !self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].empty {
+                    let player = self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].player;
+                    let player_tile = graphics::DrawParam::new().dest(Point2::new(x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
+                    self.vec_batch_player_piece[player as usize].add(player_tile);
                 }
             }
         }
-
         // next pieces
-        for player in 0..self.num_players {
-            for x in 0..4 {
-                for y in 0..2 {
-                    if self.vec_next_piece[player as usize].matrix[y][x] {
-                        let x = x as f32;
-                        let y = y as f32;
-                        let next_tile = graphics::DrawParam::new().dest(Point2::new(x * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
-                        self.vec_batch_next_piece[player as usize].add(next_tile);
+        for player in self.vec_players.iter_mut() {
+            if player.redraw_next_piece_flag {
+                player.redraw_next_piece_flag = false;
+                for x in 0..4 {
+                    for y in 0..2 {
+                        if self.vec_next_piece[player.player_num as usize].matrix[y][x] {
+                            let next_tile = graphics::DrawParam::new().dest(Point2::new(x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
+                            self.vec_batch_next_piece[player.player_num as usize].add(next_tile);
+                        }
                     }
                 }
             }
@@ -432,10 +352,9 @@ impl EventHandler for Game {
         }
 
         // clear sprite batches
-        // self.batch_empty_tile.clear();
-        // for player in 0..self.num_players {
-        //     self.vec_batch_player_piece[player as usize].clear();
-        // }
+        for player in 0..self.num_players {
+            self.vec_batch_player_piece[player as usize].clear();
+        }
 
         graphics::present(ctx)
     }

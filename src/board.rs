@@ -14,6 +14,10 @@ pub struct Board {
     vec_full_lines: Vec<FullLine>,
 }
 
+// example Board coordinates system (2 width, 2 height)
+// [(0, 0)][(0, 1)]
+// [(1, 0)][(1, 1)]
+
 impl Board {
     pub fn new(board_width: u8, board_height: u8, num_players: u8) -> Self {
         let mut vec_active_piece: Vec<Piece> = Vec::with_capacity(num_players as usize);
