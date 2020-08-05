@@ -117,11 +117,14 @@ impl Game {
         }
 
         // create empty tile sprite index matrix
-        let mut sprite_index_matrix: Vec<Vec<(spritebatch::SpriteIdx, u8)>> = Vec::with_capacity(BOARD_HEIGHT as usize);
+        let mut sprite_index_matrix: Vec<Vec<(spritebatch::SpriteIdx, u8)>> = Vec::with_capacity((BOARD_HEIGHT) as usize);
         for x in 0..board_width {
             for y in 0..BOARD_HEIGHT {
                 sprite_index_matrix.push(Vec::with_capacity(board_width as usize));
                 let empty_tile = graphics::DrawParam::new().dest(Point2::new(x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
+                // if y < BOARD_HEIGHT_BUFFER_U {
+                //     empty_tile.scale(Vector2::new(0.0, 0.0));
+                // }
                 sprite_index_matrix[y as usize].push((batch_empty_tile.add(empty_tile), 0xff));
             }
         }
