@@ -54,6 +54,7 @@ impl Board {
     }
 
     // returns (bool, bool) based on (if piece moved successfully, if (piece is locked && filled some line))
+    // sets the shape of the piece to Shapes::None if it locks
     pub fn attempt_piece_movement(&mut self, movement: Movement, player: u8) -> (bool, bool) {
         let mut cant_move_flag = false;
         // determine if it can move
@@ -110,7 +111,7 @@ impl Board {
             self.vec_active_piece[player as usize].rotation = (self.vec_active_piece[player as usize].rotation + 3) % 4;
         }
 
-        (!cant_move_flag, false)
+        (true, false)
     }
 
     fn should_lock(&self, player: u8) -> bool {

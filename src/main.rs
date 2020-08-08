@@ -151,7 +151,7 @@ impl EventHandler for Game {
         // Update code...
         for player in self.vec_players.iter_mut() {
             if !player.spawn_piece_flag && self.board.vec_active_piece[player.player_num as usize].shape == Shapes::None {
-                player.input.was_unpressed_previous_frame_setfalse();
+                player.input.was_just_pressed_setfalse();
                 continue;
             }
 
@@ -179,25 +179,17 @@ impl EventHandler for Game {
             // piece movement
             // CW / CCW
             if player.input.keydown_rotate_cw.1 {
-                if self.board.attempt_piece_movement(Movement::RotateCw, player.player_num).0 {
-
-                }
+                self.board.attempt_piece_movement(Movement::RotateCw, player.player_num);
             }
             if player.input.keydown_rotate_ccw.1 {
-                if self.board.attempt_piece_movement(Movement::RotateCcw, player.player_num).0 {
-
-                }
+                self.board.attempt_piece_movement(Movement::RotateCcw, player.player_num);
             }
             // LEFT / RIGHT
             if player.input.keydown_left.1 {
-                if self.board.attempt_piece_movement(Movement::Left, player.player_num).0 {
-
-                }
+                self.board.attempt_piece_movement(Movement::Left, player.player_num);
             }
             if player.input.keydown_right.1 {
-                if self.board.attempt_piece_movement(Movement::Right, player.player_num).0 {
-
-                }
+                self.board.attempt_piece_movement(Movement::Right, player.player_num);
             }
             // DOWN
             // down is interesting because every time the downwards position is false we have to check if it's running into the bottom or an inactive tile so we know if we should lock it
@@ -220,7 +212,7 @@ impl EventHandler for Game {
             // }
 
             // update controls (always do after all player player input for each player)
-            player.input.was_unpressed_previous_frame_setfalse();
+            player.input.was_just_pressed_setfalse();
         }
 
         // attempt to line clear (go through the vector of FullLine's and decrement clear_delay if > 0, clear and return (lines_cleared, score) for <= 0)
@@ -304,7 +296,7 @@ impl EventHandler for Game {
         graphics::clear(ctx, graphics::BLACK);
         self.tile_size = TileGraphic::get_size(ctx, self.board.width, self.board.height + NON_BOARD_SPACE_U);
 
-        // create correct SpriteBatch for each active piece
+        // add each non-empty tile to the correct SpriteBatch
         for x in 0..self.board.width {
             for y in 0..self.board.height {
                 if !self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].empty {

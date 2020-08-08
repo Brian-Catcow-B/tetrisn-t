@@ -21,7 +21,7 @@ impl Input {
         }
     }
 
-    pub fn was_unpressed_previous_frame_setfalse(&mut self) {
+    pub fn was_just_pressed_setfalse(&mut self) {
         self.keydown_left.1 = false;
         self.keydown_right.1 = false;
         self.keydown_down.1 = false;
