@@ -1,5 +1,5 @@
-use crate::tile::Tile;
-use crate::piece::{Piece, Shapes, Movement};
+use crate::game::tile::Tile;
+use crate::game::piece::{Piece, Shapes, Movement};
 use crate::{SCORE_SINGLE_BASE, SCORE_DOUBLE_BASE, SCORE_TRIPLE_BASE, SCORE_QUADRUPLE_BASE};
 
 // this constant is for the two unseen columns above the board so that when an I piece is rotated

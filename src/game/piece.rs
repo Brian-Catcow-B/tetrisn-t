@@ -1,4 +1,4 @@
-use crate::board::BOARD_HEIGHT_BUFFER_U;
+use crate::game::board::BOARD_HEIGHT_BUFFER_U;
 
 #[repr(u8)]
 #[derive(PartialEq, Eq, Copy, Clone)]

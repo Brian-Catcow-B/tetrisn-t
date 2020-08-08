@@ -1,5 +1,4 @@
 use ggez::event::KeyCode;
-use crate::piece;
 
 // (is pressed down, was pressed this frame)
 pub struct Input {
@@ -39,11 +38,11 @@ impl Input {
 }
 
 pub struct ControlScheme {
-    left: KeyCode,
-    right: KeyCode,
-    down: KeyCode,
-    rotate_cw: KeyCode,
-    rotate_ccw: KeyCode,
+    pub left: KeyCode,
+    pub right: KeyCode,
+    pub down: KeyCode,
+    pub rotate_cw: KeyCode,
+    pub rotate_ccw: KeyCode,
 }
 
 impl ControlScheme {
@@ -54,22 +53,6 @@ impl ControlScheme {
             down,
             rotate_cw,
             rotate_ccw,
-        }
-    }
-
-    pub fn find_move(&self, input: KeyCode) -> piece::Movement {
-        if input == self.left {
-            return piece::Movement::Left;
-        } else if input == self.right {
-            return piece::Movement::Right;
-        } else if input == self.down {
-            return piece::Movement::Down;
-        } else if input == self.rotate_cw {
-            return piece::Movement::RotateCw;
-        } else if input == self.rotate_ccw {
-            return piece::Movement::RotateCcw;
-        } else {
-            return piece::Movement::None;
         }
     }
 }

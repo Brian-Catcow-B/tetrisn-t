@@ -1,5 +1,6 @@
+use ggez::event::KeyCode;
 use crate::controls::{Input, ControlScheme};
-use crate::piece::{Piece, Shapes};
+use crate::game::piece::{Piece, Shapes, Movement};
 
 pub const SPAWN_DELAY: i16 = 20i16;
 
@@ -25,6 +26,22 @@ impl Player {
             spawn_delay: SPAWN_DELAY,
             next_piece: Piece::new_next(Shapes::None),
             redraw_next_piece_flag: true,
+        }
+    }
+
+    pub fn find_move(&self, input: KeyCode) -> Movement {
+        if input == self.control_scheme.left {
+            return Movement::Left;
+        } else if input == self.control_scheme.right {
+            return Movement::Right;
+        } else if input == self.control_scheme.down {
+            return Movement::Down;
+        } else if input == self.control_scheme.rotate_cw {
+            return Movement::RotateCw;
+        } else if input == self.control_scheme.rotate_ccw {
+            return Movement::RotateCcw;
+        } else {
+            return Movement::None;
         }
     }
 }
