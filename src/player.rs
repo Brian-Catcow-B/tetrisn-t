@@ -11,6 +11,7 @@ pub struct Player {
     pub spawn_column: u8,
     pub spawn_delay: i16,
     pub next_piece: Piece,
+    pub redraw_next_piece_flag: bool,
 }
 
 impl Player {
@@ -23,6 +24,7 @@ impl Player {
             spawn_column,
             spawn_delay: SPAWN_DELAY,
             next_piece: Piece::new_next(Shapes::None),
+            redraw_next_piece_flag: true,
         }
     }
 }

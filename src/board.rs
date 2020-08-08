@@ -14,6 +14,10 @@ pub struct Board {
     vec_full_lines: Vec<FullLine>,
 }
 
+// example Board coordinates system (2 width, 2 height)
+// [(0, 0)][(0, 1)]
+// [(1, 0)][(1, 1)]
+
 impl Board {
     pub fn new(board_width: u8, board_height: u8, num_players: u8) -> Self {
         let mut vec_active_piece: Vec<Piece> = Vec::with_capacity(num_players as usize);
@@ -49,8 +53,8 @@ impl Board {
         }
     }
 
-    // returns bool based on if (piece is locked && filled some line)
-    pub fn attempt_piece_movement(&mut self, movement: Movement, player: u8) -> bool {
+    // returns (bool, bool) based on (if piece moved successfully, if (piece is locked && filled some line))
+    pub fn attempt_piece_movement(&mut self, movement: Movement, player: u8) -> (bool, bool) {
         let mut cant_move_flag = false;
         // determine if it can move
         for position in self.vec_active_piece[player as usize].piece_pos(movement).iter().take(4) {
@@ -87,10 +91,10 @@ impl Board {
                     self.vec_full_lines.sort();
                 }
 
-                return is_full_line;
+                return (false, is_full_line);
             }
 
-            return false;
+            return (false, false);
         }
 
         // move it
@@ -106,7 +110,7 @@ impl Board {
             self.vec_active_piece[player as usize].rotation = (self.vec_active_piece[player as usize].rotation + 3) % 4;
         }
 
-        false
+        (!cant_move_flag, false)
     }
 
     fn should_lock(&self, player: u8) -> bool {
