@@ -318,6 +318,8 @@ impl EventHandler for Game {
         for player in self.vec_players.iter_mut() {
             if player.redraw_next_piece_flag {
                 player.redraw_next_piece_flag = false;
+                // if we need to redraw, clear the next piece sprite batch and rebuild it
+                self.vec_batch_next_piece[player.player_num as usize].clear();
                 for x in 0..4 {
                     for y in 0..2 {
                         if self.vec_next_piece[player.player_num as usize].matrix[y][x] {
@@ -351,7 +353,7 @@ impl EventHandler for Game {
                 .scale(Vector2::new(scaled_tile_size, scaled_tile_size)))?;
         }
 
-        // clear sprite batches
+        // clear player sprite batches
         for player in 0..self.num_players {
             self.vec_batch_player_piece[player as usize].clear();
         }
