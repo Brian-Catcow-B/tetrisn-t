@@ -1,6 +1,6 @@
 use crate::game::tile::Tile;
 use crate::game::piece::{Piece, Shapes, Movement};
-use crate::{SCORE_SINGLE_BASE, SCORE_DOUBLE_BASE, SCORE_TRIPLE_BASE, SCORE_QUADRUPLE_BASE};
+use crate::game::{CLEAR_DELAY, SCORE_SINGLE_BASE, SCORE_DOUBLE_BASE, SCORE_TRIPLE_BASE, SCORE_QUADRUPLE_BASE};
 
 // this constant is for the two unseen columns above the board so that when an I piece is rotated
 // right after spawning, the two tiles that go above the board are kept track of
@@ -262,7 +262,7 @@ impl FullLine {
         Self {
             row,
             player,
-            clear_delay: crate::CLEAR_DELAY,
+            clear_delay: CLEAR_DELAY,
             remove_flag: false,
         }
     }
@@ -271,7 +271,6 @@ impl FullLine {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::CLEAR_DELAY;
 
     #[test]
     fn test_testing() {

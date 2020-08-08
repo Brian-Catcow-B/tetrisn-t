@@ -1,5 +1,5 @@
-use ggez::{Context, ContextBuilder, GameResult};
-use ggez::event::{self, EventHandler};
+use ggez::{Context, GameResult};
+use ggez::event::EventHandler;
 use ggez::event::{Axis, Button, GamepadId, KeyCode, KeyMods};
 use ggez::graphics::{self, DrawParam, spritebatch};
 use ggez::nalgebra as na;
@@ -22,7 +22,17 @@ use crate::game::board::Board;
 
 use crate::controls::ControlScheme;
 
-use crate::{CLEAR_DELAY, BOARD_HEIGHT, NON_BOARD_SPACE_U};
+const BOARD_HEIGHT: u8 = 20u8;
+
+pub const CLEAR_DELAY: i8 = 60i8;
+
+pub const SCORE_SINGLE_BASE: u8 = 40u8;
+pub const SCORE_DOUBLE_BASE: u8 = 100u8;
+pub const SCORE_TRIPLE_BASE: u16 = 300u16;
+pub const SCORE_QUADRUPLE_BASE: u16 = 1200u16;
+
+// space up of the board that is not the board in tiles
+pub const NON_BOARD_SPACE_U: u8 = 4u8;
 
 pub struct Game {
     // logic (mostly)
