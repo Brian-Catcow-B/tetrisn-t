@@ -6,7 +6,7 @@ use ggez::graphics;
 use std::path;
 use std::env;
 
-
+// game and controls
 mod game;
 use game::Game;
 
@@ -35,9 +35,11 @@ fn main() {
     // create an instance of the event handler
     let mut game = Game::new(ctx, 2u8, 0u8);
 
-    // run game
-    match event::run(ctx, event_loop, &mut game) {
-        Ok(_) => println!("Exited cleanly."),
-        Err(e) => println!("Error occured: {}", e)
+    // menu/game loop
+    while ctx.continuing {
+        match event::run(ctx, event_loop, &mut game) {
+            Ok(_) => println!("Exited cleanly."),
+            Err(e) => println!("Error occured: {}", e)
+        }
     }
 }

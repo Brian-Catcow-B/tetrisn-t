@@ -165,6 +165,7 @@ impl Board {
             // nothing to see here
             return (0, 0);
         }
+        println!("board l:168 (there are full lines)");
 
         // go through the clear delays and dec if > 0, push index to vec_clearing_now_indices if <= 0
         let mut vec_clearing_now_indices: Vec<usize> = vec![];
@@ -182,6 +183,12 @@ impl Board {
             // not much to see here
             return (0, 0);
         }
+        println!("board l:168 (there are full lines that are clearing now)");
+        print!("clearing now indices: ");
+        for clearing_now_index in vec_clearing_now_indices.iter() {
+            print!("{} -> {}; ", clearing_now_index, self.vec_full_lines[*clearing_now_index].row);
+        }
+        println!();
 
         // for the return value, we need to know how many lines are being cleared (the first return in the tuple)
         // and we need to know the amount of points from the lines clearing right now (the second in the tuple)
@@ -230,18 +237,21 @@ impl Board {
         // from whatever index we are trying to access, since each index beyond what we removed will be incremented
         let mut indices_destroyed = 0;
         for index in vec_clearing_now_indices.iter() {
+            println!("here 0, index {}", *index);
             self.matrix.remove(self.vec_full_lines[index - indices_destroyed].row as usize);
             self.matrix.insert(0, vec![Tile::new_empty(); self.width as usize]);
             self.vec_full_lines.remove(index - indices_destroyed);
             indices_destroyed += 1;
+            println!("here 1");
             // now is when we step backwards through the self.vec_full_lines vector,
             // incrementing the row value of each element so when it gets cleared it lines up correctly
             let mut backwards_inc_row_index = 0;
             // help this feels like magic
-            while *index as isize - indices_destroyed as isize >= 0 && (vec_clearing_now_indices[*index - indices_destroyed] as isize - backwards_inc_row_index as isize - 1) >= 0 {
-                self.vec_full_lines[vec_clearing_now_indices[*index - indices_destroyed] - backwards_inc_row_index - 1].row += 1;
+            while *index as isize - indices_destroyed as isize >= 0 && *index as isize - backwards_inc_row_index as isize - 1 >= 0 {
+                self.vec_full_lines[*index - backwards_inc_row_index - 1].row += 1;
                 backwards_inc_row_index += 1;
             }
+            println!("here 4");
         }
 
         println!("[+] cleared {} lines, scored {} points", lines_cleared, score);
@@ -268,6 +278,7 @@ impl FullLine {
     }
 }
 
+// do `cargo test --release` because Rust doesn't like underflow, but that's how the board width works :(
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -356,5 +367,59 @@ mod tests {
         }
 
         assert_eq!((num_cleared_lines, score, test), (8, (2 * SCORE_QUADRUPLE_BASE as u32 * (0 + 1)) as u64, true));
+
+        // now try with some L's because that has been known to break it
+        let mut score: u64 = 0;
+        let mut num_cleared_lines: u16 = 0;
+
+        board.vec_active_piece[0] = Piece::new(Shapes::I);
+        board.vec_active_piece[0].spawn(2);
+        board.attempt_piece_movement(Movement::RotateCw, 0);
+        board.attempt_piece_movement(Movement::Left, 0);
+        for _ in 0..19 {
+            board.attempt_piece_movement(Movement::Down, 0);
+        }
+
+        board.vec_active_piece[0] = Piece::new(Shapes::I);
+        board.vec_active_piece[0].spawn(2);
+        board.attempt_piece_movement(Movement::RotateCw, 0);
+        for _ in 0..19 {
+            board.attempt_piece_movement(Movement::Down, 0);
+        }
+
+        board.vec_active_piece[1] = Piece::new(Shapes::L);
+        board.vec_active_piece[1].spawn(2);
+        board.attempt_piece_movement(Movement::RotateCcw, 1);
+        board.attempt_piece_movement(Movement::Right, 1);
+        for _ in 0..19 {
+            board.attempt_piece_movement(Movement::Down, 1);
+        }
+
+        // this is so that one piece locks in 1 frame before the other
+        let (returned_lines, returned_score) = board.attempt_clear_lines(0);
+        if returned_lines > 0 {
+            num_cleared_lines += returned_lines as u16;
+            score += returned_score as u64;
+        }
+
+        board.vec_active_piece[2] = Piece::new(Shapes::L);
+        board.vec_active_piece[2].spawn(2);
+        board.attempt_piece_movement(Movement::RotateCw, 2);
+        board.attempt_piece_movement(Movement::Right, 2);
+        board.attempt_piece_movement(Movement::Right, 2);
+        for _ in 0..18 {
+            board.attempt_piece_movement(Movement::Down, 2);
+        }
+
+        // now clear and see what happens
+        for _ in 0..CLEAR_DELAY + 1 {
+            let (returned_lines, returned_score) = board.attempt_clear_lines(0);
+            if returned_lines > 0 {
+                num_cleared_lines += returned_lines as u16;
+                score += returned_score as u64;
+            }
+        }
+
+        assert_eq!((num_cleared_lines, score), (4, (1 * SCORE_SINGLE_BASE as u32 * (0 + 1) + 1 * SCORE_TRIPLE_BASE as u32 * (0 + 1)) as u64));
     }
 }

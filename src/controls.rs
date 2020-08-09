@@ -7,6 +7,7 @@ pub struct Input {
     pub keydown_down: (bool, bool),
     pub keydown_rotate_cw: (bool, bool),
     pub keydown_rotate_ccw: (bool, bool),
+    pub keydown_start: (bool, bool),
 }
 
 impl Input {
@@ -17,6 +18,7 @@ impl Input {
             keydown_down: (false, false),
             keydown_rotate_cw: (false, false),
             keydown_rotate_ccw: (false, false),
+            keydown_start: (false, false),
         }
     }
 
@@ -26,6 +28,7 @@ impl Input {
         self.keydown_down.1 = false;
         self.keydown_rotate_cw.1 = false;
         self.keydown_rotate_ccw.1 = false;
+        self.keydown_start.1 = false;
     }
 
     pub fn _print_inputs(&self) {
@@ -34,6 +37,7 @@ impl Input {
         println!("Down:  ({}, {})", self.keydown_down.0, self.keydown_down.1);
         println!("Cw:    ({}, {})", self.keydown_rotate_cw.0, self.keydown_rotate_cw.1);
         println!("Ccw:   ({}, {})", self.keydown_rotate_ccw.0, self.keydown_rotate_ccw.1);
+        println!("Start: ({}, {})", self.keydown_start.0, self.keydown_start.1);
     }
 }
 
@@ -43,16 +47,18 @@ pub struct ControlScheme {
     pub down: KeyCode,
     pub rotate_cw: KeyCode,
     pub rotate_ccw: KeyCode,
+    pub start: KeyCode,
 }
 
 impl ControlScheme {
-    pub fn new(left: KeyCode, right: KeyCode,down: KeyCode, rotate_cw: KeyCode, rotate_ccw: KeyCode) -> Self {
+    pub fn new(left: KeyCode, right: KeyCode,down: KeyCode, rotate_cw: KeyCode, rotate_ccw: KeyCode, start: KeyCode) -> Self {
         Self {
             left,
             right,
             down,
             rotate_cw,
             rotate_ccw,
+            start,
         }
     }
 }

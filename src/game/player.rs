@@ -1,6 +1,6 @@
 use ggez::event::KeyCode;
 use crate::controls::{Input, ControlScheme};
-use crate::game::piece::{Piece, Shapes, Movement};
+use crate::game::piece::{Piece, Shapes};
 
 pub const SPAWN_DELAY: i16 = 20i16;
 
@@ -29,19 +29,63 @@ impl Player {
         }
     }
 
-    pub fn find_move(&self, input: KeyCode) -> Movement {
+    pub fn update_input_keydown(&mut self, input: KeyCode) -> bool {
         if input == self.control_scheme.left {
-            return Movement::Left;
+            if !self.input.keydown_left.0 {
+                self.input.keydown_left = (true, true);
+                return true;
+            }
         } else if input == self.control_scheme.right {
-            return Movement::Right;
+            if !self.input.keydown_right.0 {
+                self.input.keydown_right = (true, true);
+                return true;
+            }
         } else if input == self.control_scheme.down {
-            return Movement::Down;
+            if !self.input.keydown_down.0 {
+                self.input.keydown_down = (true, true);
+                return true;
+            }
         } else if input == self.control_scheme.rotate_cw {
-            return Movement::RotateCw;
+            if !self.input.keydown_rotate_cw.0 {
+                self.input.keydown_rotate_cw = (true, true);
+                return true;
+            }
         } else if input == self.control_scheme.rotate_ccw {
-            return Movement::RotateCcw;
-        } else {
-            return Movement::None;
+            if !self.input.keydown_rotate_ccw.0 {
+                self.input.keydown_rotate_ccw = (true, true);
+                return true;
+            }
+        } else if input == self.control_scheme.start {
+            if !self.input.keydown_start.0 {
+                self.input.keydown_start = (true, true);
+                return true;
+            }
         }
+
+        false
+    }
+
+pub fn update_input_keyup(&mut self, input: KeyCode) -> bool {
+        if input == self.control_scheme.left {
+            self.input.keydown_left = (false, false);
+            return true;
+        } else if input == self.control_scheme.right {
+            self.input.keydown_right = (false, false);
+            return true;
+        } else if input == self.control_scheme.down {
+            self.input.keydown_down = (false, false);
+            return true;
+        } else if input == self.control_scheme.rotate_cw {
+            self.input.keydown_rotate_cw = (false, false);
+            return true;
+        } else if input == self.control_scheme.rotate_ccw {
+            self.input.keydown_rotate_ccw = (false, false);
+            return true;
+        } else if input == self.control_scheme.start {
+            self.input.keydown_start = (false, false);
+            return true;
+        }
+
+        false
     }
 }
