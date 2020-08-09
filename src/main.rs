@@ -10,7 +10,7 @@ use std::env;
 mod game;
 use game::Game;
 
-mod controls;
+mod inputs;
 
 fn main() {
     let mut context = ContextBuilder::new("Rustrisn-t", "Catcow");

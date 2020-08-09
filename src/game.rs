@@ -21,7 +21,7 @@ mod board;
 use crate::game::board::BOARD_HEIGHT_BUFFER_U;
 use crate::game::board::Board;
 
-use crate::controls::ControlScheme;
+use crate::inputs::ControlScheme;
 
 const BOARD_HEIGHT: u8 = 20u8;
 
@@ -171,11 +171,9 @@ impl EventHandler for Game {
                     let caused_full_line_flag: bool = self.board.attempt_piece_movement(Movement::Down, player.player_num).1;
                     // if the piece got locked, piece.shape gets set to Shapes::None, so set the spawn piece flag
                     if self.board.vec_active_piece[player.player_num as usize].shape == Shapes::None {
-                        println!("game l:175 (piece locked)");
                         player.spawn_piece_flag = true;
                         // add more spawn delay if locking the piece caused a line clear
                         if caused_full_line_flag {
-                            println!("game l:179 (piece locked and filled line)");
                             player.spawn_delay += CLEAR_DELAY as i16;
                         }
                     }

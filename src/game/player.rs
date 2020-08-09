@@ -1,5 +1,5 @@
 use ggez::event::KeyCode;
-use crate::controls::{Input, ControlScheme};
+use crate::inputs::{Input, ControlScheme};
 use crate::game::piece::{Piece, Shapes};
 
 pub const SPAWN_DELAY: i16 = 20i16;

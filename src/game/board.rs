@@ -165,7 +165,6 @@ impl Board {
             // nothing to see here
             return (0, 0);
         }
-        println!("board l:168 (there are full lines)");
 
         // go through the clear delays and dec if > 0, push index to vec_clearing_now_indices if <= 0
         let mut vec_clearing_now_indices: Vec<usize> = vec![];
@@ -183,12 +182,6 @@ impl Board {
             // not much to see here
             return (0, 0);
         }
-        println!("board l:168 (there are full lines that are clearing now)");
-        print!("clearing now indices: ");
-        for clearing_now_index in vec_clearing_now_indices.iter() {
-            print!("{} -> {}; ", clearing_now_index, self.vec_full_lines[*clearing_now_index].row);
-        }
-        println!();
 
         // for the return value, we need to know how many lines are being cleared (the first return in the tuple)
         // and we need to know the amount of points from the lines clearing right now (the second in the tuple)
