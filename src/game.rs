@@ -1,11 +1,14 @@
-use ggez::{Context, GameResult};
-use ggez::event::EventHandler;
+// use ggez::{Context, GameResult};
+use ggez::Context;
+// use ggez::event::EventHandler;
 use ggez::event::{Axis, Button, GamepadId, KeyCode, KeyMods};
 use ggez::graphics::{self, DrawParam, spritebatch};
 use ggez::nalgebra as na;
 use na::Point2;
 use na::Vector2;
 use ggez::graphics::{Color, Scale, Text, TextFragment};
+
+use crate::control::ProgramState;
 
 mod player;
 use crate::game::player::{Player, SPAWN_DELAY};
@@ -22,6 +25,7 @@ use crate::game::board::BOARD_HEIGHT_BUFFER_U;
 use crate::game::board::Board;
 
 use crate::inputs::ControlScheme;
+
 
 const BOARD_HEIGHT: u8 = 20u8;
 
@@ -102,11 +106,8 @@ impl Game {
             vec_batch_next_piece,
         }
     }
-}
 
-// draw and update are done every frame
-impl EventHandler for Game {
-    fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
+    pub fn update(&mut self) -> ProgramState {
         if self.pause_flag {
             for player in self.vec_players.iter_mut() {
                 if player.input.keydown_start.1 {
@@ -203,14 +204,14 @@ impl EventHandler for Game {
             }
         }
 
-        Ok(())
+        ProgramState::Game
     }
 
-    fn key_down_event(
+    pub fn key_down_event(
         &mut self,
-        _ctx: &mut Context,
+        // _ctx: &mut Context,
         keycode: KeyCode,
-        _keymod: KeyMods,
+        // _keymod: KeyMods,
         repeat: bool,
     ) {
         if !repeat {
@@ -220,7 +221,12 @@ impl EventHandler for Game {
         }
     }
 
-    fn key_up_event(&mut self, _ctx: &mut Context, keycode: KeyCode, _keymod: KeyMods) {
+    pub fn key_up_event(
+        &mut self,
+        // _ctx: &mut Context,
+        keycode: KeyCode,
+        // _keymod: KeyMods
+    ) {
         // println!("Key released: {:?}, modifier {:?}", keycode, _keymod);
         for player in self.vec_players.iter_mut() {
             player.update_input_keyup(keycode);
@@ -231,12 +237,11 @@ impl EventHandler for Game {
     // with the top left of the board at (0, 0), which is the top left corner of the screen;
     // then when we actually draw the board, we scale it to the appropriate size and place the top left corner of the board at the appropriate place;
     // there's a sprite batch for each players' tiles and one more for the empty tiles, which is constant, and the player tiles are drawn after so they are on top
-    fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
+    pub fn draw(&mut self, ctx: &mut Context) {
         graphics::clear(ctx, graphics::BLACK);
         let (window_width, window_height) = graphics::size(ctx);
         self.tile_size = TileGraphic::get_size(ctx, self.board.width, self.board.height + NON_BOARD_SPACE_U);
         if !self.pause_flag {
-
             // add each non-empty tile to the correct SpriteBatch
             for x in 0..self.board.width {
                 for y in 0..self.board.height {
@@ -272,18 +277,18 @@ impl EventHandler for Game {
             // empty tiles
             graphics::draw(ctx, &self.batch_empty_tile, DrawParam::new()
                 .dest(Point2::new(board_top_left_corner, NON_BOARD_SPACE_U as f32 * self.tile_size))
-                .scale(Vector2::new(scaled_tile_size, scaled_tile_size)))?;
+                .scale(Vector2::new(scaled_tile_size, scaled_tile_size))).unwrap();
             // player tiles
             for player in 0..self.num_players {
                 graphics::draw(ctx, &self.vec_batch_player_piece[player as usize], DrawParam::new()
                     .dest(Point2::new(board_top_left_corner, NON_BOARD_SPACE_U as f32 * self.tile_size))
-                    .scale(Vector2::new(scaled_tile_size, scaled_tile_size)))?;
+                    .scale(Vector2::new(scaled_tile_size, scaled_tile_size))).unwrap();
             }
             // next piece tiles
             for player in self.vec_players.iter() {
                 graphics::draw(ctx, &self.vec_batch_next_piece[player.player_num as usize], DrawParam::new()
                     .dest(Point2::new(board_top_left_corner + (player.spawn_column - 2) as f32 * scaled_tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, 1f32 * scaled_tile_size))
-                    .scale(Vector2::new(scaled_tile_size, scaled_tile_size)))?;
+                    .scale(Vector2::new(scaled_tile_size, scaled_tile_size))).unwrap();
             }
 
             // clear player sprite batches
@@ -312,13 +317,5 @@ impl EventHandler for Game {
             .dest(Point2::new((window_width - paused_text_width as f32) / 2.0, (window_height - paused_text_height as f32) / 2.0))
             ).unwrap();
         }
-
-        graphics::present(ctx)
-    }
-
-    // this seems unused but is called somewhere in ggez to ultimately make things scale and get placed correctly when changing window size
-    fn resize_event(&mut self, ctx: &mut Context, width: f32, height: f32) {
-        let new_rect = graphics::Rect::new(0.0, 0.0, width, height);
-        graphics::set_screen_coordinates(ctx, new_rect).unwrap();
     }
 }

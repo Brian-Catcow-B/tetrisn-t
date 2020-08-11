@@ -230,12 +230,10 @@ impl Board {
         // from whatever index we are trying to access, since each index beyond what we removed will be incremented
         let mut indices_destroyed = 0;
         for index in vec_clearing_now_indices.iter() {
-            println!("here 0, index {}", *index);
             self.matrix.remove(self.vec_full_lines[index - indices_destroyed].row as usize);
             self.matrix.insert(0, vec![Tile::new_empty(); self.width as usize]);
             self.vec_full_lines.remove(index - indices_destroyed);
             indices_destroyed += 1;
-            println!("here 1");
             // now is when we step backwards through the self.vec_full_lines vector,
             // incrementing the row value of each element so when it gets cleared it lines up correctly
             let mut backwards_inc_row_index = 0;
@@ -244,7 +242,6 @@ impl Board {
                 self.vec_full_lines[*index - backwards_inc_row_index - 1].row += 1;
                 backwards_inc_row_index += 1;
             }
-            println!("here 4");
         }
 
         println!("[+] cleared {} lines, scored {} points", lines_cleared, score);

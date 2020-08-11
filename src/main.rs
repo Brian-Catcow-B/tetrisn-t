@@ -6,9 +6,12 @@ use ggez::graphics;
 use std::path;
 use std::env;
 
-// game and controls
+// rustrisnt files
+mod control;
+use control::Control;
+
+mod menu;
 mod game;
-use game::Game;
 
 mod inputs;
 
@@ -33,13 +36,11 @@ fn main() {
     graphics::set_default_filter(ctx, graphics::FilterMode::Nearest);
 
     // create an instance of the event handler
-    let mut game = Game::new(ctx, 2u8, 0u8);
+    let mut control = Control::new(ctx);
 
-    // menu/game loop
-    while ctx.continuing {
-        match event::run(ctx, event_loop, &mut game) {
-            Ok(_) => println!("Exited cleanly."),
-            Err(e) => println!("Error occured: {}", e)
-        }
+    // loop that controls the ProgramState
+    match event::run(ctx, event_loop, &mut control) {
+        Ok(_) => println!("Exited cleanly."),
+        Err(e) => println!("Error occured: {}", e)
     }
 }
