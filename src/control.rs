@@ -7,7 +7,7 @@ use crate::menu::Menu;
 use crate::game::Game;
 
 #[repr(u8)]
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Copy, Clone)]
 pub enum ProgramState {
     Menu,
     Game,
@@ -22,9 +22,9 @@ pub struct Control {
 impl Control {
     pub fn new(ctx: &mut Context) -> Control {
         Self {
-            state: ProgramState::Menu,
-            menu: Some(Menu::new(ctx)),
-            game: None,
+            state: ProgramState::Game,
+            menu: None,
+            game: Some(Game::new(ctx, 2u8, 0u8)),
         }
     }
 
@@ -45,35 +45,30 @@ impl Control {
 // this is run once every frame and passes control off to whichever state the game is in
 impl EventHandler for Control {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
+        println!("in EventHandler for Control. State = {}", self.state as u8);
+
         match self.state {
             ProgramState::Menu => {
                 // update the menu and get the state that the program should be in
-                let state_returned = match self.menu {
-                    Some(mut menu) => &menu.update(),
-                    None => {
-                        println!("[!] control.state == ProgramState::Menu but control.menu == None");
-                        panic!();
-                    }
-                };
+                let state_returned = self.menu.as_mut()
+                    .expect("[!] control.state == ProgramState::Menu but control.menu == None")
+                    .update();
                 // should we change states?
-                if self.state != *state_returned {
+                if self.state != state_returned {
                     self.menu = None;
-                    self.change_state(ctx, *state_returned);
+                    self.change_state(ctx, state_returned);
                 }
             },
             ProgramState::Game => {
                 // update the game and get the state that the program should be in
-                let state_returned = match self.game {
-                    Some(mut game) => &game.update(),
-                    None => {
-                        println!("[!] control.state == ProgramState::Game but control.game == None");
-                        panic!();
-                    }
-                };
+                let state_returned = self.game.as_mut()
+                    .expect("[!] control.state == ProgramState::Game but control.game == None")
+                    .update();
+                println!("updated game... supposedly");
                 // should we change states?
-                if self.state != *state_returned {
+                if self.state != state_returned {
                     self.game = None;
-                    self.change_state(ctx, *state_returned);
+                    self.change_state(ctx, state_returned);
                 }
             },
         };
@@ -89,20 +84,12 @@ impl EventHandler for Control {
         repeat: bool,
     ) {
         match self.state {
-            ProgramState::Menu => match self.menu {
-                Some(mut menu) => &menu.key_down_event(keycode, repeat),
-                None => {
-                    println!("[!] control.state == ProgramState::Menu but control.menu == None");
-                    panic!();
-                }
-            }
-            ProgramState::Game => match self.game {
-                Some(mut game) => &game.key_down_event(keycode, repeat),
-                None => {
-                    println!("[!] control.state == ProgramState::Game but control.game == None");
-                    panic!();
-                }
-            }
+            ProgramState::Menu => self.menu.as_mut()
+                .expect("[!] control.state == ProgramState::Menu but control.menu == None")
+                .key_down_event(keycode, repeat),
+            ProgramState::Game => self.game.as_mut()
+                .expect("[!] control.state == ProgramState::Game but control.game == None")
+                .key_down_event(keycode, repeat),
         };
     }
 
@@ -113,44 +100,25 @@ impl EventHandler for Control {
         _keymod: KeyMods
     ) {
         match self.state {
-            ProgramState::Menu => match self.menu {
-                Some(mut menu) => &menu.key_up_event(keycode),
-                None => {
-                    println!("[!] control.state == ProgramState::Menu but control.menu == None");
-                    panic!();
-                },
-            }
-            ProgramState::Game => match self.game {
-                Some(mut game) => &game.key_up_event(keycode),
-                None => {
-                    println!("[!] control.state == ProgramState::Game but control.game == None");
-                    panic!();
-                },
-            }
+            ProgramState::Menu => self.menu.as_mut()
+                .expect("[!] control.state == ProgramState::Menu but control.menu == None")
+                .key_up_event(keycode),
+            ProgramState::Game => self.game.as_mut()
+                .expect("[!] control.state == ProgramState::Game but control.game == None")
+                .key_up_event(keycode),
         };
     }
 
-    // fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
-    //     match self.state {
-    //         ProgramState::Menu => match self.menu {
-    //             Some(mut menu) => &menu.draw(ctx),
-    //             None => {
-    //                 println!("[!] control.state == ProgramState::Menu but control.menu == None");
-    //                 panic!();
-    //             }
-    //         }
-    //         ProgramState::Game => match self.game {
-    //             Some(mut game) => &game.draw(ctx),
-    //             None => {
-    //                 println!("[!] control.state == ProgramState::Game but control.game == None");
-    //                 panic!();
-    //             }
-    //         }
-    //     };
-
-    //     graphics::present(ctx)
-    // }
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
+        match self.state {
+            ProgramState::Menu => self.menu.as_mut()
+                .expect("[!] control.state == ProgramState::Menu but control.menu == None")
+                .draw(ctx),
+            ProgramState::Game => self.game.as_mut()
+                .expect("[!] control.state == ProgramState::Game but control.game == None")
+                .draw(ctx),
+        };
+
         graphics::present(ctx)
     }
 

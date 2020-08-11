@@ -6,7 +6,7 @@ use ggez::graphics::{self, DrawParam, spritebatch};
 use ggez::nalgebra as na;
 use na::Point2;
 use na::Vector2;
-use ggez::graphics::{Color, Scale, Text, TextFragment};
+use ggez::graphics::{Align, Color, Scale, Text, TextFragment};
 
 use crate::control::ProgramState;
 
@@ -110,6 +110,15 @@ impl Game {
     pub fn update(&mut self) -> ProgramState {
         if self.pause_flag {
             for player in self.vec_players.iter_mut() {
+                // should we quit to main menu?
+                if     player.input.keydown_down.0
+                    && player.input.keydown_rotate_ccw.0
+                    && player.input.keydown_rotate_cw.0
+                    && player.input.keydown_start.1
+                {
+                    return ProgramState::Menu;
+                }
+                // should we resume?
                 if player.input.keydown_start.1 {
                     self.pause_flag = false;
                     player.input.was_just_pressed_setfalse();
@@ -297,11 +306,11 @@ impl Game {
             }
         } else {
             // display a pause screen
-            let text = Text::new(TextFragment {
+            let mut text = Text::new(TextFragment {
                 // `TextFragment` stores a string, and optional parameters which will override those
                 // of `Text` itself. This allows inlining differently formatted lines, words,
                 // or even individual letters, into the same block of text.
-                text: "PAUSED".to_string(),
+                text: "PAUSED\n\nDown + RotateCw + RotateCcw then Start to quit".to_string(),
                 color: Some(Color::new(1.0, 1.0, 1.0, 1.0)),
                 // `Font` is a handle to a loaded TTF, stored inside the `Context`.
                 // `Font::default()` always exists and maps to DejaVuSerif.
@@ -310,7 +319,7 @@ impl Game {
                 ..Default::default()
             });
             let (paused_text_width, paused_text_height) = text.dimensions(ctx);
-            // text.set_bounds(Point2::new(400.0, f32::INFINITY), Align::Center);
+            text.set_bounds(Point2::new(paused_text_width as f32, paused_text_height as f32), Align::Center);
 
             graphics::draw(ctx, &text, DrawParam::new()
             .offset(Point2::new(0.5, 0.5))
