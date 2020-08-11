@@ -48,32 +48,32 @@ impl EventHandler for Control {
         match self.state {
             ProgramState::Menu => {
                 // update the menu and get the state that the program should be in
-                let state_returned = match self.menu {
-                    Some(mut menu) => &menu.update(),
+                let state_returned = match self.menu.as_mut() {
+                    Some(menu) => menu.update(),
                     None => {
                         println!("[!] control.state == ProgramState::Menu but control.menu == None");
                         panic!();
                     }
                 };
                 // should we change states?
-                if self.state != *state_returned {
+                if self.state != state_returned {
                     self.menu = None;
-                    self.change_state(ctx, *state_returned);
+                    self.change_state(ctx, state_returned);
                 }
             },
             ProgramState::Game => {
                 // update the game and get the state that the program should be in
-                let state_returned = match self.game {
-                    Some(mut game) => &game.update(),
+                let state_returned = match self.game.as_mut() {
+                    Some(game) => game.update(),
                     None => {
                         println!("[!] control.state == ProgramState::Game but control.game == None");
                         panic!();
                     }
                 };
                 // should we change states?
-                if self.state != *state_returned {
+                if self.state != state_returned {
                     self.game = None;
-                    self.change_state(ctx, *state_returned);
+                    self.change_state(ctx, state_returned);
                 }
             },
         };
@@ -89,20 +89,20 @@ impl EventHandler for Control {
         repeat: bool,
     ) {
         match self.state {
-            ProgramState::Menu => match self.menu {
-                Some(mut menu) => &menu.key_down_event(keycode, repeat),
+            ProgramState::Menu => match self.menu.as_mut() {
+                Some(menu) => menu.key_down_event(keycode, repeat),
                 None => {
                     println!("[!] control.state == ProgramState::Menu but control.menu == None");
                     panic!();
                 }
-            }
-            ProgramState::Game => match self.game {
-                Some(mut game) => &game.key_down_event(keycode, repeat),
+            },
+            ProgramState::Game => match self.game.as_mut() {
+                Some(game) => game.key_down_event(keycode, repeat),
                 None => {
                     println!("[!] control.state == ProgramState::Game but control.game == None");
                     panic!();
                 }
-            }
+            },
         };
     }
 
@@ -113,20 +113,20 @@ impl EventHandler for Control {
         _keymod: KeyMods
     ) {
         match self.state {
-            ProgramState::Menu => match self.menu {
-                Some(mut menu) => &menu.key_up_event(keycode),
+            ProgramState::Menu => match self.menu.as_mut() {
+                Some(menu) => menu.key_up_event(keycode),
                 None => {
                     println!("[!] control.state == ProgramState::Menu but control.menu == None");
                     panic!();
-                },
-            }
-            ProgramState::Game => match self.game {
-                Some(mut game) => &game.key_up_event(keycode),
+                }
+            },
+            ProgramState::Game => match self.game.as_mut() {
+                Some(game) => game.key_up_event(keycode),
                 None => {
                     println!("[!] control.state == ProgramState::Game but control.game == None");
                     panic!();
-                },
-            }
+                }
+            },
         };
     }
 
