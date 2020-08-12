@@ -3,9 +3,9 @@ use ggez::Context;
 // use ggez::event::EventHandler;
 use ggez::event::{Axis, Button, GamepadId, KeyCode, KeyMods};
 use ggez::graphics::{self, DrawParam, spritebatch};
-use ggez::nalgebra as na;
-use na::Point2;
-use na::Vector2;
+use ggez::nalgebra::{Point2, Vector2};
+// use na::Point2;
+// use na::Vector2;
 use ggez::graphics::{Align, Color, Scale, Text, TextFragment};
 
 use crate::control::ProgramState;
