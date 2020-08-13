@@ -1,6 +1,6 @@
-use crate::tile::Tile;
-use crate::piece::{Piece, Shapes, Movement};
-use crate::{SCORE_SINGLE_BASE, SCORE_DOUBLE_BASE, SCORE_TRIPLE_BASE, SCORE_QUADRUPLE_BASE};
+use crate::game::tile::Tile;
+use crate::game::piece::{Piece, Shapes, Movement};
+use crate::game::{CLEAR_DELAY, SCORE_SINGLE_BASE, SCORE_DOUBLE_BASE, SCORE_TRIPLE_BASE, SCORE_QUADRUPLE_BASE};
 
 // this constant is for the two unseen columns above the board so that when an I piece is rotated
 // right after spawning, the two tiles that go above the board are kept track of
@@ -54,6 +54,7 @@ impl Board {
     }
 
     // returns (bool, bool) based on (if piece moved successfully, if (piece is locked && filled some line))
+    // sets the shape of the piece to Shapes::None if it locks
     pub fn attempt_piece_movement(&mut self, movement: Movement, player: u8) -> (bool, bool) {
         let mut cant_move_flag = false;
         // determine if it can move
@@ -110,7 +111,7 @@ impl Board {
             self.vec_active_piece[player as usize].rotation = (self.vec_active_piece[player as usize].rotation + 3) % 4;
         }
 
-        (!cant_move_flag, false)
+        (true, false)
     }
 
     fn should_lock(&self, player: u8) -> bool {
@@ -158,7 +159,6 @@ impl Board {
     }
 
     // returns (num_lines_cleared, score_from_cleared_lines)
-    // TODO: get these return values to be smaller types and cast them as they are +='d on return; (u8, u32) should always be enough
     pub fn attempt_clear_lines(&mut self, level: u8) -> (u8, u32) {
         if self.vec_full_lines.len() == 0 {
             // nothing to see here
@@ -237,8 +237,8 @@ impl Board {
             // incrementing the row value of each element so when it gets cleared it lines up correctly
             let mut backwards_inc_row_index = 0;
             // help this feels like magic
-            while *index as isize - indices_destroyed as isize >= 0 && (vec_clearing_now_indices[*index - indices_destroyed] as isize - backwards_inc_row_index as isize - 1) >= 0 {
-                self.vec_full_lines[vec_clearing_now_indices[*index - indices_destroyed] - backwards_inc_row_index - 1].row += 1;
+            while *index as isize - indices_destroyed as isize >= 0 && *index as isize - backwards_inc_row_index as isize - 1 >= 0 {
+                self.vec_full_lines[*index - backwards_inc_row_index - 1].row += 1;
                 backwards_inc_row_index += 1;
             }
         }
@@ -261,16 +261,16 @@ impl FullLine {
         Self {
             row,
             player,
-            clear_delay: crate::CLEAR_DELAY,
+            clear_delay: CLEAR_DELAY,
             remove_flag: false,
         }
     }
 }
 
+// do `cargo test --release` because Rust doesn't like underflow, but that's how the board width works :(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::CLEAR_DELAY;
 
     #[test]
     fn test_testing() {
@@ -356,5 +356,59 @@ mod tests {
         }
 
         assert_eq!((num_cleared_lines, score, test), (8, (2 * SCORE_QUADRUPLE_BASE as u32 * (0 + 1)) as u64, true));
+
+        // now try with some L's because that has been known to break it
+        let mut score: u64 = 0;
+        let mut num_cleared_lines: u16 = 0;
+
+        board.vec_active_piece[0] = Piece::new(Shapes::I);
+        board.vec_active_piece[0].spawn(2);
+        board.attempt_piece_movement(Movement::RotateCw, 0);
+        board.attempt_piece_movement(Movement::Left, 0);
+        for _ in 0..19 {
+            board.attempt_piece_movement(Movement::Down, 0);
+        }
+
+        board.vec_active_piece[0] = Piece::new(Shapes::I);
+        board.vec_active_piece[0].spawn(2);
+        board.attempt_piece_movement(Movement::RotateCw, 0);
+        for _ in 0..19 {
+            board.attempt_piece_movement(Movement::Down, 0);
+        }
+
+        board.vec_active_piece[1] = Piece::new(Shapes::L);
+        board.vec_active_piece[1].spawn(2);
+        board.attempt_piece_movement(Movement::RotateCcw, 1);
+        board.attempt_piece_movement(Movement::Right, 1);
+        for _ in 0..19 {
+            board.attempt_piece_movement(Movement::Down, 1);
+        }
+
+        // this is so that one piece locks in 1 frame before the other
+        let (returned_lines, returned_score) = board.attempt_clear_lines(0);
+        if returned_lines > 0 {
+            num_cleared_lines += returned_lines as u16;
+            score += returned_score as u64;
+        }
+
+        board.vec_active_piece[2] = Piece::new(Shapes::L);
+        board.vec_active_piece[2].spawn(2);
+        board.attempt_piece_movement(Movement::RotateCw, 2);
+        board.attempt_piece_movement(Movement::Right, 2);
+        board.attempt_piece_movement(Movement::Right, 2);
+        for _ in 0..18 {
+            board.attempt_piece_movement(Movement::Down, 2);
+        }
+
+        // now clear and see what happens
+        for _ in 0..CLEAR_DELAY + 1 {
+            let (returned_lines, returned_score) = board.attempt_clear_lines(0);
+            if returned_lines > 0 {
+                num_cleared_lines += returned_lines as u16;
+                score += returned_score as u64;
+            }
+        }
+
+        assert_eq!((num_cleared_lines, score), (4, (1 * SCORE_SINGLE_BASE as u32 * (0 + 1) + 1 * SCORE_TRIPLE_BASE as u32 * (0 + 1)) as u64));
     }
 }
