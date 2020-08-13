@@ -159,7 +159,6 @@ impl Board {
     }
 
     // returns (num_lines_cleared, score_from_cleared_lines)
-    // TODO: get these return values to be smaller types and cast them as they are +='d on return; (u8, u32) should always be enough
     pub fn attempt_clear_lines(&mut self, level: u8) -> (u8, u32) {
         if self.vec_full_lines.len() == 0 {
             // nothing to see here

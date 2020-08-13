@@ -7,6 +7,11 @@ use ggez::nalgebra::{Point2, Vector2};
 use crate::control::ProgramState;
 use crate::inputs::Input;
 
+use crate::game::GameOptions;
+
+const MAX_STARTING_LEVEL: u8 = 29; // this is just the fastest speed, so yeah
+const MAX_NUM_PLAYERS: u8 = 62; // currently held back by board width being a u8 equal to 6 + 4 * num_players
+
 const TEXT_SCALE_DOWN: f32 = 10.0;
 
 const GRAY: graphics::Color = graphics::Color::new(0.5, 0.5, 0.5, 1.0);
@@ -36,6 +41,34 @@ pub struct Menu {
 impl Menu {
     pub fn new(ctx: &mut Context) -> Self {
         let window_dimensions = graphics::size(ctx);
+        let mut num_players_text = Text::new(TextFragment {
+            text: "Number of Players: ".to_string(),
+            color: Some(graphics::BLACK),
+            font: Some(graphics::Font::default()),
+            scale: Some(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
+            ..Default::default()
+        });
+        num_players_text.add(TextFragment {
+            text: "1".to_string(),
+            color: Some(graphics::BLACK),
+            font: Some(graphics::Font::default()),
+            scale: Some(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
+            ..Default::default()
+        });
+        let mut starting_level_text = Text::new(TextFragment {
+            text: "Starting Level: ".to_string(),
+            color: Some(graphics::BLACK),
+            font: Some(graphics::Font::default()),
+            scale: Some(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
+            ..Default::default()
+        });
+        starting_level_text.add(TextFragment {
+            text: "0".to_string(),
+            color: Some(graphics::BLACK),
+            font: Some(graphics::Font::default()),
+            scale: Some(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
+            ..Default::default()
+        });
         Self {
             input: Input::new(),
             selection: MenuOption::Start as u8,
@@ -49,42 +82,42 @@ impl Menu {
                 scale: Some(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
                 ..Default::default()
             }),
-            num_players_text: Text::new(TextFragment {
-                text: "Number of Players: 1".to_string(),
-                color: Some(graphics::BLACK),
-                font: Some(graphics::Font::default()),
-                scale: Some(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
-                ..Default::default()
-            }),
-            starting_level_text: Text::new(TextFragment {
-                text: "Starting Level: 0".to_string(),
-                color: Some(graphics::BLACK),
-                font: Some(graphics::Font::default()),
-                scale: Some(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
-                ..Default::default()
-            }),
+            num_players_text,
+            starting_level_text,
         }
     }
 
-    pub fn update(&mut self) -> ProgramState {
+    pub fn update(&mut self) -> Option<(ProgramState, GameOptions)> {
         if self.input.keydown_down.1 {
-            self.set_select(self.selection, false);
+            self.set_select(false);
             self.selection = (self.selection + 1) % NUM_MENUOPTION_ENTRIES;
-            self.set_select(self.selection, true);
+            self.set_select(true);
         }
 
         if self.input.keydown_up.1 {
-            self.set_select(self.selection, false);
+            self.set_select(false);
             self.selection = if self.selection == 0 {NUM_MENUOPTION_ENTRIES - 1} else {self.selection - 1};
-            self.set_select(self.selection, true);
+            self.set_select(true);
+        }
+
+        if self.input.keydown_right.1 {
+            self.inc_or_dec_selection(true);
+        }
+
+        if self.input.keydown_left.1 {
+            self.inc_or_dec_selection(false);
+        }
+
+        if self.input.keydown_start.1 && self.selection == MenuOption::Start as u8 {
+            return Some((ProgramState::Game, GameOptions::new(self.num_players, self.starting_level)));
         }
 
         self.input.was_just_pressed_setfalse();
-        ProgramState::Menu
+        None
     }
 
-    fn set_select(&mut self, menu_option: u8, select_flag: bool) {
-        match menu_option {
+    fn set_select(&mut self, select_flag: bool) {
+        match self.selection {
             x if x == MenuOption::Start as u8 => {
                 if select_flag {
                     self.start_text.fragments_mut()[0].color = Some(SELECT_GREEN);
@@ -95,18 +128,46 @@ impl Menu {
             x if x == MenuOption::NumPlayers as u8 => {
                 if select_flag {
                     self.num_players_text.fragments_mut()[0].color = Some(SELECT_GREEN);
+                    self.num_players_text.fragments_mut()[1].color = Some(SELECT_GREEN);
+                    self.num_players_text.fragments_mut()[1].text = format!("<{}>", self.num_players);
                 } else {
                     self.num_players_text.fragments_mut()[0].color = Some(graphics::BLACK);
+                    self.num_players_text.fragments_mut()[1].color = Some(graphics::BLACK);
+                    self.num_players_text.fragments_mut()[1].text = format!("{}", self.num_players);
                 }
             },
             x if x == MenuOption::StartingLevel as u8 => {
                 if select_flag {
                     self.starting_level_text.fragments_mut()[0].color = Some(SELECT_GREEN);
+                    self.starting_level_text.fragments_mut()[1].color = Some(SELECT_GREEN);
+                    self.starting_level_text.fragments_mut()[1].text = format!("<{}>", self.starting_level);
                 } else {
                     self.starting_level_text.fragments_mut()[0].color = Some(graphics::BLACK);
+                    self.starting_level_text.fragments_mut()[1].color = Some(graphics::BLACK);
+                    self.starting_level_text.fragments_mut()[1].text = format!("{}", self.starting_level);
                 }
             },
             _ => println!("[!] menu_option didn't find match"),
+        }
+    }
+
+    fn inc_or_dec_selection(&mut self, inc_flag: bool) {
+        // the if/else here only includes MenuOptions that have a value that can be modified
+        if self.selection == MenuOption::NumPlayers as u8 {
+            // special case (index by 1 because we can't have 0 players)
+            if inc_flag {
+                self.num_players = self.num_players % MAX_NUM_PLAYERS + 1;
+            } else {
+                self.num_players = if self.num_players == 1 {MAX_NUM_PLAYERS} else {self.num_players - 1};
+            }
+            self.num_players_text.fragments_mut()[1].text = format!("<{}>", self.num_players);
+        } else if self.selection == MenuOption::StartingLevel as u8 {
+            if inc_flag {
+                self.starting_level = (self.starting_level + 1) % (MAX_STARTING_LEVEL + 1);
+            } else {
+                self.starting_level = if self.starting_level == 0 {MAX_STARTING_LEVEL} else {self.starting_level - 1};
+            }
+            self.starting_level_text.fragments_mut()[1].text = format!("<{}>", self.starting_level);
         }
     }
 

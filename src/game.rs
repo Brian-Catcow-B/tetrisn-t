@@ -39,6 +39,21 @@ pub const SCORE_QUADRUPLE_BASE: u16 = 1200u16;
 // space up of the board that is not the board in tiles
 pub const NON_BOARD_SPACE_U: u8 = 4u8;
 
+// this struct is for when the Menu struct returns what game options to start with
+pub struct GameOptions {
+    pub num_players: u8,
+    pub starting_level: u8,
+}
+
+impl GameOptions {
+    pub fn new(num_players: u8, starting_level: u8) -> Self {
+        Self {
+            num_players,
+            starting_level,
+        }
+    }
+}
+
 pub struct Game {
     // GAME STUFF
     // logic (mostly)

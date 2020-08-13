@@ -4,7 +4,7 @@ use ggez::event::{Axis, Button, GamepadId, KeyCode, KeyMods};
 use ggez::graphics;
 
 use crate::menu::Menu;
-use crate::game::Game;
+use crate::game::{Game, GameOptions};
 
 #[repr(u8)]
 #[derive(PartialEq, Eq, Copy, Clone)]
@@ -17,6 +17,7 @@ pub struct Control {
     state: ProgramState,
     menu: Option<Menu>,
     game: Option<Game>,
+    game_options: Option<GameOptions>,
 }
 
 impl Control {
@@ -25,6 +26,7 @@ impl Control {
             state: ProgramState::Game,
             menu: None,
             game: Some(Game::new(ctx, 2u8, 0u8)),
+            game_options: None,
         }
     }
 
@@ -35,7 +37,9 @@ impl Control {
                 ProgramState::Menu
             },
             ProgramState::Game => {
-                self.game = Some(Game::new(ctx, 2u8, 0u8));
+                self.game = Some(Game::new(ctx,
+                    self.game_options.as_ref().expect("[!] attempted to start Game with no GameOptions").num_players,
+                    self.game_options.as_ref().expect("[!] attempted to start Game with no GameOptions").starting_level));
                 ProgramState::Game
             },
         };
@@ -45,18 +49,16 @@ impl Control {
 // this is run once every frame and passes control off to whichever state the game is in
 impl EventHandler for Control {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
-        println!("in EventHandler for Control. State = {}", self.state as u8);
-
         match self.state {
             ProgramState::Menu => {
-                // update the menu and get the state that the program should be in
-                let state_returned = self.menu.as_mut()
+                // update the menu and get the state with GameOptions if ProgramState is changing
+                if let Some(state_and_gameoptions) = self.menu.as_mut()
                     .expect("[!] control.state == ProgramState::Menu but control.menu == None")
-                    .update();
-                // should we change states?
-                if self.state != state_returned {
+                    .update()
+                {
                     self.menu = None;
-                    self.change_state(ctx, state_returned);
+                    self.game_options = Some(state_and_gameoptions.1);
+                    self.change_state(ctx, state_and_gameoptions.0);
                 }
             },
             ProgramState::Game => {
@@ -64,7 +66,6 @@ impl EventHandler for Control {
                 let state_returned = self.game.as_mut()
                     .expect("[!] control.state == ProgramState::Game but control.game == None")
                     .update();
-                println!("updated game... supposedly");
                 // should we change states?
                 if self.state != state_returned {
                     self.game = None;
