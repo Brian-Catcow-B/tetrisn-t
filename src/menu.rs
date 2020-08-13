@@ -1,8 +1,8 @@
 use ggez::Context;
 use ggez::graphics::{self, DrawParam};
 use ggez::event::KeyCode;
-use ggez::graphics::{Align, Color, Scale, Text, TextFragment};
-use ggez::nalgebra::{Point2, Vector2};
+use ggez::graphics::{Color, Scale, Text, TextFragment};
+use ggez::nalgebra::Point2;
 
 use crate::control::ProgramState;
 use crate::inputs::Input;
@@ -14,8 +14,8 @@ const MAX_NUM_PLAYERS: u8 = 62; // currently held back by board width being a u8
 
 const TEXT_SCALE_DOWN: f32 = 10.0;
 
-const GRAY: graphics::Color = graphics::Color::new(0.5, 0.5, 0.5, 1.0);
-const SELECT_GREEN: graphics::Color = graphics::Color::new(0.153, 0.839, 0.075, 1.0);
+const GRAY: Color = Color::new(0.5, 0.5, 0.5, 1.0);
+const SELECT_GREEN: Color = Color::new(0.153, 0.839, 0.075, 1.0);
 
 const NUM_MENUOPTION_ENTRIES: u8 = 3;
 #[repr(u8)]

@@ -114,7 +114,7 @@ impl Game {
             level: starting_level,
             num_cleared_lines: 0u16,
             score: 0u64,
-            pause_flag: true,
+            pause_flag: false,
             tile_size: 0f32,
             batch_empty_tile,
             vec_batch_player_piece,

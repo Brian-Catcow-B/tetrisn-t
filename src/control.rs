@@ -23,9 +23,9 @@ pub struct Control {
 impl Control {
     pub fn new(ctx: &mut Context) -> Control {
         Self {
-            state: ProgramState::Game,
-            menu: None,
-            game: Some(Game::new(ctx, 2u8, 0u8)),
+            state: ProgramState::Menu,
+            menu: Some(Menu::new(ctx)),
+            game: None,
             game_options: None,
         }
     }
