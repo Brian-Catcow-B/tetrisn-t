@@ -37,9 +37,16 @@ impl Control {
                 ProgramState::Menu
             },
             ProgramState::Game => {
+                // TODO: is there a way to not manually copy this? I implemented Copy and Clone to the input::ControlScheme struct, but it doesn't work on a vector of them
+                let mut vec_keyboard_inputs: Vec<crate::inputs::ControlScheme> = Vec::with_capacity(self.game_options.as_ref().expect("[!] attempted to start Game with no GameOptions").vec_keyboard_inputs.len());
+                for control_scheme in self.game_options.as_ref().expect("[!] attempted to start Game with no GameOptions").vec_keyboard_inputs.iter() {
+                    vec_keyboard_inputs.push(*control_scheme);
+                }
                 self.game = Some(Game::new(ctx,
                     self.game_options.as_ref().expect("[!] attempted to start Game with no GameOptions").num_players,
-                    self.game_options.as_ref().expect("[!] attempted to start Game with no GameOptions").starting_level));
+                    self.game_options.as_ref().expect("[!] attempted to start Game with no GameOptions").starting_level,
+                    vec_keyboard_inputs,
+                ));
                 ProgramState::Game
             },
         };
