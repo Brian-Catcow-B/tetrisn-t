@@ -6,7 +6,6 @@ const BASE_PLAYER_COLOR: (u8, u8, u8, u8) = (69u8, 125u8, 225u8, 0xffu8);
 
 const DARK_GRAY: (u8, u8, u8, u8) = (60u8, 60u8, 60u8, 0xffu8);
 const GRAY: (u8, u8, u8, u8) = (120u8, 120u8, 120u8, 0xffu8);
-const WHITE: (u8, u8, u8, u8) = (255u8, 255u8, 255u8, 0xffu8);
 
 const PLAYER_TILE_DARKEN_0: f32 = 0.95;
 const PLAYER_TILE_DARKEN_1: f32 = 0.85;
@@ -147,9 +146,9 @@ impl TileGraphic {
         for row_index in &[3, 4] {
             for col_index in &[3, 4] {
                 pixel_color_buf[(row_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC + col_index) as usize] = (
-                    (PLAYER_TILE_BRIGHTEN_0 * WHITE.0 as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_0) * player_color.0 as f32) as u8,
-                    (PLAYER_TILE_BRIGHTEN_0 * WHITE.1 as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_0) * player_color.1 as f32) as u8,
-                    (PLAYER_TILE_BRIGHTEN_0 * WHITE.2 as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_0) * player_color.2 as f32) as u8,
+                    (PLAYER_TILE_BRIGHTEN_0 * graphics::WHITE.r as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_0) * player_color.0 as f32) as u8,
+                    (PLAYER_TILE_BRIGHTEN_0 * graphics::WHITE.g as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_0) * player_color.1 as f32) as u8,
+                    (PLAYER_TILE_BRIGHTEN_0 * graphics::WHITE.b as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_0) * player_color.2 as f32) as u8,
                     0xff,
                 );
             }
@@ -158,16 +157,16 @@ impl TileGraphic {
         for row_index in &[2, 5] {
             for col_index in &[3, 4] {
                 pixel_color_buf[(row_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC + col_index) as usize] = (
-                    (PLAYER_TILE_BRIGHTEN_1 * WHITE.0 as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_1) * player_color.0 as f32) as u8,
-                    (PLAYER_TILE_BRIGHTEN_1 * WHITE.1 as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_1) * player_color.1 as f32) as u8,
-                    (PLAYER_TILE_BRIGHTEN_1 * WHITE.2 as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_1) * player_color.2 as f32) as u8,
+                    (PLAYER_TILE_BRIGHTEN_1 * graphics::WHITE.r as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_1) * player_color.0 as f32) as u8,
+                    (PLAYER_TILE_BRIGHTEN_1 * graphics::WHITE.g as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_1) * player_color.1 as f32) as u8,
+                    (PLAYER_TILE_BRIGHTEN_1 * graphics::WHITE.b as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_1) * player_color.2 as f32) as u8,
                     0xff,
                 );
                 // flipped for symmetry
                 pixel_color_buf[(row_index + col_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC) as usize] = (
-                    (PLAYER_TILE_BRIGHTEN_1 * WHITE.0 as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_1) * player_color.0 as f32) as u8,
-                    (PLAYER_TILE_BRIGHTEN_1 * WHITE.1 as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_1) * player_color.1 as f32) as u8,
-                    (PLAYER_TILE_BRIGHTEN_1 * WHITE.2 as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_1) * player_color.2 as f32) as u8,
+                    (PLAYER_TILE_BRIGHTEN_1 * graphics::WHITE.r as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_1) * player_color.0 as f32) as u8,
+                    (PLAYER_TILE_BRIGHTEN_1 * graphics::WHITE.g as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_1) * player_color.1 as f32) as u8,
+                    (PLAYER_TILE_BRIGHTEN_1 * graphics::WHITE.b as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_1) * player_color.2 as f32) as u8,
                     0xff,
                 );
             }
@@ -176,16 +175,16 @@ impl TileGraphic {
         for row_index in &[1, 6] {
             for col_index in &[3, 4] {
                 pixel_color_buf[(row_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC + col_index) as usize] = (
-                    (PLAYER_TILE_BRIGHTEN_2 * WHITE.0 as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_2) * player_color.0 as f32) as u8,
-                    (PLAYER_TILE_BRIGHTEN_2 * WHITE.1 as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_2) * player_color.1 as f32) as u8,
-                    (PLAYER_TILE_BRIGHTEN_2 * WHITE.2 as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_2) * player_color.2 as f32) as u8,
+                    (PLAYER_TILE_BRIGHTEN_2 * graphics::WHITE.r as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_2) * player_color.0 as f32) as u8,
+                    (PLAYER_TILE_BRIGHTEN_2 * graphics::WHITE.g as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_2) * player_color.1 as f32) as u8,
+                    (PLAYER_TILE_BRIGHTEN_2 * graphics::WHITE.b as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_2) * player_color.2 as f32) as u8,
                     0xff,
                 );
                 // flipped for symmetry
                 pixel_color_buf[(row_index + col_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC) as usize] = (
-                    (PLAYER_TILE_BRIGHTEN_2 * WHITE.0 as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_2) * player_color.0 as f32) as u8,
-                    (PLAYER_TILE_BRIGHTEN_2 * WHITE.1 as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_2) * player_color.1 as f32) as u8,
-                    (PLAYER_TILE_BRIGHTEN_2 * WHITE.2 as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_2) * player_color.2 as f32) as u8,
+                    (PLAYER_TILE_BRIGHTEN_2 * graphics::WHITE.r as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_2) * player_color.0 as f32) as u8,
+                    (PLAYER_TILE_BRIGHTEN_2 * graphics::WHITE.g as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_2) * player_color.1 as f32) as u8,
+                    (PLAYER_TILE_BRIGHTEN_2 * graphics::WHITE.b as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_2) * player_color.2 as f32) as u8,
                     0xff,
                 );
             }
@@ -193,9 +192,9 @@ impl TileGraphic {
         for row_index in &[2, 5] {
             for col_index in &[2, 5] {
                 pixel_color_buf[(row_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC + col_index) as usize] = (
-                    (PLAYER_TILE_BRIGHTEN_2 * WHITE.0 as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_2) * player_color.0 as f32) as u8,
-                    (PLAYER_TILE_BRIGHTEN_2 * WHITE.1 as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_2) * player_color.1 as f32) as u8,
-                    (PLAYER_TILE_BRIGHTEN_2 * WHITE.2 as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_2) * player_color.2 as f32) as u8,
+                    (PLAYER_TILE_BRIGHTEN_2 * graphics::WHITE.r as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_2) * player_color.0 as f32) as u8,
+                    (PLAYER_TILE_BRIGHTEN_2 * graphics::WHITE.g as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_2) * player_color.1 as f32) as u8,
+                    (PLAYER_TILE_BRIGHTEN_2 * graphics::WHITE.b as f32 + (1.0 - PLAYER_TILE_BRIGHTEN_2) * player_color.2 as f32) as u8,
                     0xff,
                 );
             }
