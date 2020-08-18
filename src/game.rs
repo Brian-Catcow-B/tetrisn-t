@@ -43,13 +43,15 @@ pub const NON_BOARD_SPACE_U: u8 = 4u8;
 pub struct GameOptions {
     pub num_players: u8,
     pub starting_level: u8,
+    pub vec_keyboard_inputs: Vec<ControlScheme>,
 }
 
 impl GameOptions {
-    pub fn new(num_players: u8, starting_level: u8) -> Self {
+    pub fn new(num_players: u8, starting_level: u8, vec_keyboard_inputs: Vec<ControlScheme>) -> Self {
         Self {
             num_players,
             starting_level,
+            vec_keyboard_inputs,
         }
     }
 }
@@ -73,20 +75,20 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new(ctx: &mut Context, num_players: u8, starting_level: u8) -> Game {
+    pub fn new(ctx: &mut Context, num_players: u8, starting_level: u8, vec_keyboard_inputs: Vec<ControlScheme>) -> Game {
         // Load/create resources here: images, fonts, sounds, etc.
         let board_width = 6 + 4 * num_players;
         let mut vec_players: Vec<Player> = Vec::with_capacity(num_players as usize);
         // implementing this later when a config file with saved ControlScheme's for each player is added with menu UI (rip)
-        // for player in 0..(num_players + 1) / 2 {
-        //     vec_players.push(Player::new(player, control_scheme[player], (player as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8 + 1));
-        // }
-        // for player in (num_players + 1) / 2..num_players {
-        //     vec_players.push(Player::new(player, control_scheme[player], board_width - 1 - ((num_players - 1 - player) as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8));
-        // }
+        for player in 0..(num_players + 1) / 2 {
+            vec_players.push(Player::new(player, vec_keyboard_inputs[player as usize], (player as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8 + 1));
+        }
+        for player in (num_players + 1) / 2..num_players {
+            vec_players.push(Player::new(player, vec_keyboard_inputs[player as usize], board_width - 1 - ((num_players - 1 - player) as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8));
+        }
         // ...and will get rid of the following two...
-        vec_players.push(Player::new(0, ControlScheme::new(KeyCode::A, KeyCode::D, KeyCode::S, KeyCode::E, KeyCode::Q, KeyCode::Escape), (0 as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8 + 1));
-        vec_players.push(Player::new(1, ControlScheme::new(KeyCode::J, KeyCode::L, KeyCode::K, KeyCode::O, KeyCode::U, KeyCode::Escape), board_width - 1 - ((num_players - 1 - 1) as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8));
+        // vec_players.push(Player::new(0, ControlScheme::new(KeyCode::A, KeyCode::D, KeyCode::S, KeyCode::E, KeyCode::Q, KeyCode::Escape), (0 as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8 + 1));
+        // vec_players.push(Player::new(1, ControlScheme::new(KeyCode::J, KeyCode::L, KeyCode::K, KeyCode::O, KeyCode::U, KeyCode::Escape), board_width - 1 - ((num_players - 1 - 1) as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8));
         let mut batch_empty_tile = spritebatch::SpriteBatch::new(TileGraphic::new_empty(ctx).image);
         // the emtpy tile batch will be constant once the game starts with the player tile batches drawing on top of it, so just set that up here
         for x in 0..board_width {
