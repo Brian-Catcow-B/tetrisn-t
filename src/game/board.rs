@@ -355,7 +355,7 @@ mod tests {
             test = false;
         }
 
-        assert_eq!((num_cleared_lines, score, test), (8, (2 * SCORE_QUADRUPLE_BASE as u32 * (0 + 1)) as u64, true));
+        assert_eq!((num_cleared_lines, score, test), (8, (2 * SCORE_QUADRUPLE_BASE as u32 * (1)) as u64, true));
 
         // now try with some L's because that has been known to break it
         let mut score: u64 = 0;
@@ -409,6 +409,6 @@ mod tests {
             }
         }
 
-        assert_eq!((num_cleared_lines, score), (4, (1 * SCORE_SINGLE_BASE as u32 * (0 + 1) + 1 * SCORE_TRIPLE_BASE as u32 * (0 + 1)) as u64));
+        assert_eq!((num_cleared_lines, score), (4, (1 * SCORE_SINGLE_BASE as u32 * (1) + 1 * SCORE_TRIPLE_BASE as u32 * (1)) as u64));
     }
 }
