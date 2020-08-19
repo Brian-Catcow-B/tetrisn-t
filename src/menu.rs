@@ -53,62 +53,20 @@ struct MainMenu {
 // for MenuState::Main
 impl MainMenu {
     fn new(window_dimensions: (f32, f32)) -> Self {
-        let mut num_players_text = Text::new(TextFragment {
-            text: "Number of Players: ".to_string(),
-            color: Some(graphics::BLACK),
-            font: Some(graphics::Font::default()),
-            scale: Some(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
-            ..Default::default()
-        });
-        num_players_text.add(TextFragment {
-            text: "1".to_string(),
-            color: Some(graphics::BLACK),
-            font: Some(graphics::Font::default()),
-            scale: Some(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
-            ..Default::default()
-        });
-        let mut starting_level_text = Text::new(TextFragment {
-            text: "Starting Level: ".to_string(),
-            color: Some(graphics::BLACK),
-            font: Some(graphics::Font::default()),
-            scale: Some(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
-            ..Default::default()
-        });
-        starting_level_text.add(TextFragment {
-            text: "0".to_string(),
-            color: Some(graphics::BLACK),
-            font: Some(graphics::Font::default()),
-            scale: Some(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
-            ..Default::default()
-        });
+        let mut num_players_text = Text::new(TextFragment::new("Number of Players: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
+        num_players_text.add(TextFragment::new("1").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
+        let mut starting_level_text = Text::new(TextFragment::new("Starting Level: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
+        starting_level_text.add(TextFragment::new("0").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
         Self {
             selection: MainMenuOption::Start as u8,
             num_players: 1,
             starting_level: 0,
             not_enough_controls_flag: false,
-            start_text: Text::new(TextFragment {
-                text: "Start".to_string(),
-                color: Some(SELECT_GREEN),
-                font: Some(graphics::Font::default()),
-                scale: Some(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
-                ..Default::default()
-            }),
-            not_enough_controls_text: Text::new(TextFragment {
-                text: "[!] Not enough controls setup to start".to_string(),
-                color: Some(HELP_RED),
-                font: Some(graphics::Font::default()),
-                scale: Some(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-                ..Default::default()
-            }),
+            start_text: Text::new(TextFragment::new("Start").color(SELECT_GREEN).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN))),
+            not_enough_controls_text: Text::new(TextFragment::new("[!] Not enough controls setup to start").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
             num_players_text,
             starting_level_text,
-            controls_text: Text::new(TextFragment {
-                text: "Controls".to_string(),
-                color: Some(graphics::BLACK),
-                font: Some(graphics::Font::default()),
-                scale: Some(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
-                ..Default::default()
-            }),
+            controls_text: Text::new(TextFragment::new("Controls").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN))),
         }
     }
 }
@@ -155,90 +113,18 @@ struct InputConfigMenu {
 
 impl InputConfigMenu {
     fn new(window_dimensions: (f32, f32)) -> Self {
-        let mut player_num_text = Text::new(TextFragment {
-            text: "Player Number: ".to_string(),
-            color: Some(graphics::BLACK),
-            font: Some(graphics::Font::default()),
-            scale: Some(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
-            ..Default::default()
-        });
-        player_num_text.add(TextFragment {
-            text: "1".to_string(), // display an index by 1 because users are stupid lol
-            color: Some(graphics::BLACK),
-            font: Some(graphics::Font::default()),
-            scale: Some(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
-            ..Default::default()
-        });
-        let mut left_text = Text::new(TextFragment {
-            text: "Left:     ".to_string(),
-            color: Some(graphics::BLACK),
-            font: Some(graphics::Font::default()),
-            scale: Some(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-            ..Default::default()
-        });
-        left_text.add(TextFragment {
-            text: "None".to_string(),
-            color: Some(graphics::BLACK),
-            font: Some(graphics::Font::default()),
-            scale: Some(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-            ..Default::default()
-        });
-        let mut right_text = Text::new(TextFragment {
-            text: "Right:    ".to_string(),
-            color: Some(graphics::BLACK),
-            font: Some(graphics::Font::default()),
-            scale: Some(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-            ..Default::default()
-        });
-        right_text.add(TextFragment {
-            text: "None".to_string(),
-            color: Some(graphics::BLACK),
-            font: Some(graphics::Font::default()),
-            scale: Some(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-            ..Default::default()
-        });
-        let mut down_text = Text::new(TextFragment {
-            text: "Down:     ".to_string(),
-            color: Some(graphics::BLACK),
-            font: Some(graphics::Font::default()),
-            scale: Some(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-            ..Default::default()
-        });
-        down_text.add(TextFragment {
-            text: "None".to_string(),
-            color: Some(graphics::BLACK),
-            font: Some(graphics::Font::default()),
-            scale: Some(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-            ..Default::default()
-        });
-        let mut rotate_cw_text = Text::new(TextFragment {
-            text: "RotateCw:  ".to_string(),
-            color: Some(graphics::BLACK),
-            font: Some(graphics::Font::default()),
-            scale: Some(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-            ..Default::default()
-        });
-        rotate_cw_text.add(TextFragment {
-            text: "None".to_string(),
-            color: Some(graphics::BLACK),
-            font: Some(graphics::Font::default()),
-            scale: Some(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-            ..Default::default()
-        });
-        let mut rotate_ccw_text = Text::new(TextFragment {
-            text: "RotateCcw: ".to_string(),
-            color: Some(graphics::BLACK),
-            font: Some(graphics::Font::default()),
-            scale: Some(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-            ..Default::default()
-        });
-        rotate_ccw_text.add(TextFragment {
-            text: "None".to_string(),
-            color: Some(graphics::BLACK),
-            font: Some(graphics::Font::default()),
-            scale: Some(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-            ..Default::default()
-        });
+        let mut player_num_text = Text::new(TextFragment::new("Player Number: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
+        player_num_text.add(TextFragment::new("1").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
+        let mut left_text = Text::new(TextFragment::new("Left:     ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        left_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        let mut right_text = Text::new(TextFragment::new("Right:    ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        right_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        let mut down_text = Text::new(TextFragment::new("Down:     ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        down_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        let mut rotate_cw_text = Text::new(TextFragment::new("RotateCw:  ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        rotate_cw_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        let mut rotate_ccw_text = Text::new(TextFragment::new("RotateCcw:  ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        rotate_ccw_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
         Self {
             selection: 0,
             player_num: 0,
@@ -255,25 +141,13 @@ impl InputConfigMenu {
             }),
             player_num_text,
             // subtext
-            uninitialized_text: Text::new(TextFragment {
-                text: "No Controls\nPress Space/Enter to edit".to_string(),
-                color: Some(HELP_RED),
-                font: Some(graphics::Font::default()),
-                scale: Some(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-                ..Default::default()
-            }),
+            uninitialized_text: Text::new(TextFragment::new("No Controls\nPress Space/Enter to edit").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
             left_text,
             right_text,
             down_text,
             rotate_cw_text,
             rotate_ccw_text,
-            start_text: Text::new(TextFragment {
-                text: "Start/Pause: ESC".to_string(),
-                color: Some(graphics::BLACK),
-                font: Some(graphics::Font::default()),
-                scale: Some(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-                ..Default::default()
-            }),
+            start_text: Text::new(TextFragment::new("Start/Pause: ESC").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
         }
     }
 }
@@ -303,7 +177,14 @@ impl Menu {
     }
 
     pub fn update(&mut self) -> Option<(ProgramState, GameOptions)> {
-        // TODO: a lot of this is redundant; can probably get rid of the match statement (mostly)
+        if self.input.keydown_right.1 && !self.input_config_menu.sub_selection_flag {
+            self.inc_or_dec_selection(true);
+        }
+
+        if self.input.keydown_left.1 && !self.input_config_menu.sub_selection_flag {
+            self.inc_or_dec_selection(false);
+        }
+
         match self.state {
             MenuState::Main => {
                 if self.input.keydown_down.1 {
@@ -316,14 +197,6 @@ impl Menu {
                     self.set_select(false);
                     self.main_menu.selection = if self.main_menu.selection == 0 {NUM_MAINMENUOPTION_ENTRIES - 1} else {self.main_menu.selection - 1};
                     self.set_select(true);
-                }
-
-                if self.input.keydown_right.1 {
-                    self.inc_or_dec_selection(true);
-                }
-
-                if self.input.keydown_left.1 {
-                    self.inc_or_dec_selection(false);
                 }
 
                 if self.input.keydown_start.1 && self.main_menu.selection == MainMenuOption::Controls as u8 {
@@ -347,28 +220,19 @@ impl Menu {
                     }
                     if vec_control_scheme.len() < self.main_menu.num_players as usize {
                         self.main_menu.not_enough_controls_flag = true;
-                        println!("[+] tried to start game with {} players and {} controls", self.main_menu.num_players, vec_control_scheme.len());
                     } else {
                         return Some((ProgramState::Game, GameOptions::new(self.main_menu.num_players, self.main_menu.starting_level, vec_control_scheme)));
                     }
                 }
             },
             MenuState::InputConfig => {
-                if self.input.keydown_right.1 {
-                    self.inc_or_dec_selection(true);
-                }
-
-                if self.input.keydown_left.1 {
-                    self.inc_or_dec_selection(false);
-                }
-
                 if !self.input_config_menu.sub_selection_flag {
                     if self.input.keydown_down.1 {
                         self.set_select(false);
                         self.input_config_menu.selection = (self.input_config_menu.selection + 1) % NUM_INPUTCONFIGMENUOPTION_ENTRIES;
                         self.set_select(true);
                     }
-    
+
                     if self.input.keydown_up.1 {
                         self.set_select(false);
                         self.input_config_menu.selection = if self.input_config_menu.selection == 0 {NUM_INPUTCONFIGMENUOPTION_ENTRIES - 1} else {self.input_config_menu.selection - 1};
@@ -653,7 +517,6 @@ impl Menu {
                 }
             }
             None => {
-                println!("not found!");
                 self.input_config_menu.left_text.fragments_mut()[1].text = " None".to_string();
                 self.input_config_menu.right_text.fragments_mut()[1].text = " None".to_string();
                 self.input_config_menu.down_text.fragments_mut()[1].text = " None".to_string();
@@ -720,50 +583,17 @@ impl Menu {
 
         match self.state {
             MenuState::Main => {
-                // start
-                let (start_text_width, start_text_height) = self.main_menu.start_text.dimensions(ctx);
-                graphics::draw(ctx, &self.main_menu.start_text, DrawParam::new()
-                .dest(Point2::new((self.window_dimensions.0 - start_text_width as f32) / 2.0, (self.window_dimensions.1 - start_text_height as f32) * 0.2))
-                ).unwrap();
-
-                // not enough controls
+                self.draw_text(ctx, &self.main_menu.start_text, 0.2);
                 if self.main_menu.not_enough_controls_flag {
-                    let (not_enough_controls_text_width, not_enough_controls_text_height) = self.main_menu.not_enough_controls_text.dimensions(ctx);
-                    graphics::draw(ctx, &self.main_menu.not_enough_controls_text, DrawParam::new()
-                    .dest(Point2::new((self.window_dimensions.0 - not_enough_controls_text_width as f32) / 2.0, (self.window_dimensions.1 - not_enough_controls_text_height as f32) * 0.3))
-                    ).unwrap();
+                    self.draw_text(ctx, &self.main_menu.not_enough_controls_text, 0.3);
                 }
-        
-                // num players
-                let (num_players_text_width, num_players_text_height) = self.main_menu.num_players_text.dimensions(ctx);
-                graphics::draw(ctx, &self.main_menu.num_players_text, DrawParam::new()
-                .dest(Point2::new((self.window_dimensions.0 - num_players_text_width as f32) / 2.0, (self.window_dimensions.1 - num_players_text_height as f32) * 0.4))
-                ).unwrap();
-        
-                // starting level
-                let (starting_level_text_width, starting_level_text_height) = self.main_menu.starting_level_text.dimensions(ctx);
-                graphics::draw(ctx, &self.main_menu.starting_level_text, DrawParam::new()
-                .dest(Point2::new((self.window_dimensions.0 - starting_level_text_width as f32) / 2.0, (self.window_dimensions.1 - starting_level_text_height as f32) * 0.6))
-                ).unwrap();
-
-                // controls
-                let (controls_text_width, controls_text_height) = self.main_menu.controls_text.dimensions(ctx);
-                graphics::draw(ctx, &self.main_menu.controls_text, DrawParam::new()
-                .dest(Point2::new((self.window_dimensions.0 - controls_text_width as f32) / 2.0, (self.window_dimensions.1 - controls_text_height as f32) * 0.8))
-                ).unwrap();
+                self.draw_text(ctx, &self.main_menu.num_players_text, 0.4);
+                self.draw_text(ctx, &self.main_menu.starting_level_text, 0.6);
+                self.draw_text(ctx, &self.main_menu.controls_text, 0.8);
             },
             MenuState::InputConfig => {
-                // back
-                let (back_text_width, back_text_height) = self.input_config_menu.back_text.dimensions(ctx);
-                graphics::draw(ctx, &self.input_config_menu.back_text, DrawParam::new()
-                .dest(Point2::new((self.window_dimensions.0 - back_text_width as f32) / 2.0, (self.window_dimensions.1 - back_text_height as f32) * 0.1))
-                ).unwrap();
-
-                // player_num
-                let (player_num_text_width, player_num_text_height) = self.input_config_menu.player_num_text.dimensions(ctx);
-                graphics::draw(ctx, &self.input_config_menu.player_num_text, DrawParam::new()
-                .dest(Point2::new((self.window_dimensions.0 - player_num_text_width as f32) / 2.0, (self.window_dimensions.1 - player_num_text_height as f32) * 0.3))
-                ).unwrap();
+                self.draw_text(ctx, &self.input_config_menu.back_text, 0.1);
+                self.draw_text(ctx, &self.input_config_menu.player_num_text, 0.3);
 
                 if self.input_config_menu.selection == InputConfigMenuOption::PlayerInput as u8 {
                     // draw a rectangle containing the subtexts for choosing controls
@@ -810,50 +640,24 @@ impl Menu {
                     }
 
                     if player_input_exists {
-                        // left_text
-                        let (left_text_width, left_text_height) = self.input_config_menu.left_text.dimensions(ctx);
-                        graphics::draw(ctx, &self.input_config_menu.left_text, DrawParam::new()
-                        .dest(Point2::new((self.window_dimensions.0 - left_text_width as f32) / 2.0, (self.window_dimensions.1 - left_text_height as f32) * 0.5))
-                        ).unwrap();
-
-                        // right_text
-                        let (right_text_width, right_text_height) = self.input_config_menu.right_text.dimensions(ctx);
-                        graphics::draw(ctx, &self.input_config_menu.right_text, DrawParam::new()
-                        .dest(Point2::new((self.window_dimensions.0 - right_text_width as f32) / 2.0, (self.window_dimensions.1 - right_text_height as f32) * 0.55))
-                        ).unwrap();
-
-                        // down_text
-                        let (down_text_width, down_text_height) = self.input_config_menu.down_text.dimensions(ctx);
-                        graphics::draw(ctx, &self.input_config_menu.down_text, DrawParam::new()
-                        .dest(Point2::new((self.window_dimensions.0 - down_text_width as f32) / 2.0, (self.window_dimensions.1 - down_text_height as f32) * 0.6))
-                        ).unwrap();
-
-                        // rotate_cw_text
-                        let (rotate_cw_text_width, rotate_cw_text_height) = self.input_config_menu.rotate_cw_text.dimensions(ctx);
-                        graphics::draw(ctx, &self.input_config_menu.rotate_cw_text, DrawParam::new()
-                        .dest(Point2::new((self.window_dimensions.0 - rotate_cw_text_width as f32) / 2.0, (self.window_dimensions.1 - rotate_cw_text_height as f32) * 0.65))
-                        ).unwrap();
-
-                        // rotate_ccw_text
-                        let (rotate_ccw_text_width, rotate_ccw_text_height) = self.input_config_menu.rotate_ccw_text.dimensions(ctx);
-                        graphics::draw(ctx, &self.input_config_menu.rotate_ccw_text, DrawParam::new()
-                        .dest(Point2::new((self.window_dimensions.0 - rotate_ccw_text_width as f32) / 2.0, (self.window_dimensions.1 - rotate_ccw_text_height as f32) * 0.7))
-                        ).unwrap();
-
-                        // start_text
-                        let (start_text_width, start_text_height) = self.input_config_menu.start_text.dimensions(ctx);
-                        graphics::draw(ctx, &self.input_config_menu.start_text, DrawParam::new()
-                        .dest(Point2::new((self.window_dimensions.0 - start_text_width as f32) / 2.0, (self.window_dimensions.1 - start_text_height as f32) * 0.75))
-                        ).unwrap();
+                        self.draw_text(ctx, &self.input_config_menu.left_text, 0.5);
+                        self.draw_text(ctx, &self.input_config_menu.right_text, 0.55);
+                        self.draw_text(ctx, &self.input_config_menu.down_text, 0.6);
+                        self.draw_text(ctx, &self.input_config_menu.rotate_cw_text, 0.65);
+                        self.draw_text(ctx, &self.input_config_menu.rotate_ccw_text, 0.7);
+                        self.draw_text(ctx, &self.input_config_menu.start_text, 0.75);
                     } else {
-                        // uninitialized_text
-                        let (uninitialized_text_width, uninitialized_text_height) = self.input_config_menu.uninitialized_text.dimensions(ctx);
-                        graphics::draw(ctx, &self.input_config_menu.uninitialized_text, DrawParam::new()
-                        .dest(Point2::new((self.window_dimensions.0 - uninitialized_text_width as f32) / 2.0, (self.window_dimensions.1 - uninitialized_text_height as f32) * 0.5))
-                        ).unwrap();
+                        self.draw_text(ctx, &self.input_config_menu.uninitialized_text, 0.5);
                     }
                 }
             }
         }
+    }
+
+    fn draw_text(&self, ctx: &mut Context, text_var: &Text, vertical_position: f32) {
+        let (text_width, text_height) = text_var.dimensions(ctx);
+        graphics::draw(ctx, text_var, DrawParam::new()
+        .dest(Point2::new((self.window_dimensions.0 - text_width as f32) / 2.0, (self.window_dimensions.1 - text_height as f32) * vertical_position))
+        ).unwrap();
     }
 }
