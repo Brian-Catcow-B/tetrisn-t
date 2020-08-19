@@ -45,6 +45,7 @@ impl Input {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct ControlScheme {
     pub left: KeyCode,
     pub right: KeyCode,
@@ -55,7 +56,7 @@ pub struct ControlScheme {
 }
 
 impl ControlScheme {
-    pub fn new(left: KeyCode, right: KeyCode,down: KeyCode, rotate_cw: KeyCode, rotate_ccw: KeyCode, start: KeyCode) -> Self {
+    pub fn new(left: KeyCode, right: KeyCode, down: KeyCode, rotate_cw: KeyCode, rotate_ccw: KeyCode, start: KeyCode) -> Self {
         Self {
             left,
             right,

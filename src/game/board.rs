@@ -82,7 +82,7 @@ impl Board {
                 // lock piece and push any full lines to vec_full_lines
                 self.vec_active_piece[player as usize].shape = Shapes::None;
                 let mut is_full_line = false;
-                for row in self.lock_piece(player).iter() {
+                for row in &self.lock_piece(player) {
                     if self.is_row_full(*row) {
                         is_full_line = true;
                         self.vec_full_lines.push(FullLine::new(*row, player));
@@ -149,7 +149,7 @@ impl Board {
     }
 
     fn is_row_full(&self, row: u8) -> bool {
-        for tile in self.matrix[row as usize].iter() {
+        for tile in &self.matrix[row as usize] {
             if tile.empty || tile.active {
                 return false;
             }
@@ -228,7 +228,7 @@ impl Board {
         // we simply have a variable that increments each time we remove an element from the vector, and then subtract that variable
         // from whatever index we are trying to access, since each index beyond what we removed will be incremented
         let mut indices_destroyed = 0;
-        for index in vec_clearing_now_indices.iter() {
+        for index in &vec_clearing_now_indices {
             self.matrix.remove(self.vec_full_lines[index - indices_destroyed].row as usize);
             self.matrix.insert(0, vec![Tile::new_empty(); self.width as usize]);
             self.vec_full_lines.remove(index - indices_destroyed);
