@@ -41,8 +41,10 @@ struct MainMenu {
     selection: u8,
     num_players: u8,
     starting_level: u8,
+    not_enough_controls_flag: bool,
     // drawing
     start_text: Text,
+    not_enough_controls_text: Text,
     num_players_text: Text,
     starting_level_text: Text,
     controls_text: Text,
@@ -83,11 +85,19 @@ impl MainMenu {
             selection: MainMenuOption::Start as u8,
             num_players: 1,
             starting_level: 0,
+            not_enough_controls_flag: false,
             start_text: Text::new(TextFragment {
                 text: "Start".to_string(),
                 color: Some(SELECT_GREEN),
                 font: Some(graphics::Font::default()),
                 scale: Some(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
+                ..Default::default()
+            }),
+            not_enough_controls_text: Text::new(TextFragment {
+                text: "[!] Not enough controls setup to start".to_string(),
+                color: Some(HELP_RED),
+                font: Some(graphics::Font::default()),
+                scale: Some(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
                 ..Default::default()
             }),
             num_players_text,
@@ -317,6 +327,7 @@ impl Menu {
                 }
 
                 if self.input.keydown_start.1 && self.main_menu.selection == MainMenuOption::Controls as u8 {
+                    self.main_menu.not_enough_controls_flag = false;
                     self.state = MenuState::InputConfig;
                 }
 
@@ -326,15 +337,20 @@ impl Menu {
                     // TODO: use a closure if that's better. It's too late at night for me to figure this out; I just want this to work; I've written ~500 lines of GUI code today; help
                     for keyboard_controls in self.input_config_menu.vec_keyboard_controls.iter() {
                         vec_control_scheme.push(ControlScheme::new(
-                            keyboard_controls.1.expect("[!] key set to None"),
-                            keyboard_controls.2.expect("[!] key set to None"),
-                            keyboard_controls.3.expect("[!] key set to None"),
-                            keyboard_controls.4.expect("[!] key set to None"),
-                            keyboard_controls.5.expect("[!] key set to None"),
+                            keyboard_controls.1.expect("[!] key left set to None"),
+                            keyboard_controls.2.expect("[!] key right set to None"),
+                            keyboard_controls.3.expect("[!] key down set to None"),
+                            keyboard_controls.4.expect("[!] key rotate_cw set to None"),
+                            keyboard_controls.5.expect("[!] key rotate_ccw set to None"),
                             KeyCode::Escape,
                         ));
                     }
-                    return Some((ProgramState::Game, GameOptions::new(self.main_menu.num_players, self.main_menu.starting_level, vec_control_scheme)));
+                    if vec_control_scheme.len() < self.main_menu.num_players as usize {
+                        self.main_menu.not_enough_controls_flag = true;
+                        println!("[+] tried to start game with {} players and {} controls", self.main_menu.num_players, vec_control_scheme.len());
+                    } else {
+                        return Some((ProgramState::Game, GameOptions::new(self.main_menu.num_players, self.main_menu.starting_level, vec_control_scheme)));
+                    }
                 }
             },
             MenuState::InputConfig => {
@@ -709,6 +725,14 @@ impl Menu {
                 graphics::draw(ctx, &self.main_menu.start_text, DrawParam::new()
                 .dest(Point2::new((self.window_dimensions.0 - start_text_width as f32) / 2.0, (self.window_dimensions.1 - start_text_height as f32) * 0.2))
                 ).unwrap();
+
+                // not enough controls
+                if self.main_menu.not_enough_controls_flag {
+                    let (not_enough_controls_text_width, not_enough_controls_text_height) = self.main_menu.not_enough_controls_text.dimensions(ctx);
+                    graphics::draw(ctx, &self.main_menu.not_enough_controls_text, DrawParam::new()
+                    .dest(Point2::new((self.window_dimensions.0 - not_enough_controls_text_width as f32) / 2.0, (self.window_dimensions.1 - not_enough_controls_text_height as f32) * 0.3))
+                    ).unwrap();
+                }
         
                 // num players
                 let (num_players_text_width, num_players_text_height) = self.main_menu.num_players_text.dimensions(ctx);
