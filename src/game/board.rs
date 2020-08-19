@@ -343,7 +343,7 @@ mod tests {
         }
 
         // now to clear 2 Tetrises on the same frame and see what happens
-        for _ in 0..CLEAR_DELAY + 1 {
+        for _ in 0..=CLEAR_DELAY {
             let (returned_lines, returned_score) = board.attempt_clear_lines(0);
             if returned_lines > 0 {
                 num_cleared_lines += returned_lines as u16;
