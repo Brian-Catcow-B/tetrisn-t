@@ -79,16 +79,20 @@ impl Game {
         // Load/create resources here: images, fonts, sounds, etc.
         let board_width = 6 + 4 * num_players;
         let mut vec_players: Vec<Player> = Vec::with_capacity(num_players as usize);
-        // implementing this later when a config file with saved ControlScheme's for each player is added with menu UI (rip)
-        for player in 0..(num_players + 1) / 2 {
+        // spawn columns
+        // first half, not including middle player if there's an odd number of players
+        for player in 0..(num_players) / 2 {
             vec_players.push(Player::new(player, vec_keyboard_inputs[player as usize], (player as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8 + 1));
         }
+        // middle player, for an odd number of players
+        if num_players % 2 == 1 {
+            let player = num_players / 2;
+            vec_players.push(Player::new(player, vec_keyboard_inputs[player as usize], board_width / 2));
+        }
+        // second half, not including the middle player if there's an odd number of players
         for player in (num_players + 1) / 2..num_players {
             vec_players.push(Player::new(player, vec_keyboard_inputs[player as usize], board_width - 1 - ((num_players - 1 - player) as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8));
         }
-        // ...and will get rid of the following two...
-        // vec_players.push(Player::new(0, ControlScheme::new(KeyCode::A, KeyCode::D, KeyCode::S, KeyCode::E, KeyCode::Q, KeyCode::Escape), (0 as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8 + 1));
-        // vec_players.push(Player::new(1, ControlScheme::new(KeyCode::J, KeyCode::L, KeyCode::K, KeyCode::O, KeyCode::U, KeyCode::Escape), board_width - 1 - ((num_players - 1 - 1) as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8));
         let mut batch_empty_tile = spritebatch::SpriteBatch::new(TileGraphic::new_empty(ctx).image);
         // the emtpy tile batch will be constant once the game starts with the player tile batches drawing on top of it, so just set that up here
         for x in 0..board_width {
@@ -162,10 +166,10 @@ impl Game {
                         // TODO: check if spawning collides with anything (if it overlaps board, self.game_over_flag = true; if it only collides with active tiles, wait)
                         player.spawn_piece_flag = false;
                         if self.vec_next_piece[player.player_num as usize].shape == Shapes::None {
-                            player.next_piece = piece::Piece::new(Shapes::L); // TODO: make random sometime
+                            player.next_piece = piece::Piece::new(Shapes::I); // TODO: make random sometime
                         }
                         self.board.vec_active_piece[player.player_num as usize] = piece::Piece::new(player.next_piece.shape);
-                        player.next_piece = piece::Piece::new(Shapes::J); // TODO: make random sometime
+                        player.next_piece = piece::Piece::new(Shapes::I); // TODO: make random sometime
                         self.vec_next_piece[player.player_num as usize] = NextPiece::new(player.next_piece.shape); // TODO: is there a way to make this not need Copy?
                         self.board.vec_active_piece[player.player_num as usize].spawn(player.spawn_column);
                         self.board.playerify_piece(player.player_num);
