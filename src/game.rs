@@ -36,6 +36,8 @@ pub const SCORE_DOUBLE_BASE: u8 = 100u8;
 pub const SCORE_TRIPLE_BASE: u16 = 300u16;
 pub const SCORE_QUADRUPLE_BASE: u16 = 1200u16;
 
+const GAME_OVER_DELAY: i8 = 60i8;
+
 // space up of the board that is not the board in tiles
 pub const NON_BOARD_SPACE_U: u8 = 4u8;
 
@@ -67,6 +69,8 @@ pub struct Game {
     num_cleared_lines: u16,
     score: u64,
     pause_flag: bool,
+    game_over_flag: bool,
+    game_over_delay: i8,
     // drawing
     tile_size: f32,
     batch_empty_tile: spritebatch::SpriteBatch,
@@ -78,7 +82,7 @@ impl Game {
     pub fn new(ctx: &mut Context, num_players: u8, starting_level: u8, vec_keyboard_inputs: Vec<ControlScheme>) -> Game {
         // Load/create resources here: images, fonts, sounds, etc.
         // let board_width = 6 + 4 * num_players;
-        let board_width = 4;
+        let board_width = 6;
         let mut vec_players: Vec<Player> = Vec::with_capacity(num_players as usize);
         // spawn columns
         // first half, not including middle player if there's an odd number of players
@@ -122,6 +126,8 @@ impl Game {
             num_cleared_lines: 0u16,
             score: 0u64,
             pause_flag: false,
+            game_over_flag: false,
+            game_over_delay: GAME_OVER_DELAY,
             tile_size: 0f32,
             batch_empty_tile,
             vec_batch_player_piece,
@@ -164,20 +170,22 @@ impl Game {
                 // piece spawning
                 if player.spawn_piece_flag {
                     if player.spawn_delay <= 0 {
-                        // TODO: check if spawning collides with anything (if it overlaps board, self.game_over_flag = true; if it only collides with active tiles, wait)
-                        player.spawn_piece_flag = false;
-                        if self.vec_next_piece[player.player_num as usize].shape == Shapes::None {
-                            player.next_piece = piece::Piece::new(Shapes::I); // TODO: make random sometime
+                        // (blocked, blocked by some !active tile); if .1, game over sequence, if .0 and !.1, only blocked by other players, wait until they move, then carry on
+                        let blocked: (bool, bool) = self.board.attempt_piece_spawn(player.player_num, player.spawn_column, player.next_piece_shape);
+                        if blocked.0 {
+                            if blocked.1 {
+                                self.game_over_flag = true;
+                            }
+                            continue;
                         }
-                        self.board.vec_active_piece[player.player_num as usize] = piece::Piece::new(player.next_piece.shape);
-                        player.next_piece = piece::Piece::new(Shapes::I); // TODO: make random sometime
-                        self.vec_next_piece[player.player_num as usize] = NextPiece::new(player.next_piece.shape); // TODO: is there a way to make this not need Copy?
-                        self.board.vec_active_piece[player.player_num as usize].spawn(player.spawn_column);
                         self.board.playerify_piece(player.player_num);
                         player.spawn_delay = SPAWN_DELAY;
+                        player.spawn_piece_flag = false;
+                        player.next_piece_shape = Shapes::I; // TODO: make random sometime
+                        self.vec_next_piece[player.player_num as usize] = NextPiece::new(player.next_piece_shape);
                         player.redraw_next_piece_flag = true;
                     } else {
-                        player.spawn_delay -=1;
+                        player.spawn_delay -= 1;
                     }
                     continue;
                 }

@@ -53,6 +53,27 @@ impl Board {
         }
     }
 
+    // returns (bool, bool) based on (blocked, blocked by some !active tile)
+    pub fn attempt_piece_spawn(&mut self, player: u8, spawn_col: u8, spawn_piece_shape: Shapes) -> (bool, bool) {
+        let new_piece = Piece::new(spawn_piece_shape);
+        let spawn_positions = new_piece.spawn_pos(spawn_col);
+        let mut blocked_flag: bool = false;
+        for position in spawn_positions.iter().take(4) {
+            if !self.matrix[position.0 as usize][position.1 as usize].empty {
+                if !self.matrix[position.0 as usize][position.1 as usize].active {
+                    return (true, true);
+                }
+                blocked_flag = true;
+            }
+        }
+        if blocked_flag {
+            return (true, false);
+        }
+        self.vec_active_piece[player as usize] = new_piece;
+        self.vec_active_piece[player as usize].positions = spawn_positions;
+        (false, false)
+    }
+
     // returns (bool, bool) based on (if piece moved successfully, if (piece is locked && filled some line))
     // sets the shape of the piece to Shapes::None if it locks
     pub fn attempt_piece_movement(&mut self, movement: Movement, player: u8) -> (bool, bool) {
@@ -299,8 +320,7 @@ mod tests {
         let mut num_cleared_lines: u16 = 0;
         let mut board = Board::new(5, 20, 3);
         for player_0_place_count in 0..8 {
-            board.vec_active_piece[0] = Piece::new(Shapes::I);
-            board.vec_active_piece[0].spawn(2);
+            board.attempt_piece_spawn(0, 2, Shapes::I);
             for _ in 0..20 - player_0_place_count {
                 board.attempt_piece_movement(Movement::Down, 0);
             }
@@ -308,8 +328,7 @@ mod tests {
                 test = false;
             }
         }
-        board.vec_active_piece[0] = Piece::new(Shapes::I);
-        board.vec_active_piece[0].spawn(2);
+        board.attempt_piece_spawn(0, 2, Shapes::I);
         board.attempt_piece_movement(Movement::RotateCw, 0);
         board.attempt_piece_movement(Movement::Left, 0);
         board.attempt_piece_movement(Movement::Left, 0);
@@ -339,8 +358,7 @@ mod tests {
         // [0][0][0][0][-]
         // [0][0][0][0][-]
 
-        board.vec_active_piece[1] = Piece::new(Shapes::I);
-        board.vec_active_piece[1].spawn(2);
+        board.attempt_piece_spawn(1, 2, Shapes::I);
         board.attempt_piece_movement(Movement::RotateCw, 1);
         board.attempt_piece_movement(Movement::Right, 1);
         board.attempt_piece_movement(Movement::Right, 1);
@@ -348,8 +366,7 @@ mod tests {
             board.attempt_piece_movement(Movement::Down, 1);
         }
 
-        board.vec_active_piece[2] = Piece::new(Shapes::I);
-        board.vec_active_piece[2].spawn(2);
+        board.attempt_piece_spawn(2, 2, Shapes::I);
         board.attempt_piece_movement(Movement::RotateCw, 2);
         board.attempt_piece_movement(Movement::Right, 2);
         board.attempt_piece_movement(Movement::Right, 2);
@@ -376,23 +393,20 @@ mod tests {
         let mut score: u64 = 0;
         let mut num_cleared_lines: u16 = 0;
 
-        board.vec_active_piece[0] = Piece::new(Shapes::I);
-        board.vec_active_piece[0].spawn(2);
+        board.attempt_piece_spawn(0, 2, Shapes::I);
         board.attempt_piece_movement(Movement::RotateCw, 0);
         board.attempt_piece_movement(Movement::Left, 0);
         for _ in 0..19 {
             board.attempt_piece_movement(Movement::Down, 0);
         }
 
-        board.vec_active_piece[0] = Piece::new(Shapes::I);
-        board.vec_active_piece[0].spawn(2);
+        board.attempt_piece_spawn(0, 2, Shapes::I);
         board.attempt_piece_movement(Movement::RotateCw, 0);
         for _ in 0..19 {
             board.attempt_piece_movement(Movement::Down, 0);
         }
 
-        board.vec_active_piece[1] = Piece::new(Shapes::L);
-        board.vec_active_piece[1].spawn(2);
+        board.attempt_piece_spawn(1, 2, Shapes::L);
         board.attempt_piece_movement(Movement::RotateCcw, 1);
         board.attempt_piece_movement(Movement::Right, 1);
         for _ in 0..19 {
@@ -406,8 +420,7 @@ mod tests {
             score += returned_score as u64;
         }
 
-        board.vec_active_piece[2] = Piece::new(Shapes::L);
-        board.vec_active_piece[2].spawn(2);
+        board.attempt_piece_spawn(2, 2, Shapes::L);
         board.attempt_piece_movement(Movement::RotateCw, 2);
         board.attempt_piece_movement(Movement::Right, 2);
         board.attempt_piece_movement(Movement::Right, 2);
