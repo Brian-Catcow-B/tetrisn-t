@@ -58,7 +58,8 @@ impl Board {
     pub fn attempt_piece_movement(&mut self, movement: Movement, player: u8) -> (bool, bool) {
         let mut cant_move_flag = false;
         // determine if it can move
-        for position in self.vec_active_piece[player as usize].piece_pos(movement).iter().take(4) {
+        let new_positions = self.vec_active_piece[player as usize].piece_pos(movement);
+        for position in new_positions.iter().take(4) {
             // due to integer underflow (u8 board width and u8 board height), we must only check the positive side of x and y positions
             if position.0 >= self.height + BOARD_HEIGHT_BUFFER_U {
                 cant_move_flag = true;
@@ -100,15 +101,15 @@ impl Board {
 
         // move it
         self.emptify_piece(player);
-        self.vec_active_piece[player as usize].positions = self.vec_active_piece[player as usize].piece_pos(movement);
+        self.vec_active_piece[player as usize].positions = new_positions;
         self.playerify_piece(player);
 
         // update self.piece.rotation if it was a rotate
         if movement == Movement::RotateCw {
-            self.vec_active_piece[player as usize].rotation = (self.vec_active_piece[player as usize].rotation + 1) % 4;
+            self.vec_active_piece[player as usize].rotation = (self.vec_active_piece[player as usize].rotation + 1) % self.vec_active_piece[player as usize].num_rotations;
         }
         if movement == Movement::RotateCcw {
-            self.vec_active_piece[player as usize].rotation = (self.vec_active_piece[player as usize].rotation + 3) % 4;
+            self.vec_active_piece[player as usize].rotation = (self.vec_active_piece[player as usize].rotation + self.vec_active_piece[player as usize].num_rotations - 1) % self.vec_active_piece[player as usize].num_rotations;
         }
 
         (true, false)
