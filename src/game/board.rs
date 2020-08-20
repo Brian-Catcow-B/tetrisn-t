@@ -222,6 +222,13 @@ impl Board {
             };
         }
 
+        // emptify pieces here before clear lines so the tiles don't move with the line clear and then playerify them after
+        for player in 0..self.vec_active_piece.len() {
+            if self.vec_active_piece[player].shape != Shapes::None {
+                self.emptify_piece(player as u8);
+            }
+        }
+
         // it is very helpful that we sort self.vec_full_lines because then the lines that are waiting to be cleared are easy to find
         // (just iterate backwards from where we are in self.vec_full_lines because we are removing clearing_now_lines by iterating forward,
         // so any line being cleared now will have been cleared up to the offset we are at in self.vec_full_lines);
@@ -241,6 +248,13 @@ impl Board {
             while *index as isize - indices_destroyed as isize >= 0 && *index as isize - backwards_inc_row_index as isize - 1 >= 0 {
                 self.vec_full_lines[*index - backwards_inc_row_index - 1].row += 1;
                 backwards_inc_row_index += 1;
+            }
+        }
+
+        // playerify pieces
+        for player in 0..self.vec_active_piece.len() {
+            if self.vec_active_piece[player].shape != Shapes::None {
+                self.playerify_piece(player as u8);
             }
         }
 

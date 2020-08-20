@@ -77,7 +77,8 @@ pub struct Game {
 impl Game {
     pub fn new(ctx: &mut Context, num_players: u8, starting_level: u8, vec_keyboard_inputs: Vec<ControlScheme>) -> Game {
         // Load/create resources here: images, fonts, sounds, etc.
-        let board_width = 6 + 4 * num_players;
+        // let board_width = 6 + 4 * num_players;
+        let board_width = 4;
         let mut vec_players: Vec<Player> = Vec::with_capacity(num_players as usize);
         // spawn columns
         // first half, not including middle player if there's an odd number of players
@@ -166,10 +167,10 @@ impl Game {
                         // TODO: check if spawning collides with anything (if it overlaps board, self.game_over_flag = true; if it only collides with active tiles, wait)
                         player.spawn_piece_flag = false;
                         if self.vec_next_piece[player.player_num as usize].shape == Shapes::None {
-                            player.next_piece = piece::Piece::new(Shapes::T); // TODO: make random sometime
+                            player.next_piece = piece::Piece::new(Shapes::I); // TODO: make random sometime
                         }
                         self.board.vec_active_piece[player.player_num as usize] = piece::Piece::new(player.next_piece.shape);
-                        player.next_piece = piece::Piece::new(Shapes::Z); // TODO: make random sometime
+                        player.next_piece = piece::Piece::new(Shapes::I); // TODO: make random sometime
                         self.vec_next_piece[player.player_num as usize] = NextPiece::new(player.next_piece.shape); // TODO: is there a way to make this not need Copy?
                         self.board.vec_active_piece[player.player_num as usize].spawn(player.spawn_column);
                         self.board.playerify_piece(player.player_num);
