@@ -262,7 +262,7 @@ impl Game {
                 // DOWN
                 // down is interesting because every time the downwards position is false we have to check if it's running into the bottom or an inactive tile so we know if we should lock it
                 if player.input.keydown_down.1 || (player.input.keydown_down.0 && player.force_fall_countdown == 0) || player.fall_countdown == 0 {
-                    let caused_full_line_flag: bool = self.board.attempt_piece_movement(Movement::Down, player.player_num).1;
+                    let (moved_flag, caused_full_line_flag): (bool, bool) = self.board.attempt_piece_movement(Movement::Down, player.player_num);
                     // if the piece got locked, piece.shape gets set to Shapes::None, so set the spawn piece flag
                     if self.board.vec_active_piece[player.player_num as usize].shape == Shapes::None {
                         player.spawn_piece_flag = true;
@@ -271,8 +271,10 @@ impl Game {
                             player.spawn_delay += CLEAR_DELAY as i16;
                         }
                     }
-                    player.fall_countdown = if self.level < 30 {FALL_DELAY_VALUES[self.level as usize]} else {1};
-                    player.force_fall_countdown = FORCE_FALL_DELAY;
+                    if moved_flag {
+                        player.fall_countdown = if self.level < 30 {FALL_DELAY_VALUES[self.level as usize]} else {1};
+                        player.force_fall_countdown = FORCE_FALL_DELAY;
+                    }
                 } else if player.input.keydown_down.0 {
                     player.force_fall_countdown -= 1;
                     player.fall_countdown -= 1;
