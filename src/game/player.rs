@@ -1,6 +1,7 @@
 use ggez::event::KeyCode;
 use crate::inputs::{Input, ControlScheme};
-use crate::game::piece::{Piece, Shapes};
+use crate::game::piece::Shapes;
+use crate::game::{STARTING_HANG_FRAMES, FORCE_FALL_DELAY};
 
 pub const SPAWN_DELAY: i16 = 20i16;
 
@@ -13,6 +14,8 @@ pub struct Player {
     pub spawn_delay: i16,
     pub next_piece_shape: Shapes,
     pub redraw_next_piece_flag: bool,
+    pub fall_countdown: u8,
+    pub force_fall_countdown: u8,
 }
 
 impl Player {
@@ -26,6 +29,8 @@ impl Player {
             spawn_delay: SPAWN_DELAY,
             next_piece_shape: Shapes::J, // TODO: make random sometime
             redraw_next_piece_flag: true,
+            fall_countdown: STARTING_HANG_FRAMES,
+            force_fall_countdown: FORCE_FALL_DELAY,
         }
     }
 

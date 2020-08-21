@@ -42,6 +42,46 @@ const GAME_OVER_DELAY: i8 = 60i8;
 pub const NON_BOARD_SPACE_U: u8 = 5u8;
 const LITTLE_TEXT_SCALE: f32 = 30.0;
 
+// for each level (as the index), the number of frames it takes for a piece to move down one row (everything after 29 is also 1)
+const FALL_DELAY_VALUES: [u8; 30] = [
+    48,
+    43,
+    38,
+    33,
+    28,
+    23,
+    18,
+    13,
+    8,
+    6,
+    5,
+    5,
+    5,
+    4,
+    4,
+    4,
+    3,
+    3,
+    3,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    1,
+];
+
+// number of frames it takes before pieces start to fall at the beginning of the game
+pub const STARTING_HANG_FRAMES: u8 = 120;
+
+// number of frames between downward movements when holding down
+pub const FORCE_FALL_DELAY: u8 = 2;
+
 // this struct is for when the Menu struct returns what game options to start with
 pub struct GameOptions {
     pub num_players: u8,
@@ -175,14 +215,6 @@ impl Game {
             }
         } else {
             // GAME LOGIC
-            // Debug stuff...
-
-            // draws all the active players' tiles on the top row
-            // for player in 0..self.num_players {
-            //     self.board.matrix[player as usize][BOARD_HEIGHT_BUFFER_U] = Tile::new(false, true, player.player_num);
-            // }
-
-            // Update code...
             for player in self.vec_players.iter_mut() {
                 if !player.spawn_piece_flag && self.board.vec_active_piece[player.player_num as usize].shape == Shapes::None {
                     player.input.was_just_pressed_setfalse();
@@ -229,7 +261,7 @@ impl Game {
                 }
                 // DOWN
                 // down is interesting because every time the downwards position is false we have to check if it's running into the bottom or an inactive tile so we know if we should lock it
-                if player.input.keydown_down.1 {
+                if player.input.keydown_down.1 || (player.input.keydown_down.0 && player.force_fall_countdown == 0) || player.fall_countdown == 0 {
                     let caused_full_line_flag: bool = self.board.attempt_piece_movement(Movement::Down, player.player_num).1;
                     // if the piece got locked, piece.shape gets set to Shapes::None, so set the spawn piece flag
                     if self.board.vec_active_piece[player.player_num as usize].shape == Shapes::None {
@@ -239,18 +271,19 @@ impl Game {
                             player.spawn_delay += CLEAR_DELAY as i16;
                         }
                     }
+                    player.fall_countdown = if self.level < 30 {FALL_DELAY_VALUES[self.level as usize]} else {1};
+                    player.force_fall_countdown = FORCE_FALL_DELAY;
+                } else if player.input.keydown_down.0 {
+                    player.force_fall_countdown -= 1;
+                    player.fall_countdown -= 1;
+                } else {
+                    player.fall_countdown -= 1;
                 }
 
                 if player.input.keydown_start.1 {
                     self.pause_flag = true;
                     player.input.was_just_pressed_setfalse();
                 }
-
-                // debug player 0 inputs
-                // if player.player_num == 0 {
-                //     println!("inputs player {} before", player.player_num);
-                //     player.input._print_inputs();
-                // }
 
                 // update controls (always do after all player player input for each player)
                 player.input.was_just_pressed_setfalse();
