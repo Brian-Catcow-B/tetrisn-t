@@ -123,24 +123,23 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new(ctx: &mut Context, num_players: u8, starting_level: u8, vec_keyboard_inputs: Vec<ControlScheme>) -> Game {
+    pub fn new(ctx: &mut Context, game_options: &GameOptions) -> Game {
         // Load/create resources here: images, fonts, sounds, etc.
-        // let board_width = 6 + 4 * num_players;
-        let board_width = 6;
-        let mut vec_players: Vec<Player> = Vec::with_capacity(num_players as usize);
+        let board_width = 6 + 4 * game_options.num_players;
+        let mut vec_players: Vec<Player> = Vec::with_capacity(game_options.num_players as usize);
         // spawn columns
         // first half, not including middle player if there's an odd number of players
-        for player in 0..(num_players) / 2 {
-            vec_players.push(Player::new(player, vec_keyboard_inputs[player as usize], (player as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8 + 1));
+        for player in 0..(game_options.num_players) / 2 {
+            vec_players.push(Player::new(player, game_options.vec_keyboard_inputs[player as usize], (player as f32 * (board_width as f32 / game_options.num_players as f32) + board_width as f32 / (2.0 * game_options.num_players as f32)) as u8 + 1));
         }
         // middle player, for an odd number of players
-        if num_players % 2 == 1 {
-            let player = num_players / 2;
-            vec_players.push(Player::new(player, vec_keyboard_inputs[player as usize], board_width / 2));
+        if game_options.num_players % 2 == 1 {
+            let player = game_options.num_players / 2;
+            vec_players.push(Player::new(player, game_options.vec_keyboard_inputs[player as usize], board_width / 2));
         }
         // second half, not including the middle player if there's an odd number of players
-        for player in (num_players + 1) / 2..num_players {
-            vec_players.push(Player::new(player, vec_keyboard_inputs[player as usize], board_width - 1 - ((num_players - 1 - player) as f32 * (board_width as f32 / num_players as f32) + board_width as f32 / (2.0 * num_players as f32)) as u8));
+        for player in (game_options.num_players + 1) / 2..game_options.num_players {
+            vec_players.push(Player::new(player, game_options.vec_keyboard_inputs[player as usize], board_width - 1 - ((game_options.num_players - 1 - player) as f32 * (board_width as f32 / game_options.num_players as f32) + board_width as f32 / (2.0 * game_options.num_players as f32)) as u8));
         }
         let mut batch_empty_tile = spritebatch::SpriteBatch::new(TileGraphic::new_empty(ctx).image);
         // the emtpy tile batch will be constant once the game starts with the player tile batches drawing on top of it, so just set that up here
@@ -151,10 +150,10 @@ impl Game {
                 batch_empty_tile.add(empty_tile);
             }
         }
-        let mut vec_next_piece: Vec<NextPiece> = Vec::with_capacity(num_players as usize);
-        let mut vec_batch_player_piece: Vec<spritebatch::SpriteBatch> = Vec::with_capacity(num_players as usize);
-        let mut vec_batch_next_piece: Vec<spritebatch::SpriteBatch> = Vec::with_capacity(num_players as usize);
-        for player in 0..num_players {
+        let mut vec_next_piece: Vec<NextPiece> = Vec::with_capacity(game_options.num_players as usize);
+        let mut vec_batch_player_piece: Vec<spritebatch::SpriteBatch> = Vec::with_capacity(game_options.num_players as usize);
+        let mut vec_batch_next_piece: Vec<spritebatch::SpriteBatch> = Vec::with_capacity(game_options.num_players as usize);
+        for player in 0..game_options.num_players {
             vec_next_piece.push(NextPiece::new(Shapes::None));
             vec_batch_player_piece.push(spritebatch::SpriteBatch::new(TileGraphic::new_player(ctx, player).image));
             vec_batch_next_piece.push(spritebatch::SpriteBatch::new(TileGraphic::new_player(ctx, player).image));
@@ -164,13 +163,13 @@ impl Game {
         let pause_text = Text::new(TextFragment::new("PAUSED\n\nDown + RotateCw + RotateCcw then Start to quit").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
         let game_over_text = Text::new(TextFragment::new("Game Over!").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE * 2.0)));
 
-        println!("[+] starting game with {} players and at level {}", num_players, starting_level);
+        println!("[+] starting game with {} players and at level {}", game_options.num_players, game_options.starting_level);
         Self {
-            board: Board::new(board_width, BOARD_HEIGHT, num_players),
-            num_players,
+            board: Board::new(board_width, BOARD_HEIGHT, game_options.num_players),
+            num_players: game_options.num_players,
             vec_players,
             vec_next_piece,
-            level: starting_level,
+            level: game_options.starting_level,
             num_cleared_lines: 0u16,
             score: 0u64,
             pause_flag: false,

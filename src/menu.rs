@@ -112,7 +112,21 @@ struct InputConfigMenu {
 }
 
 impl InputConfigMenu {
-    fn new(window_dimensions: (f32, f32)) -> Self {
+    fn new(window_dimensions: (f32, f32), last_used_controls: &Vec<ControlScheme>) -> Self {
+        // last used controls setup
+        let mut vec_keyboard_controls: Vec<(u8, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)> = Vec::with_capacity(last_used_controls.len());
+        for (player, controls) in last_used_controls.iter().enumerate() {
+            vec_keyboard_controls.push(
+                (player as u8,
+                Some(controls.left),
+                Some(controls.right),
+                Some(controls.down),
+                Some(controls.rotate_cw),
+                Some(controls.rotate_ccw),)
+            );
+        }
+
+        // text
         let mut player_num_text = Text::new(TextFragment::new("Player Number: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
         player_num_text.add(TextFragment::new("1").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
         let mut left_text = Text::new(TextFragment::new("Left:     ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
@@ -131,14 +145,9 @@ impl InputConfigMenu {
             sub_selection: 0,
             sub_selection_flag: false,
             most_recently_pressed_key: None,
-            vec_keyboard_controls: vec![],
-            back_text: Text::new(TextFragment {
-                text: "Back".to_string(),
-                color: Some(SELECT_GREEN),
-                font: Some(graphics::Font::default()),
-                scale: Some(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
-                ..Default::default()
-            }),
+            vec_keyboard_controls,
+            // text
+            back_text: Text::new(TextFragment::new("Back").color(SELECT_GREEN).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN))),
             player_num_text,
             // subtext
             uninitialized_text: Text::new(TextFragment::new("No Controls\nPress Space/Enter to edit").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
@@ -165,14 +174,14 @@ pub struct Menu {
 }
 
 impl Menu {
-    pub fn new(ctx: &mut Context) -> Self {
+    pub fn new(ctx: &mut Context, last_used_controls: &Vec<ControlScheme>) -> Self {
         let window_dimensions = graphics::size(ctx);
         Self {
             input: Input::new(),
             window_dimensions,
             state: MenuState::Main,
             main_menu: MainMenu::new(window_dimensions),
-            input_config_menu: InputConfigMenu::new(window_dimensions),
+            input_config_menu: InputConfigMenu::new(window_dimensions, last_used_controls),
         }
     }
 
