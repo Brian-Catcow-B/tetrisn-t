@@ -264,11 +264,11 @@ impl Board {
             indices_destroyed += 1;
             // now is when we step backwards through the self.vec_full_lines vector,
             // incrementing the row value of each element so when it gets cleared it lines up correctly
-            let mut backwards_inc_row_index = 0;
+            let mut inc_row_backwards_index = 0;
             // help this feels like magic
-            while *index as isize - indices_destroyed as isize >= 0 && *index as isize - backwards_inc_row_index as isize - 1 >= 0 {
-                self.vec_full_lines[*index - backwards_inc_row_index - 1].row += 1;
-                backwards_inc_row_index += 1;
+            while *index as isize - indices_destroyed as isize >= 0 && *index as isize - indices_destroyed as isize - inc_row_backwards_index as isize >= 0 {
+                self.vec_full_lines[*index - indices_destroyed - inc_row_backwards_index].row += 1;
+                inc_row_backwards_index += 1;
             }
         }
 
@@ -360,7 +360,7 @@ mod tests {
         let mut score: u64 = 0;
         let mut num_cleared_lines: u16 = 0;
 
-        for x in 0..=2 {
+        for x in 0..board_width - 2 {
             for y in (board_height + BOARD_HEIGHT_BUFFER_U - 4)..board_height + BOARD_HEIGHT_BUFFER_U {
                 board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8);
             }
@@ -373,7 +373,7 @@ mod tests {
             board.attempt_piece_movement(Movement::Down, 1);
         }
 
-        // this is so that one piece locks in 1 frame before the other
+        // run 1 frame of clear lines between creating the FullLines
         let (returned_lines, returned_score) = board.attempt_clear_lines(0);
         if returned_lines > 0 {
             num_cleared_lines += returned_lines as u16;
@@ -389,7 +389,7 @@ mod tests {
         }
 
         // now clear and see what happens
-        for _ in 0..CLEAR_DELAY + 1 {
+        for _ in 0..=CLEAR_DELAY {
             let (returned_lines, returned_score) = board.attempt_clear_lines(0);
             if returned_lines > 0 {
                 num_cleared_lines += returned_lines as u16;
@@ -398,6 +398,51 @@ mod tests {
         }
 
         assert_eq!((num_cleared_lines, score), (4, (1 * SCORE_SINGLE_BASE as u32 * (1) + 1 * SCORE_TRIPLE_BASE as u32 * (1)) as u64));
-        println!("passed scoring a single as one player and then a triple as another player one frame after");
+        println!("Passed scoring a single as one player and then a triple as another player one frame after");
+
+        // now clear 2 tetrises, the second one 1 frame after the other, which can also break things
+        let mut score: u64 = 0;
+        let mut num_cleared_lines: u16 = 0;
+
+        for x in 0..board_width - 1 {
+            for y in (board_height + BOARD_HEIGHT_BUFFER_U - 8)..board_height + BOARD_HEIGHT_BUFFER_U {
+                board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8);
+            }
+        }
+
+        board.attempt_piece_spawn(1, 2, Shapes::I);
+        board.attempt_piece_movement(Movement::RotateCw, 1);
+        board.attempt_piece_movement(Movement::Right, 1);
+        board.attempt_piece_movement(Movement::Right, 1);
+        for _ in 0..19 {
+            board.attempt_piece_movement(Movement::Down, 1);
+        }
+
+        // run 1 frame of clear lines between creating the FullLines
+        let (returned_lines, returned_score) = board.attempt_clear_lines(0);
+        if returned_lines > 0 {
+            num_cleared_lines += returned_lines as u16;
+            score += returned_score as u64;
+        }
+
+        board.attempt_piece_spawn(2, 2, Shapes::I);
+        board.attempt_piece_movement(Movement::RotateCw, 2);
+        board.attempt_piece_movement(Movement::Right, 2);
+        board.attempt_piece_movement(Movement::Right, 2);
+        for _ in 0..15 {
+            board.attempt_piece_movement(Movement::Down, 2);
+        }
+
+        // now to clear 2 Tetrises one frame apart and see what happens
+        for _ in 0..=CLEAR_DELAY {
+            let (returned_lines, returned_score) = board.attempt_clear_lines(0);
+            if returned_lines > 0 {
+                num_cleared_lines += returned_lines as u16;
+                score += returned_score as u64;
+            }
+        }
+
+        assert_eq!((num_cleared_lines, score), (8, (2 * SCORE_QUADRUPLE_BASE as u32 * (1)) as u64));
+        println!("Passed scoring 2 tetrises on the same frame");
     }
 }
