@@ -3,7 +3,6 @@ use crate::game::board::BOARD_HEIGHT_BUFFER_U;
 #[repr(u8)]
 #[derive(PartialEq, Eq, Copy, Clone)]
 pub enum Shapes {
-    None,
     I,
     O,
     T,
@@ -11,6 +10,22 @@ pub enum Shapes {
     S,
     L,
     Z,
+    None,
+}
+
+impl Shapes {
+    pub fn from_u8(value: u8) -> Shapes {
+        match value {
+            0 => Shapes::I,
+            1 => Shapes::O,
+            2 => Shapes::T,
+            3 => Shapes::J,
+            4 => Shapes::S,
+            5 => Shapes::L,
+            6 => Shapes::Z,
+            _ => panic!("Unknown Shapes value: {}", value),
+        }
+    }
 }
 
 #[repr(u8)]

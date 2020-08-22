@@ -1,4 +1,5 @@
 use ggez::event::KeyCode;
+use rand::random;
 use crate::inputs::{Input, ControlScheme};
 use crate::game::piece::Shapes;
 use crate::game::{STARTING_HANG_FRAMES, FORCE_FALL_DELAY};
@@ -27,7 +28,7 @@ impl Player {
             spawn_piece_flag: true,
             spawn_column,
             spawn_delay: SPAWN_DELAY,
-            next_piece_shape: Shapes::J, // TODO: make random sometime
+            next_piece_shape: Shapes::from_u8(random::<u8>() % 7),
             redraw_next_piece_flag: true,
             fall_countdown: STARTING_HANG_FRAMES,
             force_fall_countdown: FORCE_FALL_DELAY,

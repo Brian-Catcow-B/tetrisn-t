@@ -1,12 +1,10 @@
-// use ggez::{Context, GameResult};
 use ggez::Context;
-// use ggez::event::EventHandler;
 use ggez::event::{Axis, Button, GamepadId, KeyCode, KeyMods};
 use ggez::graphics::{self, DrawParam, spritebatch};
 use ggez::nalgebra::{Point2, Vector2};
-// use na::Point2;
-// use na::Vector2;
 use ggez::graphics::{Align, Color, Scale, Text, TextFragment};
+
+use rand::random;
 
 use crate::control::ProgramState;
 
@@ -230,13 +228,22 @@ impl Game {
                                 self.game_over_flag = true;
                             }
                             continue;
+                        } else {
+                            self.board.playerify_piece(player.player_num);
+                            player.fall_countdown = if self.level < 30 {FALL_DELAY_VALUES[self.level as usize]} else {1};
+                            player.force_fall_countdown = FORCE_FALL_DELAY;
+                            player.spawn_delay = SPAWN_DELAY;
+                            player.spawn_piece_flag = false;
+                            // set next piece to random; reroll once if it chooses the same piece as it just was
+                            let random_shape = Shapes::from_u8(random::<u8>() % 7);
+                            if self.board.vec_active_piece[player.player_num as usize].shape != random_shape {
+                                player.next_piece_shape = random_shape;
+                            } else {
+                                player.next_piece_shape = Shapes::from_u8(random::<u8>() % 7);
+                            }
+                            self.vec_next_piece[player.player_num as usize] = NextPiece::new(player.next_piece_shape);
+                            player.redraw_next_piece_flag = true;
                         }
-                        self.board.playerify_piece(player.player_num);
-                        player.spawn_delay = SPAWN_DELAY;
-                        player.spawn_piece_flag = false;
-                        player.next_piece_shape = Shapes::I; // TODO: make random sometime
-                        self.vec_next_piece[player.player_num as usize] = NextPiece::new(player.next_piece_shape);
-                        player.redraw_next_piece_flag = true;
                     } else {
                         player.spawn_delay -= 1;
                     }
