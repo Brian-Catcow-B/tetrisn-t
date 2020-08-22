@@ -315,48 +315,18 @@ mod tests {
 
     #[test]
     fn clearing_and_scoring() {
-        let mut test: bool = true;
+        let board_width = 5;
+        let board_height = 20;
+        let num_players = 3;
         let mut score: u64 = 0;
         let mut num_cleared_lines: u16 = 0;
-        let mut board = Board::new(5, 20, 3);
-        for player_0_place_count in 0..8 {
-            board.attempt_piece_spawn(0, 2, Shapes::I);
-            for _ in 0..20 - player_0_place_count {
-                board.attempt_piece_movement(Movement::Down, 0);
-            }
-            if board.matrix[19 + BOARD_HEIGHT_BUFFER_U as usize - player_0_place_count][0].player == 0xffu8 {
-                test = false;
-            }
-        }
-        board.attempt_piece_spawn(0, 2, Shapes::I);
-        board.attempt_piece_movement(Movement::RotateCw, 0);
-        board.attempt_piece_movement(Movement::Left, 0);
-        board.attempt_piece_movement(Movement::Left, 0);
-        for _ in 0..11 {
-            board.attempt_piece_movement(Movement::Down, 0);
-        }
+        let mut board = Board::new(board_width, board_height, num_players);
 
-        // now it should be like this
-        // [-][-][-][-][-]
-        // [-][-][-][-][-]
-        // [-][-][-][-][-]
-        // [-][-][-][-][-]
-        // [-][-][-][-][-]
-        // [-][-][-][-][-]
-        // [-][-][-][-][-]
-        // [-][-][-][-][-]
-        // [0][-][-][-][-]
-        // [0][-][-][-][-]
-        // [0][-][-][-][-]
-        // [0][-][-][-][-]
-        // [0][0][0][0][-]
-        // [0][0][0][0][-]
-        // [0][0][0][0][-]
-        // [0][0][0][0][-]
-        // [0][0][0][0][-]
-        // [0][0][0][0][-]
-        // [0][0][0][0][-]
-        // [0][0][0][0][-]
+        for x in 0..4 {
+            for y in (board_height + BOARD_HEIGHT_BUFFER_U - 8)..board_height + BOARD_HEIGHT_BUFFER_U {
+                board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8);
+            }
+        }
 
         board.attempt_piece_spawn(1, 2, Shapes::I);
         board.attempt_piece_movement(Movement::RotateCw, 1);
@@ -383,27 +353,17 @@ mod tests {
             }
         }
 
-        if board.matrix[16 + BOARD_HEIGHT_BUFFER_U as usize][0].empty {
-            test = false;
-        }
+        assert_eq!((num_cleared_lines, score), (8, (2 * SCORE_QUADRUPLE_BASE as u32 * (1)) as u64));
+        println!("Passed scoring 2 tetrises on the same frame");
 
-        assert_eq!((num_cleared_lines, score, test), (8, (2 * SCORE_QUADRUPLE_BASE as u32 * (1)) as u64, true));
-
-        // now try with some L's because that has been known to break it
+        // now try with some L's because that can break it
         let mut score: u64 = 0;
         let mut num_cleared_lines: u16 = 0;
 
-        board.attempt_piece_spawn(0, 2, Shapes::I);
-        board.attempt_piece_movement(Movement::RotateCw, 0);
-        board.attempt_piece_movement(Movement::Left, 0);
-        for _ in 0..19 {
-            board.attempt_piece_movement(Movement::Down, 0);
-        }
-
-        board.attempt_piece_spawn(0, 2, Shapes::I);
-        board.attempt_piece_movement(Movement::RotateCw, 0);
-        for _ in 0..19 {
-            board.attempt_piece_movement(Movement::Down, 0);
+        for x in 0..=2 {
+            for y in (board_height + BOARD_HEIGHT_BUFFER_U - 4)..board_height + BOARD_HEIGHT_BUFFER_U {
+                board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8);
+            }
         }
 
         board.attempt_piece_spawn(1, 2, Shapes::L);
@@ -438,5 +398,6 @@ mod tests {
         }
 
         assert_eq!((num_cleared_lines, score), (4, (1 * SCORE_SINGLE_BASE as u32 * (1) + 1 * SCORE_TRIPLE_BASE as u32 * (1)) as u64));
+        println!("passed scoring a single as one player and then a triple as another player one frame after");
     }
 }
