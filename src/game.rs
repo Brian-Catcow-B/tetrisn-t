@@ -77,6 +77,11 @@ const FALL_DELAY_VALUES: [u8; 30] = [
 // number of frames between downward movements when holding down
 pub const FORCE_FALL_DELAY: u8 = 2;
 
+// first das threshold (eg left is pressed; how many frames to until the piece auto-shifts left?)
+const DAS_THRESHOLD_BIG: u8 = 16;
+// second das threshold (eg left is pressed and it auto shifts once; how many frames until it auto-shifts again?)
+const DAS_THRESHOLD_LITTLE: u8 = 5;
+
 // this struct is for when the Menu struct returns what game options to start with
 pub struct GameOptions {
     pub num_players: u8,
@@ -254,19 +259,49 @@ impl Game {
                 }
 
                 // piece movement
+                // LEFT / RIGHT
+                if player.input.keydown_left.1 {
+                    // if it didn't move on the initial input, set waiting_to_shift to true
+                    player.waiting_to_shift = !self.board.attempt_piece_movement(Movement::Left, player.player_num).0;
+                    player.das_countdown = DAS_THRESHOLD_BIG;
+                }
+                if player.input.keydown_right.1 {
+                    // if it didn't move on the initial input, set waiting_to_shift to true
+                    player.waiting_to_shift = !self.board.attempt_piece_movement(Movement::Right, player.player_num).0;
+                    player.das_countdown = DAS_THRESHOLD_BIG;
+                }
+                if player.input.keydown_left.0 && !player.input.keydown_left.1 {
+                    if player.das_countdown > 0 {
+                        player.das_countdown -= 1;
+                    }
+                    if player.das_countdown == 0 || player.waiting_to_shift {
+                        if self.board.attempt_piece_movement(Movement::Left, player.player_num).0 {
+                            player.das_countdown = std::cmp::max(DAS_THRESHOLD_LITTLE, player.das_countdown);
+                            player.waiting_to_shift = false;
+                        } else {
+                            player.waiting_to_shift = true;
+                        };
+                    }
+                }
+                if player.input.keydown_right.0 && !player.input.keydown_right.1 {
+                    if player.das_countdown > 0 {
+                        player.das_countdown -= 1;
+                    }
+                    if player.das_countdown == 0 || player.waiting_to_shift {
+                        if self.board.attempt_piece_movement(Movement::Right, player.player_num).0 {
+                            player.das_countdown = std::cmp::max(DAS_THRESHOLD_LITTLE, player.das_countdown);
+                            player.waiting_to_shift = false;
+                        } else {
+                            player.waiting_to_shift = true;
+                        };
+                    }
+                }
                 // CW / CCW
                 if player.input.keydown_rotate_cw.1 {
                     self.board.attempt_piece_movement(Movement::RotateCw, player.player_num);
                 }
                 if player.input.keydown_rotate_ccw.1 {
                     self.board.attempt_piece_movement(Movement::RotateCcw, player.player_num);
-                }
-                // LEFT / RIGHT
-                if player.input.keydown_left.1 {
-                    self.board.attempt_piece_movement(Movement::Left, player.player_num);
-                }
-                if player.input.keydown_right.1 {
-                    self.board.attempt_piece_movement(Movement::Right, player.player_num);
                 }
                 // DOWN
                 // down is interesting because every time the downwards position is false we have to check if it's running into the bottom or an inactive tile so we know if we should lock it
