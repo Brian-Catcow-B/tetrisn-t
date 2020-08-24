@@ -102,6 +102,7 @@ pub struct Game {
     vec_players: Vec<Player>,
     vec_next_piece: Vec<NextPiece>,
     level: u8,
+    starting_level: u8,
     num_cleared_lines: u16,
     score: u64,
     pause_flag: bool,
@@ -112,7 +113,7 @@ pub struct Game {
     batch_empty_tile: spritebatch::SpriteBatch,
     vec_batch_player_piece: Vec<spritebatch::SpriteBatch>,
     vec_batch_next_piece: Vec<spritebatch::SpriteBatch>,
-    score_text: Text,
+    game_info_text: Text,
     pause_text: Text,
     game_over_text: Text,
 }
@@ -153,8 +154,12 @@ impl Game {
             vec_batch_player_piece.push(spritebatch::SpriteBatch::new(TileGraphic::new_player(ctx, player).image));
             vec_batch_next_piece.push(spritebatch::SpriteBatch::new(TileGraphic::new_player(ctx, player).image));
         }
-        let mut score_text = Text::new(TextFragment::new("Score: ").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
-        score_text.add(TextFragment::new("0").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
+        let mut game_info_text = Text::new(TextFragment::new("Lines: ").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
+        game_info_text.add(TextFragment::new("000").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
+        game_info_text.add(TextFragment::new("   Score: ").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
+        game_info_text.add(TextFragment::new("0000000").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
+        game_info_text.add(TextFragment::new("   Level: ").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
+        game_info_text.add(TextFragment::new(format!("{:02}", game_options.starting_level)).color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
         let pause_text = Text::new(TextFragment::new("PAUSED\n\nDown + RotateCw + RotateCcw then Start to quit").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
         let game_over_text = Text::new(TextFragment::new("Game Over!").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE * 2.0)));
 
@@ -165,6 +170,7 @@ impl Game {
             vec_players,
             vec_next_piece,
             level: game_options.starting_level,
+            starting_level: game_options.starting_level,
             num_cleared_lines: 0u16,
             score: 0u64,
             pause_flag: false,
@@ -174,7 +180,7 @@ impl Game {
             batch_empty_tile,
             vec_batch_player_piece,
             vec_batch_next_piece,
-            score_text,
+            game_info_text,
             pause_text,
             game_over_text,
         }
@@ -298,8 +304,19 @@ impl Game {
             let (returned_lines, returned_score) = self.board.attempt_clear_lines(self.level);
             if returned_lines > 0 {
                 self.num_cleared_lines += returned_lines as u16;
+                self.game_info_text.fragments_mut()[1].text = format!("{:03}", self.num_cleared_lines);
                 self.score += returned_score as u64;
-                self.score_text.fragments_mut()[1].text = format!("{}", self.score);
+                self.game_info_text.fragments_mut()[3].text = format!("{:07}", self.score);
+                let first_level_up_lines_amount: u16 = (self.starting_level as u16 + 1) * 10;
+                let not_first_level_up_lines_amount: u16 = 10;
+                if self.level == self.starting_level {
+                    if self.num_cleared_lines >= first_level_up_lines_amount {
+                        self.level += 1;
+                    }
+                } else if self.num_cleared_lines >= first_level_up_lines_amount + (self.level as u16 - self.starting_level as u16) * not_first_level_up_lines_amount {
+                    self.level += 1;
+                }
+                self.game_info_text.fragments_mut()[5].text = format!("{:02}", self.level);
                 println!("[+] lines: {}; score: {}", self.num_cleared_lines, self.score);
             }
         }
@@ -344,7 +361,7 @@ impl Game {
         if self.game_over_flag {
             // DRAW GAME OVER
             self.draw_text(ctx, &self.game_over_text, 0.4, (window_width, window_height));
-            self.draw_text(ctx, &self.score_text, 0.55, (window_width, window_height));
+            self.draw_text(ctx, &self.game_info_text, 0.55, (window_width, window_height));
         } else if self.pause_flag {
             // DRAW PAUSE
             self.draw_text(ctx, &self.pause_text, 0.4, (window_width, window_height));
@@ -399,7 +416,7 @@ impl Game {
                     .scale(Vector2::new(scaled_tile_size, scaled_tile_size))).unwrap();
             }
             // score text
-            self.draw_text(ctx, &self.score_text, 0.05, (window_width, window_height));
+            self.draw_text(ctx, &self.game_info_text, 0.05, (window_width, window_height));
 
             // clear player sprite batches
             for player in 0..self.num_players {
