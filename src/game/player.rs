@@ -2,7 +2,7 @@ use ggez::event::KeyCode;
 use rand::random;
 use crate::inputs::{Input, ControlScheme};
 use crate::game::piece::Shapes;
-use crate::game::{STARTING_HANG_FRAMES, FORCE_FALL_DELAY};
+use crate::game::FORCE_FALL_DELAY;
 
 pub const SPAWN_DELAY: i16 = 20i16;
 
@@ -30,7 +30,7 @@ impl Player {
             spawn_delay: SPAWN_DELAY,
             next_piece_shape: Shapes::from_u8(random::<u8>() % 7),
             redraw_next_piece_flag: true,
-            fall_countdown: STARTING_HANG_FRAMES,
+            fall_countdown: 0,
             force_fall_countdown: FORCE_FALL_DELAY,
         }
     }

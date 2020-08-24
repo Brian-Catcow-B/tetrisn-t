@@ -5,7 +5,6 @@ use ggez::graphics;
 
 use crate::menu::Menu;
 use crate::game::{Game, GameOptions};
-use crate::inputs::ControlScheme;
 
 #[repr(u8)]
 #[derive(PartialEq, Eq, Copy, Clone)]
@@ -19,33 +18,25 @@ pub struct Control {
     menu: Option<Menu>,
     game: Option<Game>,
     game_options: Option<GameOptions>,
-    last_used_controls: Vec<ControlScheme>,
 }
 
 impl Control {
     pub fn new(ctx: &mut Context) -> Control {
         Self {
             state: ProgramState::Menu,
-            menu: Some(Menu::new(ctx, &vec![])),
+            menu: Some(Menu::new(ctx, &None)),
             game: None,
             game_options: None,
-            last_used_controls: vec![],
         }
     }
 
     pub fn change_state(&mut self, ctx: &mut Context, new_state: ProgramState) {
         self.state = match new_state {
             ProgramState::Menu => {
-                self.menu = Some(Menu::new(ctx, &self.last_used_controls));
+                self.menu = Some(Menu::new(ctx, &self.game_options));
                 ProgramState::Menu
             },
             ProgramState::Game => {
-                // store the controls in self so that it's around for the lifetime of the program, updated each time the state switches from Menu to Game if changed
-                if !self.game_options.as_ref().expect("[!] attempted to start Game with no GameOptions").vec_keyboard_inputs.is_empty() {
-                    for control_scheme in self.game_options.as_ref().expect("[!] attempted to start Game with no GameOptions").vec_keyboard_inputs.iter() {
-                        self.last_used_controls.push(*control_scheme);
-                    }
-                }
                 self.game = Some(Game::new(ctx,
                     self.game_options.as_ref().expect("[!] attempted to start Game with no GameOptions"),
                 ));

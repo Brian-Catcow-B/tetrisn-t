@@ -2,7 +2,7 @@ use ggez::Context;
 use ggez::event::{Axis, Button, GamepadId, KeyCode, KeyMods};
 use ggez::graphics::{self, DrawParam, spritebatch};
 use ggez::nalgebra::{Point2, Vector2};
-use ggez::graphics::{Align, Color, Scale, Text, TextFragment};
+use ggez::graphics::{Scale, Text, TextFragment};
 
 use rand::random;
 
@@ -73,9 +73,6 @@ const FALL_DELAY_VALUES: [u8; 30] = [
     2,
     1,
 ];
-
-// number of frames it takes before pieces start to fall at the beginning of the game
-pub const STARTING_HANG_FRAMES: u8 = 120;
 
 // number of frames between downward movements when holding down
 pub const FORCE_FALL_DELAY: u8 = 2;
