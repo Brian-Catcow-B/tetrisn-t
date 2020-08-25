@@ -37,7 +37,7 @@ pub enum Movement {
     Down,
     RotateCw,
     RotateCcw,
-    // Up, // implemented where Board::clear_line() is called (in main.rs) to fix a weird case; TODO: move the Piece class to be part of the Board class
+    // Up,
 }
 
 pub struct Piece {

@@ -78,7 +78,7 @@ const FALL_DELAY_VALUES: [u8; 30] = [
 pub const FORCE_FALL_DELAY: u8 = 2;
 
 // first das threshold (eg left is pressed; how many frames to until the piece auto-shifts left?)
-const DAS_THRESHOLD_BIG: u8 = 16;
+const DAS_THRESHOLD_BIG: u8 = 12;
 // second das threshold (eg left is pressed and it auto shifts once; how many frames until it auto-shifts again?)
 const DAS_THRESHOLD_LITTLE: u8 = 5;
 
@@ -361,9 +361,7 @@ impl Game {
 
     pub fn key_down_event(
         &mut self,
-        // _ctx: &mut Context,
         keycode: KeyCode,
-        // _keymod: KeyMods,
         repeat: bool,
     ) {
         if !repeat {
@@ -375,11 +373,8 @@ impl Game {
 
     pub fn key_up_event(
         &mut self,
-        // _ctx: &mut Context,
         keycode: KeyCode,
-        // _keymod: KeyMods
     ) {
-        // println!("Key released: {:?}, modifier {:?}", keycode, _keymod);
         for player in self.vec_players.iter_mut() {
             player.update_input_keyup(keycode);
         }
