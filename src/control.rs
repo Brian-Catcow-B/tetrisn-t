@@ -1,6 +1,6 @@
 use ggez::{Context, GameResult};
 use ggez::event::EventHandler;
-use ggez::event::{Axis, Button, GamepadId, KeyCode, KeyMods};
+use ggez::event::{KeyCode, KeyMods};
 use ggez::graphics;
 
 use crate::menu::Menu;
@@ -24,7 +24,7 @@ impl Control {
     pub fn new(ctx: &mut Context) -> Control {
         Self {
             state: ProgramState::Menu,
-            menu: Some(Menu::new(ctx)),
+            menu: Some(Menu::new(ctx, &None)),
             game: None,
             game_options: None,
         }
@@ -33,19 +33,12 @@ impl Control {
     pub fn change_state(&mut self, ctx: &mut Context, new_state: ProgramState) {
         self.state = match new_state {
             ProgramState::Menu => {
-                self.menu = Some(Menu::new(ctx));
+                self.menu = Some(Menu::new(ctx, &self.game_options));
                 ProgramState::Menu
             },
             ProgramState::Game => {
-                // TODO: is there a way to not manually copy this? I implemented Copy and Clone to the input::ControlScheme struct, but it doesn't work on a vector of them
-                let mut vec_keyboard_inputs: Vec<crate::inputs::ControlScheme> = Vec::with_capacity(self.game_options.as_ref().expect("[!] attempted to start Game with no GameOptions").vec_keyboard_inputs.len());
-                for control_scheme in self.game_options.as_ref().expect("[!] attempted to start Game with no GameOptions").vec_keyboard_inputs.iter() {
-                    vec_keyboard_inputs.push(*control_scheme);
-                }
                 self.game = Some(Game::new(ctx,
-                    self.game_options.as_ref().expect("[!] attempted to start Game with no GameOptions").num_players,
-                    self.game_options.as_ref().expect("[!] attempted to start Game with no GameOptions").starting_level,
-                    vec_keyboard_inputs,
+                    self.game_options.as_ref().expect("[!] attempted to start Game with no GameOptions"),
                 ));
                 ProgramState::Game
             },

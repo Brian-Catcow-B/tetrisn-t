@@ -52,15 +52,15 @@ struct MainMenu {
 
 // for MenuState::Main
 impl MainMenu {
-    fn new(window_dimensions: (f32, f32)) -> Self {
+    fn new(window_dimensions: (f32, f32), num_players: u8, starting_level: u8) -> Self {
         let mut num_players_text = Text::new(TextFragment::new("Number of Players: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
-        num_players_text.add(TextFragment::new("1").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
+        num_players_text.add(TextFragment::new(format!("{}", num_players)).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
         let mut starting_level_text = Text::new(TextFragment::new("Starting Level: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
-        starting_level_text.add(TextFragment::new("0").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
+        starting_level_text.add(TextFragment::new(format!("{}", starting_level)).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
         Self {
             selection: MainMenuOption::Start as u8,
-            num_players: 1,
-            starting_level: 0,
+            num_players,
+            starting_level,
             not_enough_controls_flag: false,
             start_text: Text::new(TextFragment::new("Start").color(SELECT_GREEN).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN))),
             not_enough_controls_text: Text::new(TextFragment::new("[!] Not enough controls setup to start").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
@@ -112,33 +112,36 @@ struct InputConfigMenu {
 }
 
 impl InputConfigMenu {
-    fn new(window_dimensions: (f32, f32)) -> Self {
+    fn new(window_dimensions: (f32, f32), last_used_keyboard_controls: Vec<(u8, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>) -> Self {
         let mut player_num_text = Text::new(TextFragment::new("Player Number: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
         player_num_text.add(TextFragment::new("1").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
         let mut left_text = Text::new(TextFragment::new("Left:     ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        left_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
         let mut right_text = Text::new(TextFragment::new("Right:    ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        right_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
         let mut down_text = Text::new(TextFragment::new("Down:     ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        down_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
         let mut rotate_cw_text = Text::new(TextFragment::new("RotateCw:  ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        rotate_cw_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
         let mut rotate_ccw_text = Text::new(TextFragment::new("RotateCcw:  ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        rotate_ccw_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        if last_used_keyboard_controls.is_empty() {
+            left_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            right_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            down_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            rotate_cw_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            rotate_ccw_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        } else {
+            left_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].1.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            right_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].2.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            down_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].3.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            rotate_cw_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].4.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            rotate_ccw_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].5.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        }
         Self {
             selection: 0,
             player_num: 0,
             sub_selection: 0,
             sub_selection_flag: false,
             most_recently_pressed_key: None,
-            vec_keyboard_controls: vec![],
-            back_text: Text::new(TextFragment {
-                text: "Back".to_string(),
-                color: Some(SELECT_GREEN),
-                font: Some(graphics::Font::default()),
-                scale: Some(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
-                ..Default::default()
-            }),
+            vec_keyboard_controls: last_used_keyboard_controls,
+            // text
+            back_text: Text::new(TextFragment::new("Back").color(SELECT_GREEN).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN))),
             player_num_text,
             // subtext
             uninitialized_text: Text::new(TextFragment::new("No Controls\nPress Space/Enter to edit").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
@@ -165,14 +168,32 @@ pub struct Menu {
 }
 
 impl Menu {
-    pub fn new(ctx: &mut Context) -> Self {
+    pub fn new(ctx: &mut Context, last_used_game_options: &Option<GameOptions>) -> Self {
         let window_dimensions = graphics::size(ctx);
+        // get the last used options if there are any
+        let mut vec_keyboard_controls: Vec<(u8, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)> = vec![];
+        let mut num_players: u8 = 1;
+        let mut starting_level: u8 = 0;
+        if let Some(game_options) = last_used_game_options {
+            for (player, controls) in game_options.vec_keyboard_inputs.iter().enumerate() {
+                vec_keyboard_controls.push(
+                    (player as u8,
+                    Some(controls.left),
+                    Some(controls.right),
+                    Some(controls.down),
+                    Some(controls.rotate_cw),
+                    Some(controls.rotate_ccw),)
+                );
+            }
+            num_players = game_options.num_players;
+            starting_level = game_options.starting_level;
+        }
         Self {
             input: Input::new(),
             window_dimensions,
             state: MenuState::Main,
-            main_menu: MainMenu::new(window_dimensions),
-            input_config_menu: InputConfigMenu::new(window_dimensions),
+            main_menu: MainMenu::new(window_dimensions, num_players, starting_level),
+            input_config_menu: InputConfigMenu::new(window_dimensions, vec_keyboard_controls),
         }
     }
 
