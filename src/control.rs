@@ -1,6 +1,6 @@
 use ggez::{Context, GameResult};
 use ggez::event::EventHandler;
-use ggez::event::{Axis, Button, GamepadId, KeyCode, KeyMods};
+use ggez::event::{KeyCode, KeyMods};
 use ggez::graphics;
 
 use crate::menu::Menu;

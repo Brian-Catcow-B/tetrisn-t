@@ -1,5 +1,6 @@
 use ggez::Context;
-use ggez::event::{Axis, Button, GamepadId, KeyCode, KeyMods};
+// use ggez::event::{Axis, Button, GamepadId};
+use ggez::event::{KeyCode};
 use ggez::graphics::{self, DrawParam, spritebatch};
 use ggez::nalgebra::{Point2, Vector2};
 use ggez::graphics::{Scale, Text, TextFragment};
@@ -81,6 +82,9 @@ pub const FORCE_FALL_DELAY: u8 = 2;
 const DAS_THRESHOLD_BIG: u8 = 12;
 // second das threshold (eg left is pressed and it auto shifts once; how many frames until it auto-shifts again?)
 const DAS_THRESHOLD_LITTLE: u8 = 5;
+
+// how long the pieces don't move down at the start
+pub const INITIAL_HANG_FRAMES: u8 = 180;
 
 // this struct is for when the Menu struct returns what game options to start with
 pub struct GameOptions {
@@ -193,13 +197,17 @@ impl Game {
 
     pub fn update(&mut self) -> ProgramState {
         if self.game_over_flag {
-            // GAME OVER LOGIC
-            for player in self.vec_players.iter_mut() {
-                // should we quit to main menu?
-                if player.input.keydown_start.1 {
-                    return ProgramState::Menu;
+            if self.game_over_delay == 0 {
+                // GAME OVER LOGIC
+                for player in self.vec_players.iter_mut() {
+                    // should we quit to main menu?
+                    if player.input.keydown_start.1 {
+                        return ProgramState::Menu;
+                    }
+                    player.input.was_just_pressed_setfalse();
                 }
-                player.input.was_just_pressed_setfalse();
+            } else {
+                self.game_over_delay -= 1;
             }
         } else if self.pause_flag {
             // PAUSE LOGIC
@@ -238,8 +246,6 @@ impl Game {
                             continue;
                         } else {
                             self.board.playerify_piece(player.player_num);
-                            player.fall_countdown = if self.level < 30 {FALL_DELAY_VALUES[self.level as usize]} else {1};
-                            player.force_fall_countdown = FORCE_FALL_DELAY;
                             player.spawn_delay = SPAWN_DELAY;
                             player.spawn_piece_flag = false;
                             // set next piece to random; reroll once if it chooses the same piece as it just was
@@ -310,6 +316,8 @@ impl Game {
                     // if the piece got locked, piece.shape gets set to Shapes::None, so set the spawn piece flag
                     if self.board.vec_active_piece[player.player_num as usize].shape == Shapes::None {
                         player.spawn_piece_flag = true;
+                        player.fall_countdown = if self.level < 30 {FALL_DELAY_VALUES[self.level as usize]} else {1};
+                        player.force_fall_countdown = FORCE_FALL_DELAY;
                         // add more spawn delay if locking the piece caused a line clear
                         if caused_full_line_flag {
                             player.spawn_delay += CLEAR_DELAY as i16;
@@ -388,7 +396,7 @@ impl Game {
         graphics::clear(ctx, graphics::BLACK);
         let (window_width, window_height) = graphics::size(ctx);
         self.tile_size = TileGraphic::get_size(ctx, self.board.width, self.board.height + NON_BOARD_SPACE_U);
-        if self.game_over_flag {
+        if self.game_over_flag && self.game_over_delay == 0 {
             // DRAW GAME OVER
             self.draw_text(ctx, &self.game_over_text, 0.4, (window_width, window_height));
             self.draw_text(ctx, &self.game_info_text, 0.55, (window_width, window_height));

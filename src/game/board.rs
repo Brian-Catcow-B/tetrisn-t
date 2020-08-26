@@ -443,6 +443,6 @@ mod tests {
         }
 
         assert_eq!((num_cleared_lines, score), (8, (2 * SCORE_QUADRUPLE_BASE as u32 * (1)) as u64));
-        println!("Passed scoring 2 tetrises on the same frame");
+        println!("Passed scoring 2 tetrises one frame apart");
     }
 }
