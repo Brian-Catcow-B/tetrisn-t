@@ -199,7 +199,7 @@ impl Game {
         if self.game_over_flag {
             if self.game_over_delay == 0 {
                 // GAME OVER LOGIC
-                for player in self.vec_players.iter_mut() {
+                for player in &mut self.vec_players {
                     // should we quit to main menu?
                     if player.input.keydown_start.1 {
                         return ProgramState::Menu;
@@ -211,7 +211,7 @@ impl Game {
             }
         } else if self.pause_flag {
             // PAUSE LOGIC
-            for player in self.vec_players.iter_mut() {
+            for player in &mut self.vec_players {
                 // should we quit to main menu?
                 if     player.input.keydown_down.0
                     && player.input.keydown_rotate_ccw.0
@@ -228,7 +228,7 @@ impl Game {
             }
         } else {
             // GAME LOGIC
-            for player in self.vec_players.iter_mut() {
+            for player in &mut self.vec_players {
                 if !player.spawn_piece_flag && self.board.vec_active_piece[player.player_num as usize].shape == Shapes::None {
                     player.input.was_just_pressed_setfalse();
                     continue;
@@ -373,7 +373,7 @@ impl Game {
         repeat: bool,
     ) {
         if !repeat {
-            for player in self.vec_players.iter_mut() {
+            for player in &mut self.vec_players {
                 if player.update_input_keydown(keycode) {break;}
             }
         }
@@ -383,7 +383,7 @@ impl Game {
         &mut self,
         keycode: KeyCode,
     ) {
-        for player in self.vec_players.iter_mut() {
+        for player in &mut self.vec_players {
             player.update_input_keyup(keycode);
         }
     }
@@ -416,7 +416,7 @@ impl Game {
                 }
             }
             // next pieces
-            for player in self.vec_players.iter_mut() {
+            for player in &mut self.vec_players {
                 if player.redraw_next_piece_flag {
                     player.redraw_next_piece_flag = false;
                     // if we need to redraw, clear the next piece sprite batch and rebuild it
