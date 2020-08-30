@@ -2,8 +2,8 @@ use ggez::{Context, graphics};
 
 pub const NUM_PIXEL_ROWS_PER_TILEGRAPHIC: u16 = 8u16;
 
-const DARK_GRAY: (u8, u8, u8, u8) = (60u8, 60u8, 60u8, 0xffu8);
-const GRAY: (u8, u8, u8, u8) = (80u8, 80u8, 80u8, 0xffu8);
+const DARK_GRAY: (u8, u8, u8, u8) = (20u8, 20u8, 20u8, 0xffu8);
+const GRAY: (u8, u8, u8, u8) = (60u8, 60u8, 60u8, 0xffu8);
 const WHITE: (u8, u8, u8, u8) = (255u8, 255u8, 255u8, 0xffu8);
 
 const PLAYER_TILE_DARKEN_0: f32 = 0.80;
