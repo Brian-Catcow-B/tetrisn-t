@@ -41,38 +41,39 @@ const GAME_OVER_DELAY: i8 = 60i8;
 pub const NON_BOARD_SPACE_U: u8 = 5u8;
 const LITTLE_TEXT_SCALE: f32 = 30.0;
 
-// for each level (as the index), the number of frames it takes for a piece to move down one row (everything after 29 is also 1)
+// for each level (as the index), the number of frames it takes for a piece to move down one row (everything after 29 is also 0)
+// it's actually 1 less than the number of frames it takes the piece to fall because the game logic works out better that way
 const FALL_DELAY_VALUES: [u8; 30] = [
-    48,
-    43,
-    38,
-    33,
-    28,
-    23,
-    18,
-    13,
-    8,
-    6,
-    5,
-    5,
-    5,
-    4,
-    4,
-    4,
-    3,
-    3,
-    3,
-    2,
-    2,
-    2,
-    2,
-    2,
-    2,
-    2,
-    2,
-    2,
-    2,
-    1,
+    48 - 1,
+    43 - 1,
+    38 - 1,
+    33 - 1,
+    28 - 1,
+    23 - 1,
+    18 - 1,
+    13 - 1,
+    8 - 1,
+    6 - 1,
+    5 - 1,
+    5 - 1,
+    5 - 1,
+    4 - 1,
+    4 - 1,
+    4 - 1,
+    3 - 1,
+    3 - 1,
+    3 - 1,
+    2 - 1,
+    2 - 1,
+    2 - 1,
+    2 - 1,
+    2 - 1,
+    2 - 1,
+    2 - 1,
+    2 - 1,
+    2 - 1,
+    2 - 1,
+    1 - 1,
 ];
 
 // number of frames between downward movements when holding down
@@ -316,7 +317,7 @@ impl Game {
                     // if the piece got locked, piece.shape gets set to Shapes::None, so set the spawn piece flag
                     if self.board.vec_active_piece[player.player_num as usize].shape == Shapes::None {
                         player.spawn_piece_flag = true;
-                        player.fall_countdown = if self.level < 30 {FALL_DELAY_VALUES[self.level as usize]} else {1};
+                        player.fall_countdown = if self.level < 30 {FALL_DELAY_VALUES[self.level as usize]} else {1 - 1};
                         player.force_fall_countdown = FORCE_FALL_DELAY;
                         // add more spawn delay if locking the piece caused a line clear
                         if caused_full_line_flag {
@@ -324,7 +325,7 @@ impl Game {
                         }
                     }
                     if moved_flag {
-                        player.fall_countdown = if self.level < 30 {FALL_DELAY_VALUES[self.level as usize]} else {1};
+                        player.fall_countdown = if self.level < 30 {FALL_DELAY_VALUES[self.level as usize]} else {1 - 1};
                         player.force_fall_countdown = FORCE_FALL_DELAY;
                     }
                 } else if player.input.keydown_down.0 {
