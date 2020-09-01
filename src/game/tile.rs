@@ -34,13 +34,15 @@ const PLAYER_TILE_BRIGHTEN_2: f32 = 0.10;
 
 // defined player colors, otherwise it uses a "random" but easily determinable color based on BASE_PLAYER_COLOR
 const NUM_PLAYERCOLORS: u8 = 7;
-const PLAYER0_RGBA: (u8, u8, u8, u8) = (69u8, 125u8, 225u8, 0xffu8);
-const PLAYER1_RGBA: (u8, u8, u8, u8) = (240u8, 40u8, 40u8, 0xffu8);
-const PLAYER2_RGBA: (u8, u8, u8, u8) = (80u8, 200u8, 60u8, 0xffu8);
-const PLAYER3_RGBA: (u8, u8, u8, u8) = (230u8, 230u8, 50u8, 0xffu8);
-const PLAYER4_RGBA: (u8, u8, u8, u8) = (220u8, 150u8, 70u8, 0xffu8);
-const PLAYER5_RGBA: (u8, u8, u8, u8) = (160u8, 230u8, 250u8, 0xffu8);
-const PLAYER6_RGBA: (u8, u8, u8, u8) = (230u8, 100u8, 210u8, 0xffu8);
+const PLAYER_RGBA: [(u8, u8, u8, u8); NUM_PLAYERCOLORS as usize] = [
+    (69u8, 125u8, 225u8, 0xffu8),
+    (240u8, 40u8, 40u8, 0xffu8),
+    (80u8, 200u8, 60u8, 0xffu8),
+    (230u8, 230u8, 50u8, 0xffu8),
+    (220u8, 150u8, 70u8, 0xffu8),
+    (160u8, 230u8, 250u8, 0xffu8),
+    (230u8, 100u8, 210u8, 0xffu8),
+];
 
 const BASE_PLAYER_COLOR: (u8, u8, u8, u8) = (20u8, 80u8, 150u8, 0xffu8);
 
@@ -101,17 +103,11 @@ impl TileGraphic {
     }
 
     pub fn new_player(ctx: &mut Context, player: u8) -> Self {
-        let player_color: (u8, u8, u8, u8) = match player {
-            0 => PLAYER0_RGBA,
-            1 => PLAYER1_RGBA,
-            2 => PLAYER2_RGBA,
-            3 => PLAYER3_RGBA,
-            4 => PLAYER4_RGBA,
-            5 => PLAYER5_RGBA,
-            6 => PLAYER6_RGBA,
-            _ => ((player - NUM_PLAYERCOLORS + 1) * BASE_PLAYER_COLOR.0, (player - NUM_PLAYERCOLORS + 1) * BASE_PLAYER_COLOR.1, (player - NUM_PLAYERCOLORS + 1) * BASE_PLAYER_COLOR.2, BASE_PLAYER_COLOR.3),
+        let player_color: (u8, u8, u8, u8) = if player < NUM_PLAYERCOLORS {
+            PLAYER_RGBA[player as usize]
+        } else {
+            ((player - NUM_PLAYERCOLORS + 1) * BASE_PLAYER_COLOR.0, (player - NUM_PLAYERCOLORS + 1) * BASE_PLAYER_COLOR.1, (player - NUM_PLAYERCOLORS + 1) * BASE_PLAYER_COLOR.2, BASE_PLAYER_COLOR.3)
         };
-        // let player_color: (u8, u8, u8, u8) = ((player + 1) * BASE_PLAYER_COLOR.0, (player + 1) * BASE_PLAYER_COLOR.1, (player + 1) * BASE_PLAYER_COLOR.2, BASE_PLAYER_COLOR.3);
         // create a buffer of (u8, u8, u8, u8), because rgba, big enough to hold each pixel
         let mut pixel_color_buf: [(u8, u8, u8, u8); NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize] = [player_color; NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize];
         // corner

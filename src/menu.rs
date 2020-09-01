@@ -297,7 +297,6 @@ impl Menu {
                             }
                         }
                         self.input_config_menu.vec_keyboard_controls.push((self.input_config_menu.player_num, None, None, None, None, None));
-                        println!("self.input_config_menu.vec_keyboard_controls.len() == {}", self.input_config_menu.vec_keyboard_controls.len());
                         self.update_sub_text_strings();
                         self.input_config_menu.sub_selection_flag = true;
                         self.set_select(true);
