@@ -12,7 +12,7 @@ use crate::game::GameOptions;
 const MAX_STARTING_LEVEL: u8 = 29; // this is just the fastest speed, so yeah
 const MAX_NUM_PLAYERS: u8 = 62; // currently held back by board width being a u8 equal to 6 + 4 * num_players
 
-const TEXT_SCALE_DOWN: f32 = 10.0;
+const TEXT_SCALE_DOWN: f32 = 15.0;
 const SUB_TEXT_SCALE_DOWN: f32 = 20.0;
 
 const GRAY: Color = Color::new(0.5, 0.5, 0.5, 1.0);
@@ -97,12 +97,15 @@ struct InputConfigMenu {
     sub_selection: u8,
     sub_selection_flag: bool,
     most_recently_pressed_key: Option<KeyCode>,
+    vec_used_keycode: Vec<KeyCode>,
+    keycode_conflict_flag: bool,
     vec_keyboard_controls: Vec<(u8, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>,
     // text
     back_text: Text,
     player_num_text: Text,
     // subtext
     uninitialized_text: Text,
+    keycode_conflict_text: Text,
     left_text: Text,
     right_text: Text,
     down_text: Text,
@@ -139,12 +142,15 @@ impl InputConfigMenu {
             sub_selection: 0,
             sub_selection_flag: false,
             most_recently_pressed_key: None,
+            vec_used_keycode: vec![KeyCode::Escape],
+            keycode_conflict_flag: false,
             vec_keyboard_controls: last_used_keyboard_controls,
             // text
             back_text: Text::new(TextFragment::new("Back").color(SELECT_GREEN).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN))),
             player_num_text,
             // subtext
             uninitialized_text: Text::new(TextFragment::new("No Controls\nPress Space/Enter to edit").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
+            keycode_conflict_text: Text::new(TextFragment::new("[!] Redundant KeyCode; ignoring input").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
             left_text,
             right_text,
             down_text,
@@ -269,6 +275,23 @@ impl Menu {
                         self.input_config_menu.most_recently_pressed_key = None;
                         for (idx, ctrls) in self.input_config_menu.vec_keyboard_controls.iter().enumerate() {
                             if ctrls.0 == self.input_config_menu.player_num {
+                                // remove the old keyboard controls after removing all the KeyCodes from the used keycodes vector since we are overwriting this one
+                                let mut items_removed = 0;
+                                // we must index because .remove() pulls the indices after it back by 1, so use `items_removed` to pull the index back with it
+                                for used_key_idx in 0..self.input_config_menu.vec_used_keycode.len() {
+                                    if Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == self.input_config_menu.vec_keyboard_controls[idx].1
+                                    || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == self.input_config_menu.vec_keyboard_controls[idx].2
+                                    || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == self.input_config_menu.vec_keyboard_controls[idx].3
+                                    || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == self.input_config_menu.vec_keyboard_controls[idx].4
+                                    || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == self.input_config_menu.vec_keyboard_controls[idx].5 {
+                                        self.input_config_menu.vec_used_keycode.remove(used_key_idx - items_removed);
+                                        items_removed += 1;
+                                        // we only need to get rid of 5
+                                        if items_removed >= 5 {
+                                            break;
+                                        }
+                                    }
+                                }
                                 self.input_config_menu.vec_keyboard_controls.remove(idx);
                                 break;
                             }
@@ -282,31 +305,64 @@ impl Menu {
                     if self.input_config_menu.most_recently_pressed_key.is_some() && self.input_config_menu.vec_keyboard_controls.len() > 0 {
                         // set the tuple index to the correct key of the tuple just pushed to the vector
                         let vec_length = self.input_config_menu.vec_keyboard_controls.len();
-                        match self.input_config_menu.sub_selection {
-                            x if x == InputConfigMenuSubOption::Left as u8 => {
-                                self.input_config_menu.vec_keyboard_controls[vec_length - 1].1 = self.input_config_menu.most_recently_pressed_key;
-                            },
-                            x if x == InputConfigMenuSubOption::Right as u8 => {
-                                self.input_config_menu.vec_keyboard_controls[vec_length - 1].2 = self.input_config_menu.most_recently_pressed_key;
-                            },
-                            x if x == InputConfigMenuSubOption::Down as u8 => {
-                                self.input_config_menu.vec_keyboard_controls[vec_length - 1].3 = self.input_config_menu.most_recently_pressed_key;
-                            },
-                            x if x == InputConfigMenuSubOption::RotateCw as u8 => {
-                                self.input_config_menu.vec_keyboard_controls[vec_length - 1].4 = self.input_config_menu.most_recently_pressed_key;
-                            },
-                            x if x == InputConfigMenuSubOption::RotateCcw as u8 => {
-                                self.input_config_menu.vec_keyboard_controls[vec_length - 1].5 = self.input_config_menu.most_recently_pressed_key;
-                            },
-                            _ => println!("[!] couldn't get correct tuple index to set most recently pressed key"),
-                        }
-                        self.set_select(false);
-                        if self.input_config_menu.sub_selection < NUM_INPUTCONFIGMENUSUBOPTION_ENTRIES as u8 - 1 {
-                            self.input_config_menu.sub_selection += 1;
-                            self.set_select(true);
-                        } else {
+                        // first check if the KeyCode is Escape, and if it is, just delete the layout entry and go out of the subselection section
+                        // second check if the KeyCode was already used. If it was, set the error message flag to true
+                        if self.input_config_menu.most_recently_pressed_key == Some(KeyCode::Escape) {
+                            self.set_select(false);
+                            self.input_config_menu.keycode_conflict_flag = false;
                             self.input_config_menu.sub_selection = 0;
                             self.input_config_menu.sub_selection_flag = false;
+                            if self.input_config_menu.vec_keyboard_controls[vec_length - 1].4.is_some() {
+                                for _ in 1..=4 {
+                                    self.input_config_menu.vec_used_keycode.pop();
+                                }
+                            } else if self.input_config_menu.vec_keyboard_controls[vec_length - 1].3.is_some() {
+                                for _ in 1..=3 {
+                                    self.input_config_menu.vec_used_keycode.pop();
+                                }
+                            } else if self.input_config_menu.vec_keyboard_controls[vec_length - 1].2.is_some() {
+                                for _ in 1..=2 {
+                                    self.input_config_menu.vec_used_keycode.pop();
+                                }
+                            } else if self.input_config_menu.vec_keyboard_controls[vec_length - 1].1.is_some() {
+                                self.input_config_menu.vec_used_keycode.pop();
+                            }
+                            self.input_config_menu.vec_keyboard_controls.pop();
+                        } else if self.input_config_menu.vec_used_keycode.contains(&self.input_config_menu.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None")) {
+                            self.input_config_menu.keycode_conflict_flag = true;
+                        } else {
+                            self.input_config_menu.keycode_conflict_flag = false;
+                            match self.input_config_menu.sub_selection {
+                                x if x == InputConfigMenuSubOption::Left as u8 => {
+                                    self.input_config_menu.vec_keyboard_controls[vec_length - 1].1 = self.input_config_menu.most_recently_pressed_key;
+                                    self.input_config_menu.vec_used_keycode.push(self.input_config_menu.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None"));
+                                },
+                                x if x == InputConfigMenuSubOption::Right as u8 => {
+                                    self.input_config_menu.vec_keyboard_controls[vec_length - 1].2 = self.input_config_menu.most_recently_pressed_key;
+                                    self.input_config_menu.vec_used_keycode.push(self.input_config_menu.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None"));
+                                },
+                                x if x == InputConfigMenuSubOption::Down as u8 => {
+                                    self.input_config_menu.vec_keyboard_controls[vec_length - 1].3 = self.input_config_menu.most_recently_pressed_key;
+                                    self.input_config_menu.vec_used_keycode.push(self.input_config_menu.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None"));
+                                },
+                                x if x == InputConfigMenuSubOption::RotateCw as u8 => {
+                                    self.input_config_menu.vec_keyboard_controls[vec_length - 1].4 = self.input_config_menu.most_recently_pressed_key;
+                                    self.input_config_menu.vec_used_keycode.push(self.input_config_menu.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None"));
+                                },
+                                x if x == InputConfigMenuSubOption::RotateCcw as u8 => {
+                                    self.input_config_menu.vec_keyboard_controls[vec_length - 1].5 = self.input_config_menu.most_recently_pressed_key;
+                                    self.input_config_menu.vec_used_keycode.push(self.input_config_menu.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None"));
+                                },
+                                _ => println!("[!] couldn't get correct tuple index to set most recently pressed key"),
+                            }
+                            self.set_select(false);
+                            if self.input_config_menu.sub_selection < NUM_INPUTCONFIGMENUSUBOPTION_ENTRIES as u8 - 1 {
+                                self.input_config_menu.sub_selection += 1;
+                                self.set_select(true);
+                            } else {
+                                self.input_config_menu.sub_selection = 0;
+                                self.input_config_menu.sub_selection_flag = false;
+                            }
                         }
                     }
                 }
@@ -615,6 +671,10 @@ impl Menu {
             MenuState::InputConfig => {
                 self.draw_text(ctx, &self.input_config_menu.back_text, 0.1);
                 self.draw_text(ctx, &self.input_config_menu.player_num_text, 0.3);
+
+                if self.input_config_menu.keycode_conflict_flag {
+                    self.draw_text(ctx, &self.input_config_menu.keycode_conflict_text, 0.2);
+                }
 
                 if self.input_config_menu.selection == InputConfigMenuOption::PlayerInput as u8 {
                     // draw a rectangle containing the subtexts for choosing controls

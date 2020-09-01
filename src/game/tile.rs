@@ -2,15 +2,13 @@ use ggez::{Context, graphics};
 
 pub const NUM_PIXEL_ROWS_PER_TILEGRAPHIC: u16 = 8u16;
 
-const BASE_PLAYER_COLOR: (u8, u8, u8, u8) = (69u8, 125u8, 225u8, 0xffu8);
-
-const DARK_GRAY: (u8, u8, u8, u8) = (60u8, 60u8, 60u8, 0xffu8);
-const GRAY: (u8, u8, u8, u8) = (120u8, 120u8, 120u8, 0xffu8);
+const DARK_GRAY: (u8, u8, u8, u8) = (20u8, 20u8, 20u8, 0xffu8);
+const GRAY: (u8, u8, u8, u8) = (60u8, 60u8, 60u8, 0xffu8);
 const WHITE: (u8, u8, u8, u8) = (255u8, 255u8, 255u8, 0xffu8);
 
-const PLAYER_TILE_DARKEN_0: f32 = 0.95;
-const PLAYER_TILE_DARKEN_1: f32 = 0.85;
-const PLAYER_TILE_DARKEN_2: f32 = 0.70;
+const PLAYER_TILE_DARKEN_0: f32 = 0.80;
+const PLAYER_TILE_DARKEN_1: f32 = 0.70;
+const PLAYER_TILE_DARKEN_2: f32 = 0.50;
 
 // [0][1][1][2][2][1][1][0]
 // [1][-][-][-][-][-][-][1]
@@ -34,6 +32,19 @@ const PLAYER_TILE_BRIGHTEN_2: f32 = 0.10;
 // [-][-][-][2][2][-][-][-]
 // [-][-][-][-][-][-][-][-]
 
+// defined player colors, otherwise it uses a "random" but easily determinable color based on BASE_PLAYER_COLOR
+const NUM_PLAYERCOLORS: u8 = 7;
+const PLAYER_RGBA: [(u8, u8, u8, u8); NUM_PLAYERCOLORS as usize] = [
+    (69u8, 125u8, 225u8, 0xffu8),
+    (240u8, 40u8, 40u8, 0xffu8),
+    (80u8, 200u8, 60u8, 0xffu8),
+    (230u8, 230u8, 50u8, 0xffu8),
+    (220u8, 150u8, 70u8, 0xffu8),
+    (160u8, 230u8, 250u8, 0xffu8),
+    (230u8, 100u8, 210u8, 0xffu8),
+];
+
+const BASE_PLAYER_COLOR: (u8, u8, u8, u8) = (20u8, 80u8, 150u8, 0xffu8);
 
 #[derive(Clone)]
 pub struct Tile {
@@ -92,7 +103,11 @@ impl TileGraphic {
     }
 
     pub fn new_player(ctx: &mut Context, player: u8) -> Self {
-        let player_color: (u8, u8, u8, u8) = ((player + 1) * BASE_PLAYER_COLOR.0, (player + 1) * BASE_PLAYER_COLOR.1, (player + 1) * BASE_PLAYER_COLOR.2, BASE_PLAYER_COLOR.3);
+        let player_color: (u8, u8, u8, u8) = if player < NUM_PLAYERCOLORS {
+            PLAYER_RGBA[player as usize]
+        } else {
+            ((player - NUM_PLAYERCOLORS + 1) * BASE_PLAYER_COLOR.0, (player - NUM_PLAYERCOLORS + 1) * BASE_PLAYER_COLOR.1, (player - NUM_PLAYERCOLORS + 1) * BASE_PLAYER_COLOR.2, BASE_PLAYER_COLOR.3)
+        };
         // create a buffer of (u8, u8, u8, u8), because rgba, big enough to hold each pixel
         let mut pixel_color_buf: [(u8, u8, u8, u8); NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize] = [player_color; NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize];
         // corner
