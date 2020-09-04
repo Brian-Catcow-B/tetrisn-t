@@ -34,6 +34,16 @@ impl Input {
         self.keydown_start.1 = false;
     }
 
+    pub fn reset_all(&mut self) {
+        self.keydown_left = (false, false);
+        self.keydown_right = (false, false);
+        self.keydown_down = (false, false);
+        self.keydown_up = (false, false);
+        self.keydown_rotate_cw = (false, false);
+        self.keydown_rotate_ccw = (false, false);
+        self.keydown_start = (false, false);
+    }
+
     pub fn _print_inputs(&self) {
         println!("Left:  ({}, {})", self.keydown_left.0, self.keydown_left.1);
         println!("Right: ({}, {})", self.keydown_right.0, self.keydown_right.1);

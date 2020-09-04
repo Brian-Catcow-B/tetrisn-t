@@ -128,4 +128,12 @@ impl EventHandler for Control {
         let new_rect = graphics::Rect::new(0.0, 0.0, width, height);
         graphics::set_screen_coordinates(ctx, new_rect).unwrap();
     }
+
+    fn focus_event(&mut self, _ctx: &mut Context, gained: bool) {
+        if self.state == ProgramState::Game {
+            self.game.as_mut()
+                .expect("[!] control.state == ProgramState::Game but control.game == None")
+                .focus_event(gained);
+        }
+    }
 }
