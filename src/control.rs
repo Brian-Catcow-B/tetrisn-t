@@ -1,6 +1,6 @@
 use ggez::{Context, GameResult};
 use ggez::event::EventHandler;
-use ggez::event::{KeyCode, KeyMods};
+use ggez::event::{Axis, Button, GamepadId, KeyCode, KeyMods};
 use ggez::graphics;
 
 use crate::menu::Menu;
@@ -108,6 +108,42 @@ impl EventHandler for Control {
                 .expect("[!] control.state == ProgramState::Game but control.game == None")
                 .key_up_event(keycode),
         };
+    }
+
+    fn gamepad_button_down_event(&mut self, _ctx: &mut Context, btn: Button, id: GamepadId) {
+        match self.state {
+            ProgramState::Menu => (),
+                // self.menu.as_mut()
+                // .expect("[!] control.state == ProgramState::Menu but control.menu == None")
+                // .gamepad_button_down_event(btn, id),
+            ProgramState::Game => self.game.as_mut()
+                .expect("[!] control.state == ProgramState::Game but control.game == None")
+                .gamepad_button_down_event(btn, id),
+        };
+    }
+
+    fn gamepad_button_up_event(&mut self, _ctx: &mut Context, btn: Button, id: GamepadId) {
+        match self.state {
+            ProgramState::Menu => (),
+                // self.menu.as_mut()
+                // .expect("[!] control.state == ProgramState::Menu but control.menu == None")
+                // .gamepad_button_up_event(btn, id),
+            ProgramState::Game => self.game.as_mut()
+                .expect("[!] control.state == ProgramState::Game but control.game == None")
+                .gamepad_button_up_event(btn, id),
+        };
+    }
+
+    fn gamepad_axis_event(&mut self, _ctx: &mut Context, axis: Axis, value: f32, id: GamepadId) {
+        match self.state {
+            ProgramState::Menu => (),
+                // self.menu.as_mut()
+                // .expect("[!] control.state == ProgramState::Menu but control.menu == None")
+                // .gamepad_axis_event(axis, value, id),
+            ProgramState::Game => self.game.as_mut()
+                .expect("[!] control.state == ProgramState::Game but control.game == None")
+                .gamepad_axis_event(axis, value, id),
+        }
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {

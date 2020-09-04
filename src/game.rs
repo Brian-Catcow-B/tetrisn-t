@@ -1,6 +1,6 @@
 use ggez::Context;
 // use ggez::event::{Axis, Button, GamepadId};
-use ggez::event::{KeyCode};
+use ggez::event::{Button, Axis, GamepadId, KeyCode};
 use ggez::graphics::{self, DrawParam, spritebatch};
 use ggez::nalgebra::{Point2, Vector2};
 use ggez::graphics::{Scale, Text, TextFragment};
@@ -111,6 +111,7 @@ pub struct Game {
     num_players: u8,
     vec_players: Vec<Player>,
     vec_next_piece: Vec<NextPiece>,
+    vec_gamepad_id_map_to_player: Vec<(GamepadId, u8)>,
     level: u8,
     starting_level: u8,
     num_cleared_lines: u16,
@@ -179,6 +180,7 @@ impl Game {
             num_players: game_options.num_players,
             vec_players,
             vec_next_piece,
+            vec_gamepad_id_map_to_player: vec![],
             level: game_options.starting_level,
             starting_level: game_options.starting_level,
             num_cleared_lines: 0u16,
@@ -394,6 +396,51 @@ impl Game {
     ) {
         for player in &mut self.vec_players {
             player.update_input_keyup(keycode);
+        }
+    }
+
+    pub fn gamepad_button_down_event(&mut self, btn: Button, id: GamepadId) {
+        println!("Gamepad button pressed: {:?} Gamepad_Id: {:?}", btn, id);
+        if btn == Button::South {
+            self.vec_players[0].input.keydown_rotate_cw = (true, true);
+        } else if btn == Button::West {
+            self.vec_players[0].input.keydown_rotate_ccw = (true, true);
+        } else if btn == Button::Start {
+            self.vec_players[0].input.keydown_start = (true, true);
+        }
+    }
+
+    pub fn gamepad_button_up_event(&mut self, btn: Button, id: GamepadId) {
+        println!("Gamepad button released: {:?} Gamepad_Id: {:?}", btn, id);
+        if btn == Button::South {
+            self.vec_players[0].input.keydown_rotate_cw = (false, false);
+        } else if btn == Button::West {
+            self.vec_players[0].input.keydown_rotate_ccw = (false, false);
+        } else if btn == Button::Start {
+            self.vec_players[0].input.keydown_start = (false, false);
+        }
+    }
+
+    pub fn gamepad_axis_event(&mut self, axis: Axis, value: f32, id: GamepadId) {
+        println!(
+            "Axis Event: {:?} Value: {} Gamepad_Id: {:?}",
+            axis, value, id
+        );
+        if axis == Axis::LeftStickX {
+            if value < -0.7 && !self.vec_players[0].input.keydown_left.0 {
+                self.vec_players[0].input.keydown_left = (true, true);
+            } else if value > 0.7 && !self.vec_players[0].input.keydown_right.0 {
+                self.vec_players[0].input.keydown_right = (true, true);
+            } else if value < 0.6 && value > -0.6 {
+                self.vec_players[0].input.keydown_left = (false, false);
+                self.vec_players[0].input.keydown_right = (false, false);
+            }
+        } else if axis == Axis::LeftStickY {
+            if value < -0.7 && !self.vec_players[0].input.keydown_down.0 {
+                self.vec_players[0].input.keydown_down = (true, true);
+            } else if value > -0.6 {
+                self.vec_players[0].input.keydown_down = (false, false);
+            }
         }
     }
 
