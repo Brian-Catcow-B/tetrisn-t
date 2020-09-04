@@ -115,7 +115,7 @@ pub struct Game {
     starting_level: u8,
     num_cleared_lines: u16,
     score: u64,
-    pause_flag: bool,
+    pause_flag: (bool, bool),
     game_over_flag: bool,
     game_over_delay: i8,
     // drawing
@@ -170,7 +170,7 @@ impl Game {
         game_info_text.add(TextFragment::new("0000000").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
         game_info_text.add(TextFragment::new("   Level: ").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
         game_info_text.add(TextFragment::new(format!("{:02}", game_options.starting_level)).color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
-        let pause_text = Text::new(TextFragment::new("PAUSED\n\nDown + RotateCw + RotateCcw then Start/ESC to quit").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
+        let pause_text = Text::new(TextFragment::new("PAUSED\n\nDown + RotateCw + RotateCcw + ESC/Start to quit").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
         let game_over_text = Text::new(TextFragment::new("Game Over!").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE * 2.0)));
 
         println!("[+] starting game with {} players and at level {}", game_options.num_players, game_options.starting_level);
@@ -183,7 +183,7 @@ impl Game {
             starting_level: game_options.starting_level,
             num_cleared_lines: 0u16,
             score: 0u64,
-            pause_flag: false,
+            pause_flag: (false, false),
             game_over_flag: false,
             game_over_delay: GAME_OVER_DELAY,
             tile_size: 0f32,
@@ -210,21 +210,29 @@ impl Game {
             } else {
                 self.game_over_delay -= 1;
             }
-        } else if self.pause_flag {
+        } else if self.pause_flag.0 {
             // PAUSE LOGIC
-            for player in &mut self.vec_players {
-                // should we quit to main menu?
-                if     player.input.keydown_down.0
-                    && player.input.keydown_rotate_ccw.0
-                    && player.input.keydown_rotate_cw.0
-                    && player.input.keydown_start.1
-                {
-                    return ProgramState::Menu;
+            if self.pause_flag.1 {
+                // if the pause flag was just set, reset all inputs to false in case focus was lost or keyboard hardware is acting up somehow or another
+                self.pause_flag.1 = false;
+                for player in &mut self.vec_players {
+                    player.input.reset_all();
                 }
-                // should we resume?
-                if player.input.keydown_start.1 {
-                    self.pause_flag = false;
-                    player.input.was_just_pressed_setfalse();
+            } else {
+                for player in &mut self.vec_players {
+                    // should we quit to main menu?
+                    if     player.input.keydown_down.0
+                        && player.input.keydown_rotate_ccw.0
+                        && player.input.keydown_rotate_cw.0
+                        && player.input.keydown_start.1
+                    {
+                        return ProgramState::Menu;
+                    }
+                    // should we resume?
+                    if player.input.keydown_start.1 {
+                        self.pause_flag = (false, false);
+                        player.input.was_just_pressed_setfalse();
+                    }
                 }
             }
         } else {
@@ -336,7 +344,7 @@ impl Game {
                 }
 
                 if player.input.keydown_start.1 {
-                    self.pause_flag = true;
+                    self.pause_flag = (true, true);
                     player.input.was_just_pressed_setfalse();
                 }
 
@@ -401,7 +409,7 @@ impl Game {
             // DRAW GAME OVER
             self.draw_text(ctx, &self.game_over_text, 0.4, (window_width, window_height));
             self.draw_text(ctx, &self.game_info_text, 0.55, (window_width, window_height));
-        } else if self.pause_flag {
+        } else if self.pause_flag.0 {
             // DRAW PAUSE
             self.draw_text(ctx, &self.pause_text, 0.4, (window_width, window_height));
         } else {
@@ -469,5 +477,11 @@ impl Game {
         graphics::draw(ctx, text_var, DrawParam::new()
         .dest(Point2::new((window_dimensions.0 - text_width as f32) / 2.0, (window_dimensions.1 - text_height as f32) * vertical_position))
         ).unwrap();
+    }
+
+    pub fn focus_event(&mut self, gained: bool) {
+        if !gained {
+            self.pause_flag = (true, true);
+        }
     }
 }
