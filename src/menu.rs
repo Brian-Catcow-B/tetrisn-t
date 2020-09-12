@@ -11,10 +11,15 @@ use crate::game::GameOptions;
 
 const MAX_STARTING_LEVEL: u8 = 29; // this is just the fastest speed, so yeah
 const MAX_NUM_PLAYERS: u8 = 62; // currently held back by board width being a u8 equal to 6 + 4 * num_players
-const MAX_NUM_GAMEPAD_PROFILES: u8 = 10;
+const MAX_NUM_GAMEPAD_PROFILES: u8 = 9;
+
+const DETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.5;
+const UNDETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.3;
+// const GAMEPAD_AXIS_DETECT_DELAY: u8 = 10;
 
 const TEXT_SCALE_DOWN: f32 = 15.0;
 const SUB_TEXT_SCALE_DOWN: f32 = 20.0;
+const MINI_TEXT_SCALE_DOWN: f32 = 30.0;
 
 const GRAY: Color = Color::new(0.5, 0.5, 0.5, 1.0);
 const DARK_GRAY: Color = Color::new(0.3, 0.3, 0.3, 1.0);
@@ -89,9 +94,8 @@ enum InputConfigMenuSubOptionKeyboard {
     Down,
     RotateCw,
     RotateCcw,
-    // Start,
 }
-const NUM_INPUTCONFIGMENUSUBOPTIONGAMEPAD_ENTRIES: u8 = 10;
+const NUM_INPUTCONFIGMENUSUBOPTIONGAMEPAD_ENTRIES: u8 = 9;
 #[repr(u8)]
 enum InputConfigMenuSubOptionGamepad {
     Left,
@@ -115,19 +119,21 @@ struct InputConfigMenu {
     sub_selection_gamepad_flag: bool,
     most_recently_pressed_key: Option<KeyCode>,
     most_recently_pressed_gamepad_button: Option<Button>,
-    most_recently_pressed_gamepad_axis: Option<Axis>,
-    gamepad_axis_wait_flag: bool,
+    most_recently_pressed_gamepad_axis: Option<(Axis, bool)>,
+    gamepad_axis_wait: (bool, Option<(Axis, bool)>),
     vec_used_keycode: Vec<KeyCode>,
     keycode_conflict_flag: bool,
     vec_keyboard_controls: Vec<(u8, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>,
+    vec_gamepad_profiles: Vec<Option<((Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), Option<Button>, Option<Button>, Option<Button>)>>,
     // text
     back_text: Text,
     gamepad_profile_text: Text,
     player_num_text: Text,
     // subtext
-    uninitialized_text: Text,
+    input_uninitialized_text: Text,
+    gamepad_profile_uninitialized_text: Text,
     keycode_conflict_text: Text,
-    skip_alt_entry_text: Text,
+    skip_button_axis_text: Text,
     left_text: Text,
     alt_left_text: Text,
     right_text: Text,
@@ -146,11 +152,11 @@ impl InputConfigMenu {
         let mut gamepad_profile_text = Text::new(TextFragment::new("GamePad Profile: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
         gamepad_profile_text.add(TextFragment::new("1").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
         let mut left_text = Text::new(TextFragment::new("Left:     ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        let mut alt_left_text = Text::new(TextFragment::new("Left (alt):  ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        let mut alt_left_text = Text::new(TextFragment::new("Left (Axis):  ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
         let mut right_text = Text::new(TextFragment::new("Right:    ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        let mut alt_right_text = Text::new(TextFragment::new("Right (alt): ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        let mut alt_right_text = Text::new(TextFragment::new("Right (Axis): ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
         let mut down_text = Text::new(TextFragment::new("Down:     ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        let mut alt_down_text = Text::new(TextFragment::new("Down (alt):  ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        let mut alt_down_text = Text::new(TextFragment::new("Down (Axis):  ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
         let mut rotate_cw_text = Text::new(TextFragment::new("RotateCw:  ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
         let mut rotate_ccw_text = Text::new(TextFragment::new("RotateCcw:  ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
         let mut start_text = Text::new(TextFragment::new("Start/Pause: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
@@ -167,10 +173,13 @@ impl InputConfigMenu {
             rotate_cw_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].4.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
             rotate_ccw_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].5.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
         }
-        alt_left_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        alt_right_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        alt_down_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        alt_left_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
+        alt_right_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
+        alt_down_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
         start_text.add(TextFragment::new("Esc").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+
+        let mut vec_gamepad_profiles = Vec::with_capacity(MAX_NUM_GAMEPAD_PROFILES as usize);
+        vec_gamepad_profiles.append(&mut vec![None; MAX_NUM_GAMEPAD_PROFILES as usize]);
         Self {
             selection: 0,
             player_num: 0,
@@ -181,18 +190,20 @@ impl InputConfigMenu {
             most_recently_pressed_key: None,
             most_recently_pressed_gamepad_button: None,
             most_recently_pressed_gamepad_axis: None,
-            gamepad_axis_wait_flag: false,
+            gamepad_axis_wait: (false, None),
             vec_used_keycode: vec![KeyCode::Escape],
             keycode_conflict_flag: false,
             vec_keyboard_controls: last_used_keyboard_controls,
+            vec_gamepad_profiles,
             // text
             back_text: Text::new(TextFragment::new("Back").color(SELECT_GREEN).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN))),
             gamepad_profile_text,
             player_num_text,
             // subtext
-            uninitialized_text: Text::new(TextFragment::new("No Controls\nKeyboard: Space/Enter\nGamepad: 'G'").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
+            input_uninitialized_text: Text::new(TextFragment::new("No Controls\nKeyboard: Space/Enter\nGamepad: 'G'").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
+            gamepad_profile_uninitialized_text: Text::new(TextFragment::new("Profile nonexistent\nCreate/edit: Space/Enter").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
             keycode_conflict_text: Text::new(TextFragment::new("[!] Redundant KeyCode; ignoring input").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
-            skip_alt_entry_text: Text::new(TextFragment::new("Skip alternate controls: Space/Enter").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
+            skip_button_axis_text: Text::new(TextFragment::new("Skip Button/Axis: Space/Enter").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
             left_text,
             alt_left_text,
             right_text,
@@ -298,7 +309,7 @@ impl Menu {
                 }
             },
             MenuState::InputConfig => {
-                if !self.input_config_menu.sub_selection_keyboard_flag {
+                if !self.input_config_menu.sub_selection_keyboard_flag && !self.input_config_menu.sub_selection_gamepad_flag {
                     if self.input.keydown_down.1 {
                         self.set_select(false);
                         self.input_config_menu.selection = (self.input_config_menu.selection + 1) % NUM_INPUTCONFIGMENUOPTION_ENTRIES;
@@ -342,11 +353,11 @@ impl Menu {
                             }
                         }
                         self.input_config_menu.vec_keyboard_controls.push((self.input_config_menu.player_num, None, None, None, None, None));
-                        self.update_sub_text_strings();
+                        self.update_sub_text_strings_keyboard();
                         self.input_config_menu.sub_selection_keyboard_flag = true;
                         self.set_select(true);
                     }
-                } else {
+                } else if self.input_config_menu.sub_selection_keyboard_flag {
                     if self.input_config_menu.most_recently_pressed_key.is_some() && self.input_config_menu.vec_keyboard_controls.len() > 0 {
                         // set the tuple index to the correct key of the tuple just pushed to the vector
                         let vec_length = self.input_config_menu.vec_keyboard_controls.len();
@@ -410,6 +421,8 @@ impl Menu {
                             }
                         }
                     }
+                } else {
+
                 }
             }
         }
@@ -462,13 +475,24 @@ impl Menu {
                 }
             },
             MenuState::InputConfig => {
-                if !self.input_config_menu.sub_selection_keyboard_flag {
+                if !self.input_config_menu.sub_selection_keyboard_flag && !self.input_config_menu.sub_selection_gamepad_flag {
                     match self.input_config_menu.selection {
                         x if x == InputConfigMenuOption::Back as u8 => {
                             if select_flag {
                                 self.input_config_menu.back_text.fragments_mut()[0].color = Some(SELECT_GREEN);
                             } else {
                                 self.input_config_menu.back_text.fragments_mut()[0].color = Some(graphics::BLACK);
+                            }
+                        },
+                        x if x == InputConfigMenuOption::GamepadProfile as u8 => {
+                            if select_flag {
+                                self.input_config_menu.gamepad_profile_text.fragments_mut()[0].color = Some(SELECT_GREEN);
+                                self.input_config_menu.gamepad_profile_text.fragments_mut()[1].color = Some(SELECT_GREEN);
+                                self.input_config_menu.gamepad_profile_text.fragments_mut()[1].text = format!("<{}>", self.input_config_menu.profile_num + 1);
+                            } else {
+                                self.input_config_menu.gamepad_profile_text.fragments_mut()[0].color = Some(graphics::BLACK);
+                                self.input_config_menu.gamepad_profile_text.fragments_mut()[1].color = Some(graphics::BLACK);
+                                self.input_config_menu.gamepad_profile_text.fragments_mut()[1].text = format!(" {}", self.input_config_menu.profile_num + 1);
                             }
                         },
                         x if x == InputConfigMenuOption::PlayerInput as u8 => {
@@ -484,7 +508,7 @@ impl Menu {
                         },
                         _ => println!("[!] input_config_menu_option didn't find match"),
                     }
-                } else {
+                } else if self.input_config_menu.sub_selection_keyboard_flag {
                     match self.input_config_menu.sub_selection {
                         x if x == InputConfigMenuSubOptionKeyboard::Left as u8 => {
                             if select_flag {
@@ -543,6 +567,8 @@ impl Menu {
                         },
                         _ => println!("[!] input_config_menu_option didn't find match"),
                     }
+                } else {
+                    
                 }
             }
         }
@@ -579,7 +605,7 @@ impl Menu {
                         }
                         // display player_num + 1 because index by 1 to users
                         self.input_config_menu.player_num_text.fragments_mut()[1].text = format!("<{}>", self.input_config_menu.player_num + 1);
-                        self.update_sub_text_strings();
+                        self.update_sub_text_strings_keyboard();
                     } else if self.input_config_menu.selection == InputConfigMenuOption::GamepadProfile as u8 {
                         if inc_flag {
                             self.input_config_menu.profile_num = (self.input_config_menu.profile_num + 1) % MAX_NUM_GAMEPAD_PROFILES;
@@ -588,14 +614,114 @@ impl Menu {
                         }
                         // display profile_num + 1 because index by 1 to users
                         self.input_config_menu.gamepad_profile_text.fragments_mut()[1].text = format!("<{}>", self.input_config_menu.profile_num + 1);
-                        self.update_sub_text_strings(); // TODO: this might need a separate function of sorts
+                        self.update_sub_text_strings_keyboard(); // TODO: this might need a separate function of sorts
                     }
                 }
             }
         }
     }
 
-    fn update_sub_text_strings(&mut self) {
+    fn set_gamepad_specific_sub_text_strings(&mut self) {
+        self.input_config_menu.left_text.fragments_mut()[0].text = "Left (Button):  ".to_string();
+        self.input_config_menu.right_text.fragments_mut()[0].text = "Right (Button): ".to_string();
+        self.input_config_menu.down_text.fragments_mut()[0].text = "Down (Button):  ".to_string();
+    }
+
+    fn set_keyboard_specific_sub_text_strings(&mut self) {
+        self.input_config_menu.left_text.fragments_mut()[0].text = "Left:     ".to_string();
+        self.input_config_menu.right_text.fragments_mut()[0].text = "Right:    ".to_string();
+        self.input_config_menu.down_text.fragments_mut()[0].text = "Down:     ".to_string();
+    }
+
+    fn update_sub_text_strings_gamepad(&mut self) {
+        self.set_gamepad_specific_sub_text_strings();
+        match self.input_config_menu.vec_gamepad_profiles[self.input_config_menu.profile_num as usize] {
+            Some(profile) => {
+                match (profile.0).0 {
+                    Some(button) => {
+                        self.input_config_menu.left_text.fragments_mut()[1].text = format!("{:?}", button);
+                    },
+                    None => {
+                        self.input_config_menu.left_text.fragments_mut()[1].text = "None".to_string();
+                    }
+                }
+                match (profile.0).1 {
+                    Some(axis) => {
+                        self.input_config_menu.alt_left_text.fragments_mut()[1].text = format!("{:?}", axis);
+                    },
+                    None => {
+                        self.input_config_menu.alt_left_text.fragments_mut()[1].text = "None".to_string();
+                    }
+                }
+
+                match (profile.1).0 {
+                    Some(button) => {
+                        self.input_config_menu.right_text.fragments_mut()[1].text = format!("{:?}", button);
+                    },
+                    None => {
+                        self.input_config_menu.right_text.fragments_mut()[1].text = "None".to_string();
+                    }
+                }
+                match (profile.1).1 {
+                    Some(axis) => {
+                        self.input_config_menu.alt_right_text.fragments_mut()[1].text = format!("{:?}", axis);
+                    },
+                    None => {
+                        self.input_config_menu.alt_right_text.fragments_mut()[1].text = "None".to_string();
+                    }
+                }
+
+                match (profile.2).0 {
+                    Some(button) => {
+                        self.input_config_menu.down_text.fragments_mut()[1].text = format!("{:?}", button);
+                    },
+                    None => {
+                        self.input_config_menu.down_text.fragments_mut()[1].text = "None".to_string();
+                    }
+                }
+                match (profile.2).1 {
+                    Some(axis) => {
+                        self.input_config_menu.alt_down_text.fragments_mut()[1].text = format!("{:?}", axis);
+                    },
+                    None => {
+                        self.input_config_menu.alt_down_text.fragments_mut()[1].text = "None".to_string();
+                    }
+                }
+
+                match profile.3 {
+                    Some(button) => {
+                        self.input_config_menu.rotate_cw_text.fragments_mut()[1].text = format!("{:?}", button);
+                    },
+                    None => {
+                        self.input_config_menu.rotate_cw_text.fragments_mut()[1].text = "None".to_string();
+                    }
+                }
+
+                match profile.4 {
+                    Some(button) => {
+                        self.input_config_menu.rotate_ccw_text.fragments_mut()[1].text = format!("{:?}", button);
+                    },
+                    None => {
+                        self.input_config_menu.rotate_ccw_text.fragments_mut()[1].text = "None".to_string();
+                    }
+                }
+            }
+            None => {
+                self.input_config_menu.left_text.fragments_mut()[1].text = "None".to_string();
+                self.input_config_menu.alt_left_text.fragments_mut()[1].text = "None".to_string();
+                self.input_config_menu.right_text.fragments_mut()[1].text = "None".to_string();
+                self.input_config_menu.alt_right_text.fragments_mut()[1].text = "None".to_string();
+                self.input_config_menu.down_text.fragments_mut()[1].text = "None".to_string();
+                self.input_config_menu.alt_down_text.fragments_mut()[1].text = "None".to_string();
+                self.input_config_menu.rotate_cw_text.fragments_mut()[1].text = "None".to_string();
+                self.input_config_menu.rotate_ccw_text.fragments_mut()[1].text = "None".to_string();
+                self.input_config_menu.start_text.fragments_mut()[1].text = "None".to_string();
+            }
+        }
+    }
+
+    fn update_sub_text_strings_keyboard(&mut self) {
+        self.set_keyboard_specific_sub_text_strings();
         let mut index_found: Option<u8> = None;
         for (idx, ctrls) in self.input_config_menu.vec_keyboard_controls.iter().enumerate() {
             if ctrls.0 == self.input_config_menu.player_num {
@@ -708,6 +834,28 @@ impl Menu {
         }
     }
 
+    pub fn gamepad_button_down_event(&mut self, btn: Button) {
+        self.input_config_menu.most_recently_pressed_gamepad_button = Some(btn);
+        println!("just set most_recently_pressed_gamepad_button to Some({:?})", btn);
+    }
+
+    pub fn gamepad_axis_event(&mut self, axis: Axis, value: f32) {
+        if !self.input_config_menu.gamepad_axis_wait.0 {
+            if value < -DETECT_GAMEPAD_AXIS_THRESHOLD {
+                self.input_config_menu.gamepad_axis_wait = (true, Some((axis, if value < 0.0 {false} else {true})));
+                self.input_config_menu.most_recently_pressed_gamepad_axis = Some((axis, false));
+                println!("just set most_recently_pressed_gamepad_axis to Some(({:?}, false))", axis);
+            } else if value > DETECT_GAMEPAD_AXIS_THRESHOLD {
+                self.input_config_menu.gamepad_axis_wait = (true, Some((axis, if value < 0.0 {false} else {true})));
+                self.input_config_menu.most_recently_pressed_gamepad_axis = Some((axis, true));
+                println!("just set most_recently_pressed_gamepad_axis to Some(({:?}, true))", axis);
+            }
+        } else if value < UNDETECT_GAMEPAD_AXIS_THRESHOLD && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD && (self.input_config_menu.gamepad_axis_wait.1).expect("[!] axis waiting on None").0 == axis {
+            self.input_config_menu.gamepad_axis_wait = (false, None);
+            println!("set false");
+        }
+    }
+
     pub fn draw(&mut self, ctx: &mut Context) {
         graphics::clear(ctx, GRAY);
         self.window_dimensions = graphics::size(ctx);
@@ -724,6 +872,7 @@ impl Menu {
             },
             MenuState::InputConfig => {
                 self.draw_text(ctx, &self.input_config_menu.back_text, 0.1);
+                self.draw_text(ctx, &self.input_config_menu.gamepad_profile_text, 0.2);
                 self.draw_text(ctx, &self.input_config_menu.player_num_text, 0.3);
 
                 if self.input_config_menu.keycode_conflict_flag {
@@ -768,31 +917,25 @@ impl Menu {
                     graphics::draw(ctx, &editing_indicator_rectangle, (Point2::new(0.0, 0.0),)).unwrap();
 
                     if self.input_config_menu.selection == InputConfigMenuOption::GamepadProfile as u8 {
-                        // determine if uninitialized_text xor input stuffs should be displayed
-                        let mut player_input_exists: bool = false;
-                        for inputs in self.input_config_menu.vec_keyboard_controls.iter() {
-                            if inputs.0 == self.input_config_menu.player_num {
-                                player_input_exists = true;
-                                break;
-                            }
-                        }
-
-                        if player_input_exists {
+                        if self.input_config_menu.vec_gamepad_profiles[self.input_config_menu.profile_num as usize].is_some() {
                             self.draw_text(ctx, &self.input_config_menu.left_text, 0.5);
+                            self.draw_text(ctx, &self.input_config_menu.alt_left_text, 0.525);
                             self.draw_text(ctx, &self.input_config_menu.right_text, 0.55);
+                            self.draw_text(ctx, &self.input_config_menu.alt_right_text, 0.575);
                             self.draw_text(ctx, &self.input_config_menu.down_text, 0.6);
+                            self.draw_text(ctx, &self.input_config_menu.alt_down_text, 0.625);
                             self.draw_text(ctx, &self.input_config_menu.rotate_cw_text, 0.65);
                             self.draw_text(ctx, &self.input_config_menu.rotate_ccw_text, 0.7);
                             self.draw_text(ctx, &self.input_config_menu.start_text, 0.75);
                         } else {
-                            self.draw_text(ctx, &self.input_config_menu.uninitialized_text, 0.5);
+                            self.draw_text(ctx, &self.input_config_menu.gamepad_profile_uninitialized_text, 0.5);
                         }
 
                         if self.input_config_menu.sub_selection_gamepad_flag {
-                            self.draw_text(ctx, &self.input_config_menu.skip_alt_entry_text, 0.9);
+                            self.draw_text(ctx, &self.input_config_menu.skip_button_axis_text, 0.9);
                         }
                     } else if self.input_config_menu.selection == InputConfigMenuOption::PlayerInput as u8 {
-                        // determine if uninitialized_text xor input stuffs should be displayed
+                        // determine if input_uninitialized_text xor input stuffs should be displayed
                         let mut player_input_exists: bool = false;
                         for inputs in self.input_config_menu.vec_keyboard_controls.iter() {
                             if inputs.0 == self.input_config_menu.player_num {
@@ -809,7 +952,7 @@ impl Menu {
                             self.draw_text(ctx, &self.input_config_menu.rotate_ccw_text, 0.7);
                             self.draw_text(ctx, &self.input_config_menu.start_text, 0.75);
                         } else {
-                            self.draw_text(ctx, &self.input_config_menu.uninitialized_text, 0.5);
+                            self.draw_text(ctx, &self.input_config_menu.input_uninitialized_text, 0.5);
                         }
                     }
                 }
