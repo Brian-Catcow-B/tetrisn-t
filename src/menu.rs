@@ -16,7 +16,7 @@ const MAX_NUM_GAMEPAD_PROFILES: u8 = 9;
 const DETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.5;
 const UNDETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.3;
 
-const SUB_TEXT_Y_TOP: f32 = 0.45;
+const SUB_TEXT_Y_TOP: f32 = 0.48;
 const SUB_TEXT_Y_DIFF: f32 = 0.04;
 
 const TEXT_SCALE_DOWN: f32 = 15.0;
@@ -128,6 +128,8 @@ struct InputConfigMenu {
     gamepad_axis_wait: (bool, Option<(Axis, bool)>),
     vec_used_keycode: Vec<KeyCode>,
     keycode_conflict_flag: bool,
+    button_conflict_flag: bool,
+    axis_conflict_flag: bool,
     arr_controls: [(Option<(Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>, Option<u8>); MAX_NUM_PLAYERS as usize],
     arr_gamepad_profiles: [Option<((Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), Option<Button>, Option<Button>, Option<Button>)>; MAX_NUM_GAMEPAD_PROFILES as usize],
     // text
@@ -138,6 +140,8 @@ struct InputConfigMenu {
     input_uninitialized_text: Text,
     gamepad_profile_uninitialized_text: Text,
     keycode_conflict_text: Text,
+    button_conflict_text: Text,
+    axis_conflict_text: Text,
     skip_button_axis_text: Text,
     choose_profile_text: Text,
     k_left_text: Text,
@@ -225,6 +229,8 @@ impl InputConfigMenu {
             gamepad_axis_wait: (false, None),
             vec_used_keycode: vec![],
             keycode_conflict_flag: false,
+            button_conflict_flag: false,
+            axis_conflict_flag: false,
             arr_controls,
             arr_gamepad_profiles: [None; MAX_NUM_GAMEPAD_PROFILES as usize],
             // text
@@ -235,6 +241,8 @@ impl InputConfigMenu {
             input_uninitialized_text: Text::new(TextFragment::new("No Controls\nKeyboard: Space/Enter\nGamepad: 'G'").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
             gamepad_profile_uninitialized_text: Text::new(TextFragment::new("Profile nonexistent\nCreate/edit: Space/Enter").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
             keycode_conflict_text: Text::new(TextFragment::new("[!] Redundant KeyCode; ignoring").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
+            button_conflict_text: Text::new(TextFragment::new("[!] Redundant Button; ignoring").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
+            axis_conflict_text: Text::new(TextFragment::new("[!] Redundant Axis; ignoring").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
             skip_button_axis_text: Text::new(TextFragment::new("Skip Button/Axis: Space/Enter").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
             choose_profile_text,
             k_left_text,
@@ -401,17 +409,28 @@ impl Menu {
                                     (profile.0).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
                                 },
                                 x if x == InputConfigMenuSubOptionGamepad::AxisRight as u8 => {
-                                    (profile.1).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
+                                    if self.input_config_menu.most_recently_pressed_gamepad_axis != (profile.0).1 {
+                                        (profile.1).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
+                                        self.input_config_menu.axis_conflict_flag = false;
+                                    } else {
+                                        self.input_config_menu.axis_conflict_flag = true;
+                                    }
                                 },
                                 x if x == InputConfigMenuSubOptionGamepad::AxisDown as u8 => {
-                                    (profile.2).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
+                                    if self.input_config_menu.most_recently_pressed_gamepad_axis != (profile.0).1
+                                    && self.input_config_menu.most_recently_pressed_gamepad_axis != (profile.1).1 {
+                                        (profile.2).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
+                                        self.input_config_menu.axis_conflict_flag = false;
+                                    } else {
+                                        self.input_config_menu.axis_conflict_flag = true;
+                                    }
                                 },
                                 _ => not_on_axis_flag = true,
                             }
                         } else {
                             println!("[!] gamepad profile unexpectedly None");
                         }
-                        if !not_on_axis_flag {
+                        if !not_on_axis_flag && !self.input_config_menu.axis_conflict_flag {
                             self.set_select(false);
                             if self.input_config_menu.sub_selection_gamepad < NUM_INPUTCONFIGMENUSUBOPTIONGAMEPAD_TEXT_ENTRIES as u8 - 1 {
                                 self.input_config_menu.sub_selection_gamepad += 1;
@@ -435,26 +454,61 @@ impl Menu {
                                     (profile.0).0 = self.input_config_menu.most_recently_pressed_gamepad_button;
                                 },
                                 x if x == InputConfigMenuSubOptionGamepad::ButtonRight as u8 => {
-                                    (profile.1).0 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                    if self.input_config_menu.most_recently_pressed_gamepad_button != (profile.0).0 {
+                                        (profile.1).0 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                        self.input_config_menu.button_conflict_flag = false;
+                                    } else {
+                                        self.input_config_menu.button_conflict_flag = true;
+                                    }
                                 },
                                 x if x == InputConfigMenuSubOptionGamepad::ButtonDown as u8 => {
-                                    (profile.2).0 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                    if self.input_config_menu.most_recently_pressed_gamepad_button != (profile.0).0
+                                    && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.1).0 {
+                                        (profile.2).0 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                        self.input_config_menu.button_conflict_flag = false;
+                                    } else {
+                                        self.input_config_menu.button_conflict_flag = true;
+                                    }
                                 },
                                 x if x == InputConfigMenuSubOptionGamepad::ButtonRotateCw as u8 => {
-                                    profile.3 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                    if self.input_config_menu.most_recently_pressed_gamepad_button != (profile.0).0
+                                    && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.1).0
+                                    && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.2).0 {
+                                        profile.3 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                        self.input_config_menu.button_conflict_flag = false;
+                                    } else {
+                                        self.input_config_menu.button_conflict_flag = true;
+                                    }
                                 },
                                 x if x == InputConfigMenuSubOptionGamepad::ButtonRotateCcw as u8 => {
-                                    profile.4 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                    if self.input_config_menu.most_recently_pressed_gamepad_button != (profile.0).0
+                                    && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.1).0
+                                    && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.2).0
+                                    && self.input_config_menu.most_recently_pressed_gamepad_button != profile.3 {
+                                        profile.4 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                        self.input_config_menu.button_conflict_flag = false;
+                                    } else {
+                                        self.input_config_menu.button_conflict_flag = true;
+                                    }
                                 },
                                 x if x == InputConfigMenuSubOptionGamepad::ButtonStart as u8 => {
-                                    profile.5 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                    if self.input_config_menu.most_recently_pressed_gamepad_button != (profile.0).0
+                                    && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.1).0
+                                    && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.2).0
+                                    && self.input_config_menu.most_recently_pressed_gamepad_button != profile.3
+                                    && self.input_config_menu.most_recently_pressed_gamepad_button != profile.4 {
+                                        profile.5 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                        self.input_config_menu.button_conflict_flag = false;
+                                    } else {
+                                        self.input_config_menu.button_conflict_flag = true;
+                                    }
                                 },
                                 _ => not_on_button_flag = true,
                             }
                         } else {
                             println!("[!] gamepad profile unexpectedly None");
                         }
-                        if !not_on_button_flag {
+                        if !not_on_button_flag && !self.input_config_menu.button_conflict_flag {
                             self.set_select(false);
                             if self.input_config_menu.sub_selection_gamepad < NUM_INPUTCONFIGMENUSUBOPTIONGAMEPAD_TEXT_ENTRIES as u8 - 1 {
                                 self.input_config_menu.sub_selection_gamepad += 1;
@@ -473,6 +527,8 @@ impl Menu {
 
                     if self.input_config_menu.most_recently_pressed_key == Some(KeyCode::Escape) {
                         self.set_select(false);
+                        self.input_config_menu.button_conflict_flag = false;
+                        self.input_config_menu.axis_conflict_flag = false;
                         self.input_config_menu.arr_gamepad_profiles[self.input_config_menu.profile_num as usize] = None;
                         self.input_config_menu.sub_selection_gamepad = 0;
                         self.input_config_menu.sub_selection_gamepad_flag = false;
@@ -1177,6 +1233,12 @@ impl Menu {
                     graphics::draw(ctx, &editing_indicator_rectangle, (Point2::new(0.0, 0.0),)).unwrap();
 
                     if self.input_config_menu.selection == InputConfigMenuOption::GamepadProfile as u8 {
+                        if self.input_config_menu.button_conflict_flag {
+                            self.draw_text(ctx, &self.input_config_menu.button_conflict_text, 0.43);
+                        } else if self.input_config_menu.axis_conflict_flag {
+                            self.draw_text(ctx, &self.input_config_menu.axis_conflict_text, 0.43);
+                        }
+
                         if self.input_config_menu.arr_gamepad_profiles[self.input_config_menu.profile_num as usize].is_some() {
                             self.draw_text(ctx, &self.input_config_menu.g_axis_left_text, SUB_TEXT_Y_TOP);
                             self.draw_text(ctx, &self.input_config_menu.g_axis_right_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF);
@@ -1198,6 +1260,7 @@ impl Menu {
                         if self.input_config_menu.keycode_conflict_flag {
                             self.draw_text(ctx, &self.input_config_menu.keycode_conflict_text, 0.43);
                         }
+
                         if self.input_config_menu.choose_profile_flag {
                             self.draw_text(ctx, &self.input_config_menu.choose_profile_text, 0.5);
                         } else {
