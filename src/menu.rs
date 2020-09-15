@@ -100,15 +100,15 @@ enum InputConfigMenuSubOptionKeyboard {
 const NUM_INPUTCONFIGMENUSUBOPTIONGAMEPAD_TEXT_ENTRIES: u8 = 9;
 #[repr(u8)]
 enum InputConfigMenuSubOptionGamepad {
-    Left,
-    AltLeft,
-    Right,
-    AltRight,
-    Down,
-    AltDown,
-    RotateCw,
-    RotateCcw,
-    Start,
+    AxisLeft,
+    AxisRight,
+    AxisDown,
+    ButtonLeft,
+    ButtonRight,
+    ButtonDown,
+    ButtonRotateCw,
+    ButtonRotateCcw,
+    ButtonStart,
 }
 
 struct InputConfigMenu {
@@ -140,15 +140,21 @@ struct InputConfigMenu {
     keycode_conflict_text: Text,
     skip_button_axis_text: Text,
     choose_profile_text: Text,
-    left_text: Text,
-    alt_left_text: Text,
-    right_text: Text,
-    alt_right_text: Text,
-    down_text: Text,
-    alt_down_text: Text,
-    rotate_cw_text: Text,
-    rotate_ccw_text: Text,
-    start_text: Text,
+    k_left_text: Text,
+    k_right_text: Text,
+    k_down_text: Text,
+    k_rotate_cw_text: Text,
+    k_rotate_ccw_text: Text,
+    k_start_text: Text,
+    g_axis_left_text: Text,
+    g_axis_right_text: Text,
+    g_axis_down_text: Text,
+    g_button_left_text: Text,
+    g_button_right_text: Text,
+    g_button_down_text: Text,
+    g_button_rotate_cw_text: Text,
+    g_button_rotate_ccw_text: Text,
+    g_button_start_text: Text,
 }
 
 impl InputConfigMenu {
@@ -160,37 +166,49 @@ impl InputConfigMenu {
             }
         }
         let mut player_controls_text = Text::new(TextFragment::new("Player Number: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
-        player_controls_text.add(TextFragment::new("1").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
+        player_controls_text.add(TextFragment::new(" 1").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
         let mut gamepad_profile_text = Text::new(TextFragment::new("GamePad Profile: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
-        gamepad_profile_text.add(TextFragment::new("1").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
+        gamepad_profile_text.add(TextFragment::new(" 1").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
         let mut choose_profile_text = Text::new(TextFragment::new("Profile:").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        let mut left_text = Text::new(TextFragment::new("Left:     ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        let mut alt_left_text = Text::new(TextFragment::new("Left (Axis):  ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
-        let mut right_text = Text::new(TextFragment::new("Right:    ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        let mut alt_right_text = Text::new(TextFragment::new("Right (Axis): ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
-        let mut down_text = Text::new(TextFragment::new("Down:     ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        let mut alt_down_text = Text::new(TextFragment::new("Down (Axis):  ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
-        let mut rotate_cw_text = Text::new(TextFragment::new("RotateCw:  ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        let mut rotate_ccw_text = Text::new(TextFragment::new("RotateCcw:  ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        let mut start_text = Text::new(TextFragment::new("Start/Pause: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        let mut k_left_text = Text::new(TextFragment::new("Left:     ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        let mut k_right_text = Text::new(TextFragment::new("Right:    ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        let mut k_down_text = Text::new(TextFragment::new("Down:     ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        let mut k_rotate_cw_text = Text::new(TextFragment::new("RotateCw:  ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        let mut k_rotate_ccw_text = Text::new(TextFragment::new("RotateCcw:  ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        let k_start_text = Text::new(TextFragment::new("Start/Pause: Esc").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        let mut g_axis_left_text = Text::new(TextFragment::new("Left (Axis):  ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
+        let mut g_axis_right_text = Text::new(TextFragment::new("Right (Axis): ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
+        let mut g_axis_down_text = Text::new(TextFragment::new("Down (Axis):  ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
+        let mut g_button_left_text = Text::new(TextFragment::new("Left (Button): ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        let mut g_button_right_text = Text::new(TextFragment::new("Right (Button): ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        let mut g_button_down_text = Text::new(TextFragment::new("Down (Button): ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        let mut g_button_rotate_cw_text = Text::new(TextFragment::new("RotateCw: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        let mut g_button_rotate_ccw_text = Text::new(TextFragment::new("RotateCcw: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        let mut g_button_start_text = Text::new(TextFragment::new("Start/Pause: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
         if last_used_keyboard_controls.is_empty() {
-            left_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            right_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            down_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            rotate_cw_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            rotate_ccw_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            // they'll get set to have the string "None" later in this case anyways
+            k_left_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_right_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_down_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_rotate_cw_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_rotate_ccw_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
         } else {
-            left_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].1.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            right_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].2.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            down_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].3.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            rotate_cw_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].4.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            rotate_ccw_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].5.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_left_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].1.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_right_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].2.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_down_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].3.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_rotate_cw_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].4.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_rotate_ccw_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].5.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
         }
         choose_profile_text.add(TextFragment::new(" 1").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        alt_left_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
-        alt_right_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
-        alt_down_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
-        start_text.add(TextFragment::new("Esc").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        g_axis_left_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
+        g_axis_right_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
+        g_axis_down_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
+        g_button_left_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        g_button_right_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        g_button_down_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        g_button_rotate_cw_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        g_button_rotate_ccw_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        g_button_start_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
         Self {
             selection: 0,
             player_controls: 0,
@@ -205,7 +223,7 @@ impl InputConfigMenu {
             most_recently_pressed_gamepad_button: None,
             most_recently_pressed_gamepad_axis: None,
             gamepad_axis_wait: (false, None),
-            vec_used_keycode: vec![KeyCode::Escape],
+            vec_used_keycode: vec![],
             keycode_conflict_flag: false,
             arr_controls,
             arr_gamepad_profiles: [None; MAX_NUM_GAMEPAD_PROFILES as usize],
@@ -216,18 +234,24 @@ impl InputConfigMenu {
             // subtext
             input_uninitialized_text: Text::new(TextFragment::new("No Controls\nKeyboard: Space/Enter\nGamepad: 'G'").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
             gamepad_profile_uninitialized_text: Text::new(TextFragment::new("Profile nonexistent\nCreate/edit: Space/Enter").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
-            keycode_conflict_text: Text::new(TextFragment::new("[!] Redundant KeyCode; ignoring input").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
+            keycode_conflict_text: Text::new(TextFragment::new("[!] Redundant KeyCode; ignoring").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
             skip_button_axis_text: Text::new(TextFragment::new("Skip Button/Axis: Space/Enter").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
             choose_profile_text,
-            left_text,
-            alt_left_text,
-            right_text,
-            alt_right_text,
-            down_text,
-            alt_down_text,
-            rotate_cw_text,
-            rotate_ccw_text,
-            start_text,
+            k_left_text,
+            k_right_text,
+            k_down_text,
+            k_rotate_cw_text,
+            k_rotate_ccw_text,
+            k_start_text,
+            g_axis_left_text,
+            g_axis_right_text,
+            g_axis_down_text,
+            g_button_left_text,
+            g_button_right_text,
+            g_button_down_text,
+            g_button_rotate_cw_text,
+            g_button_rotate_ccw_text,
+            g_button_start_text,
         }
     }
 }
@@ -357,24 +381,8 @@ impl Menu {
                             self.set_select(true);
                         } else if self.input_config_menu.selection == InputConfigMenuOption::PlayerInput as u8 {
                             self.input_config_menu.most_recently_pressed_key = None;
-                            // remove the old keyboard controls after removing all the KeyCodes from the used keycodes vector since we are overwriting this one
-                            let mut items_removed = 0;
-                            // we must index because .remove() pulls the indices after it back by 1, so use `items_removed` to pull the index back with it
                             if let Some(ctrls) = self.input_config_menu.arr_controls[self.input_config_menu.player_controls as usize].0 {
-                                for used_key_idx in 0..self.input_config_menu.vec_used_keycode.len() {
-                                    if Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == ctrls.0
-                                    || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == ctrls.1
-                                    || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == ctrls.2
-                                    || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == ctrls.3
-                                    || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == ctrls.4 {
-                                        self.input_config_menu.vec_used_keycode.remove(used_key_idx - items_removed);
-                                        items_removed += 1;
-                                        // we only need to get rid of NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_TEXT_ENTRIES
-                                        if items_removed >= NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_TEXT_ENTRIES as usize {
-                                            break;
-                                        }
-                                    }
-                                }
+                                self.remove_from_used_keycodes(ctrls);
                             }
                             self.input_config_menu.arr_controls[self.input_config_menu.player_controls as usize].0 = None;
 
@@ -385,26 +393,60 @@ impl Menu {
                         }
                     }
                 } else if self.input_config_menu.sub_selection_gamepad_flag {
+                    if self.input_config_menu.most_recently_pressed_gamepad_axis.is_some() {
+                        let mut not_on_axis_flag: bool = false;
+                        if let Some(mut profile) = self.input_config_menu.arr_gamepad_profiles[self.input_config_menu.profile_num as usize].as_mut() {
+                            match self.input_config_menu.sub_selection_gamepad {
+                                x if x == InputConfigMenuSubOptionGamepad::AxisLeft as u8 => {
+                                    (profile.0).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
+                                },
+                                x if x == InputConfigMenuSubOptionGamepad::AxisRight as u8 => {
+                                    (profile.1).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
+                                },
+                                x if x == InputConfigMenuSubOptionGamepad::AxisDown as u8 => {
+                                    (profile.2).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
+                                },
+                                _ => not_on_axis_flag = true,
+                            }
+                        } else {
+                            println!("[!] gamepad profile unexpectedly None");
+                        }
+                        if !not_on_axis_flag {
+                            self.set_select(false);
+                            if self.input_config_menu.sub_selection_gamepad < NUM_INPUTCONFIGMENUSUBOPTIONGAMEPAD_TEXT_ENTRIES as u8 - 1 {
+                                self.input_config_menu.sub_selection_gamepad += 1;
+                                self.set_select(true);
+                            } else {
+                                self.input_config_menu.sub_selection_gamepad = 0;
+                                self.input_config_menu.sub_selection_gamepad_flag = false;
+                            }
+                        } else {
+                            self.input_config_menu.most_recently_pressed_gamepad_axis = None;
+                        }
+
+                        self.input_config_menu.most_recently_pressed_key = None;
+                    }
+
                     if self.input_config_menu.most_recently_pressed_gamepad_button.is_some() {
                         let mut not_on_button_flag: bool = false;
                         if let Some(mut profile) = self.input_config_menu.arr_gamepad_profiles[self.input_config_menu.profile_num as usize].as_mut() {
                             match self.input_config_menu.sub_selection_gamepad {
-                                x if x == InputConfigMenuSubOptionGamepad::Left as u8 => {
+                                x if x == InputConfigMenuSubOptionGamepad::ButtonLeft as u8 => {
                                     (profile.0).0 = self.input_config_menu.most_recently_pressed_gamepad_button;
                                 },
-                                x if x == InputConfigMenuSubOptionGamepad::Right as u8 => {
+                                x if x == InputConfigMenuSubOptionGamepad::ButtonRight as u8 => {
                                     (profile.1).0 = self.input_config_menu.most_recently_pressed_gamepad_button;
                                 },
-                                x if x == InputConfigMenuSubOptionGamepad::Down as u8 => {
+                                x if x == InputConfigMenuSubOptionGamepad::ButtonDown as u8 => {
                                     (profile.2).0 = self.input_config_menu.most_recently_pressed_gamepad_button;
                                 },
-                                x if x == InputConfigMenuSubOptionGamepad::RotateCw as u8 => {
+                                x if x == InputConfigMenuSubOptionGamepad::ButtonRotateCw as u8 => {
                                     profile.3 = self.input_config_menu.most_recently_pressed_gamepad_button;
                                 },
-                                x if x == InputConfigMenuSubOptionGamepad::RotateCcw as u8 => {
+                                x if x == InputConfigMenuSubOptionGamepad::ButtonRotateCcw as u8 => {
                                     profile.4 = self.input_config_menu.most_recently_pressed_gamepad_button;
                                 },
-                                x if x == InputConfigMenuSubOptionGamepad::Start as u8 => {
+                                x if x == InputConfigMenuSubOptionGamepad::ButtonStart as u8 => {
                                     profile.5 = self.input_config_menu.most_recently_pressed_gamepad_button;
                                 },
                                 _ => not_on_button_flag = true,
@@ -426,40 +468,6 @@ impl Menu {
                         }
 
                         self.input_config_menu.most_recently_pressed_gamepad_axis = None;
-                        self.input_config_menu.most_recently_pressed_key = None;
-                    }
-
-                    if self.input_config_menu.most_recently_pressed_gamepad_axis.is_some() {
-                        let mut not_on_axis_flag: bool = false;
-                        if let Some(mut profile) = self.input_config_menu.arr_gamepad_profiles[self.input_config_menu.profile_num as usize].as_mut() {
-                            match self.input_config_menu.sub_selection_gamepad {
-                                x if x == InputConfigMenuSubOptionGamepad::AltLeft as u8 => {
-                                    (profile.0).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
-                                },
-                                x if x == InputConfigMenuSubOptionGamepad::AltRight as u8 => {
-                                    (profile.1).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
-                                },
-                                x if x == InputConfigMenuSubOptionGamepad::AltDown as u8 => {
-                                    (profile.2).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
-                                },
-                                _ => not_on_axis_flag = true,
-                            }
-                        } else {
-                            println!("[!] gamepad profile unexpectedly None");
-                        }
-                        if !not_on_axis_flag {
-                            self.set_select(false);
-                            if self.input_config_menu.sub_selection_gamepad < NUM_INPUTCONFIGMENUSUBOPTIONGAMEPAD_TEXT_ENTRIES as u8 - 1 {
-                                self.input_config_menu.sub_selection_gamepad += 1;
-                                self.set_select(true);
-                            } else {
-                                self.input_config_menu.sub_selection_gamepad = 0;
-                                self.input_config_menu.sub_selection_gamepad_flag = false;
-                            }
-                        } else {
-                            self.input_config_menu.most_recently_pressed_gamepad_axis = None;
-                        }
-
                         self.input_config_menu.most_recently_pressed_key = None;
                     }
 
@@ -545,7 +553,10 @@ impl Menu {
                     if self.input.keydown_start.1 {
                         self.set_select(false);
                         self.input_config_menu.arr_controls[self.input_config_menu.player_controls as usize].1 = Some(self.input_config_menu.choose_profile_num);
-                        self.input_config_menu.arr_controls[self.input_config_menu.player_controls as usize].0 = None;
+                        if let Some(ctrls) = self.input_config_menu.arr_controls[self.input_config_menu.player_controls as usize].0 {
+                            self.remove_from_used_keycodes(ctrls);
+                            self.input_config_menu.arr_controls[self.input_config_menu.player_controls as usize].0 = None;
+                        }
                         self.input_config_menu.choose_profile_flag = false;
                     }
                 }
@@ -554,6 +565,24 @@ impl Menu {
 
         self.input.was_just_pressed_setfalse();
         None
+    }
+
+    fn remove_from_used_keycodes(&mut self, ctrls: (Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)) {
+        let mut items_removed = 0;
+        for used_key_idx in 0..self.input_config_menu.vec_used_keycode.len() {
+            if Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == ctrls.0
+            || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == ctrls.1
+            || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == ctrls.2
+            || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == ctrls.3
+            || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == ctrls.4 {
+                self.input_config_menu.vec_used_keycode.remove(used_key_idx - items_removed);
+                items_removed += 1;
+                // we only need to get rid of NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_TEXT_ENTRIES
+                if items_removed >= NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_TEXT_ENTRIES as usize {
+                    return;
+                }
+            }
+        }
     }
 
     fn set_select(&mut self, select_flag: bool) {
@@ -635,128 +664,128 @@ impl Menu {
                     }
                 } else if self.input_config_menu.sub_selection_gamepad_flag {
                     match self.input_config_menu.sub_selection_gamepad {
-                        x if x == InputConfigMenuSubOptionGamepad::Left as u8 => {
+                        x if x == InputConfigMenuSubOptionGamepad::AxisLeft as u8 => {
                             if select_flag {
-                                self.input_config_menu.left_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-                                self.input_config_menu.left_text.fragments_mut()[1].color = Some(SELECT_GREEN);
+                                self.input_config_menu.g_axis_left_text.fragments_mut()[0].color = Some(SELECT_GREEN);
+                                self.input_config_menu.g_axis_left_text.fragments_mut()[1].color = Some(SELECT_GREEN);
                             } else {
-                                self.input_config_menu.left_text.fragments_mut()[0].color = Some(graphics::BLACK);
-                                self.input_config_menu.left_text.fragments_mut()[1].color = Some(graphics::BLACK);
-                                match self.input_config_menu.most_recently_pressed_gamepad_button {
-                                    Some(button) => self.input_config_menu.left_text.fragments_mut()[1].text = format!("{:?}", button),
-                                    None => self.input_config_menu.left_text.fragments_mut()[1].text = format!("None"),
-                                }
-                                self.input_config_menu.most_recently_pressed_gamepad_button = None;
-                            }
-                        },
-                        x if x == InputConfigMenuSubOptionGamepad::AltLeft as u8 => {
-                            if select_flag {
-                                self.input_config_menu.alt_left_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-                                self.input_config_menu.alt_left_text.fragments_mut()[1].color = Some(SELECT_GREEN);
-                            } else {
-                                self.input_config_menu.alt_left_text.fragments_mut()[0].color = Some(graphics::BLACK);
-                                self.input_config_menu.alt_left_text.fragments_mut()[1].color = Some(graphics::BLACK);
+                                self.input_config_menu.g_axis_left_text.fragments_mut()[0].color = Some(graphics::BLACK);
+                                self.input_config_menu.g_axis_left_text.fragments_mut()[1].color = Some(graphics::BLACK);
                                 match self.input_config_menu.most_recently_pressed_gamepad_axis {
-                                    Some(axis) => self.input_config_menu.alt_left_text.fragments_mut()[1].text = format!("{:?}{}", axis.0, if axis.1 {'+'} else {'-'}),
-                                    None => self.input_config_menu.alt_left_text.fragments_mut()[1].text = format!("None"),
+                                    Some(axis) => self.input_config_menu.g_axis_left_text.fragments_mut()[1].text = format!("{:?}{}", axis.0, if axis.1 {'+'} else {'-'}),
+                                    None => self.input_config_menu.g_axis_left_text.fragments_mut()[1].text = format!("None"),
                                 }
                                 self.input_config_menu.most_recently_pressed_gamepad_axis = None;
                             }
                         },
-                        x if x == InputConfigMenuSubOptionGamepad::Right as u8 => {
+                        x if x == InputConfigMenuSubOptionGamepad::AxisRight as u8 => {
                             if select_flag {
-                                self.input_config_menu.right_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-                                self.input_config_menu.right_text.fragments_mut()[1].color = Some(SELECT_GREEN);
+                                self.input_config_menu.g_axis_right_text.fragments_mut()[0].color = Some(SELECT_GREEN);
+                                self.input_config_menu.g_axis_right_text.fragments_mut()[1].color = Some(SELECT_GREEN);
                             } else {
-                                self.input_config_menu.right_text.fragments_mut()[0].color = Some(graphics::BLACK);
-                                self.input_config_menu.right_text.fragments_mut()[1].color = Some(graphics::BLACK);
-                                match self.input_config_menu.most_recently_pressed_gamepad_button {
-                                    Some(button) => self.input_config_menu.right_text.fragments_mut()[1].text = format!("{:?}", button),
-                                    None => self.input_config_menu.right_text.fragments_mut()[1].text = format!("None"),
-                                }
-                                self.input_config_menu.most_recently_pressed_gamepad_button = None;
-                            }
-                        },
-                        x if x == InputConfigMenuSubOptionGamepad::AltRight as u8 => {
-                            if select_flag {
-                                self.input_config_menu.alt_right_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-                                self.input_config_menu.alt_right_text.fragments_mut()[1].color = Some(SELECT_GREEN);
-                            } else {
-                                self.input_config_menu.alt_right_text.fragments_mut()[0].color = Some(graphics::BLACK);
-                                self.input_config_menu.alt_right_text.fragments_mut()[1].color = Some(graphics::BLACK);
+                                self.input_config_menu.g_axis_right_text.fragments_mut()[0].color = Some(graphics::BLACK);
+                                self.input_config_menu.g_axis_right_text.fragments_mut()[1].color = Some(graphics::BLACK);
                                 match self.input_config_menu.most_recently_pressed_gamepad_axis {
-                                    Some(axis) => self.input_config_menu.alt_right_text.fragments_mut()[1].text = format!("{:?}{}", axis.0, if axis.1 {'+'} else {'-'}),
-                                    None => self.input_config_menu.alt_right_text.fragments_mut()[1].text = format!("None"),
+                                    Some(axis) => self.input_config_menu.g_axis_right_text.fragments_mut()[1].text = format!("{:?}{}", axis.0, if axis.1 {'+'} else {'-'}),
+                                    None => self.input_config_menu.g_axis_right_text.fragments_mut()[1].text = format!("None"),
                                 }
                                 self.input_config_menu.most_recently_pressed_gamepad_axis = None;
                             }
                         },
-                        x if x == InputConfigMenuSubOptionGamepad::Down as u8 => {
+                        x if x == InputConfigMenuSubOptionGamepad::AxisDown as u8 => {
                             if select_flag {
-                                self.input_config_menu.down_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-                                self.input_config_menu.down_text.fragments_mut()[1].color = Some(SELECT_GREEN);
+                                self.input_config_menu.g_axis_down_text.fragments_mut()[0].color = Some(SELECT_GREEN);
+                                self.input_config_menu.g_axis_down_text.fragments_mut()[1].color = Some(SELECT_GREEN);
                             } else {
-                                self.input_config_menu.down_text.fragments_mut()[0].color = Some(graphics::BLACK);
-                                self.input_config_menu.down_text.fragments_mut()[1].color = Some(graphics::BLACK);
-                                match self.input_config_menu.most_recently_pressed_gamepad_button {
-                                    Some(button) => self.input_config_menu.down_text.fragments_mut()[1].text = format!("{:?}", button),
-                                    None => self.input_config_menu.down_text.fragments_mut()[1].text = format!("None"),
-                                }
-                                self.input_config_menu.most_recently_pressed_gamepad_button = None;
-                            }
-                        },
-                        x if x == InputConfigMenuSubOptionGamepad::AltDown as u8 => {
-                            if select_flag {
-                                self.input_config_menu.alt_down_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-                                self.input_config_menu.alt_down_text.fragments_mut()[1].color = Some(SELECT_GREEN);
-                            } else {
-                                self.input_config_menu.alt_down_text.fragments_mut()[0].color = Some(graphics::BLACK);
-                                self.input_config_menu.alt_down_text.fragments_mut()[1].color = Some(graphics::BLACK);
+                                self.input_config_menu.g_axis_down_text.fragments_mut()[0].color = Some(graphics::BLACK);
+                                self.input_config_menu.g_axis_down_text.fragments_mut()[1].color = Some(graphics::BLACK);
                                 match self.input_config_menu.most_recently_pressed_gamepad_axis {
-                                    Some(axis) => self.input_config_menu.alt_down_text.fragments_mut()[1].text = format!("{:?}{}", axis.0, if axis.1 {'+'} else {'-'}),
-                                    None => self.input_config_menu.alt_down_text.fragments_mut()[1].text = format!("None"),
+                                    Some(axis) => self.input_config_menu.g_axis_down_text.fragments_mut()[1].text = format!("{:?}{}", axis.0, if axis.1 {'+'} else {'-'}),
+                                    None => self.input_config_menu.g_axis_down_text.fragments_mut()[1].text = format!("None"),
                                 }
                                 self.input_config_menu.most_recently_pressed_gamepad_axis = None;
                             }
                         },
-                        x if x == InputConfigMenuSubOptionGamepad::RotateCw as u8 => {
+                        x if x == InputConfigMenuSubOptionGamepad::ButtonLeft as u8 => {
                             if select_flag {
-                                self.input_config_menu.rotate_cw_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-                                self.input_config_menu.rotate_cw_text.fragments_mut()[1].color = Some(SELECT_GREEN);
+                                self.input_config_menu.g_button_left_text.fragments_mut()[0].color = Some(SELECT_GREEN);
+                                self.input_config_menu.g_button_left_text.fragments_mut()[1].color = Some(SELECT_GREEN);
                             } else {
-                                self.input_config_menu.rotate_cw_text.fragments_mut()[0].color = Some(graphics::BLACK);
-                                self.input_config_menu.rotate_cw_text.fragments_mut()[1].color = Some(graphics::BLACK);
+                                self.input_config_menu.g_button_left_text.fragments_mut()[0].color = Some(graphics::BLACK);
+                                self.input_config_menu.g_button_left_text.fragments_mut()[1].color = Some(graphics::BLACK);
                                 match self.input_config_menu.most_recently_pressed_gamepad_button {
-                                    Some(button) => self.input_config_menu.rotate_cw_text.fragments_mut()[1].text = format!("{:?}", button),
-                                    None => self.input_config_menu.rotate_cw_text.fragments_mut()[1].text = format!("None"),
+                                    Some(button) => self.input_config_menu.g_button_left_text.fragments_mut()[1].text = format!("{:?}", button),
+                                    None => self.input_config_menu.g_button_left_text.fragments_mut()[1].text = format!("None"),
                                 }
                                 self.input_config_menu.most_recently_pressed_gamepad_button = None;
                             }
                         },
-                        x if x == InputConfigMenuSubOptionGamepad::RotateCcw as u8 => {
+                        x if x == InputConfigMenuSubOptionGamepad::ButtonRight as u8 => {
                             if select_flag {
-                                self.input_config_menu.rotate_ccw_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-                                self.input_config_menu.rotate_ccw_text.fragments_mut()[1].color = Some(SELECT_GREEN);
+                                self.input_config_menu.g_button_right_text.fragments_mut()[0].color = Some(SELECT_GREEN);
+                                self.input_config_menu.g_button_right_text.fragments_mut()[1].color = Some(SELECT_GREEN);
                             } else {
-                                self.input_config_menu.rotate_ccw_text.fragments_mut()[0].color = Some(graphics::BLACK);
-                                self.input_config_menu.rotate_ccw_text.fragments_mut()[1].color = Some(graphics::BLACK);
+                                self.input_config_menu.g_button_right_text.fragments_mut()[0].color = Some(graphics::BLACK);
+                                self.input_config_menu.g_button_right_text.fragments_mut()[1].color = Some(graphics::BLACK);
                                 match self.input_config_menu.most_recently_pressed_gamepad_button {
-                                    Some(button) => self.input_config_menu.rotate_ccw_text.fragments_mut()[1].text = format!("{:?}", button),
-                                    None => self.input_config_menu.rotate_ccw_text.fragments_mut()[1].text = format!("None"),
+                                    Some(button) => self.input_config_menu.g_button_right_text.fragments_mut()[1].text = format!("{:?}", button),
+                                    None => self.input_config_menu.g_button_right_text.fragments_mut()[1].text = format!("None"),
                                 }
                                 self.input_config_menu.most_recently_pressed_gamepad_button = None;
                             }
                         },
-                        x if x == InputConfigMenuSubOptionGamepad::Start as u8 => {
+                        x if x == InputConfigMenuSubOptionGamepad::ButtonDown as u8 => {
                             if select_flag {
-                                self.input_config_menu.start_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-                                self.input_config_menu.start_text.fragments_mut()[1].color = Some(SELECT_GREEN);
+                                self.input_config_menu.g_button_down_text.fragments_mut()[0].color = Some(SELECT_GREEN);
+                                self.input_config_menu.g_button_down_text.fragments_mut()[1].color = Some(SELECT_GREEN);
                             } else {
-                                self.input_config_menu.start_text.fragments_mut()[0].color = Some(graphics::BLACK);
-                                self.input_config_menu.start_text.fragments_mut()[1].color = Some(graphics::BLACK);
+                                self.input_config_menu.g_button_down_text.fragments_mut()[0].color = Some(graphics::BLACK);
+                                self.input_config_menu.g_button_down_text.fragments_mut()[1].color = Some(graphics::BLACK);
                                 match self.input_config_menu.most_recently_pressed_gamepad_button {
-                                    Some(button) => self.input_config_menu.start_text.fragments_mut()[1].text = format!("{:?}", button),
-                                    None => self.input_config_menu.start_text.fragments_mut()[1].text = format!("None"),
+                                    Some(button) => self.input_config_menu.g_button_down_text.fragments_mut()[1].text = format!("{:?}", button),
+                                    None => self.input_config_menu.g_button_down_text.fragments_mut()[1].text = format!("None"),
+                                }
+                                self.input_config_menu.most_recently_pressed_gamepad_button = None;
+                            }
+                        },
+                        x if x == InputConfigMenuSubOptionGamepad::ButtonRotateCw as u8 => {
+                            if select_flag {
+                                self.input_config_menu.g_button_rotate_cw_text.fragments_mut()[0].color = Some(SELECT_GREEN);
+                                self.input_config_menu.g_button_rotate_cw_text.fragments_mut()[1].color = Some(SELECT_GREEN);
+                            } else {
+                                self.input_config_menu.g_button_rotate_cw_text.fragments_mut()[0].color = Some(graphics::BLACK);
+                                self.input_config_menu.g_button_rotate_cw_text.fragments_mut()[1].color = Some(graphics::BLACK);
+                                match self.input_config_menu.most_recently_pressed_gamepad_button {
+                                    Some(button) => self.input_config_menu.g_button_rotate_cw_text.fragments_mut()[1].text = format!("{:?}", button),
+                                    None => self.input_config_menu.g_button_rotate_cw_text.fragments_mut()[1].text = format!("None"),
+                                }
+                                self.input_config_menu.most_recently_pressed_gamepad_button = None;
+                            }
+                        },
+                        x if x == InputConfigMenuSubOptionGamepad::ButtonRotateCcw as u8 => {
+                            if select_flag {
+                                self.input_config_menu.g_button_rotate_ccw_text.fragments_mut()[0].color = Some(SELECT_GREEN);
+                                self.input_config_menu.g_button_rotate_ccw_text.fragments_mut()[1].color = Some(SELECT_GREEN);
+                            } else {
+                                self.input_config_menu.g_button_rotate_ccw_text.fragments_mut()[0].color = Some(graphics::BLACK);
+                                self.input_config_menu.g_button_rotate_ccw_text.fragments_mut()[1].color = Some(graphics::BLACK);
+                                match self.input_config_menu.most_recently_pressed_gamepad_button {
+                                    Some(button) => self.input_config_menu.g_button_rotate_ccw_text.fragments_mut()[1].text = format!("{:?}", button),
+                                    None => self.input_config_menu.g_button_rotate_ccw_text.fragments_mut()[1].text = format!("None"),
+                                }
+                                self.input_config_menu.most_recently_pressed_gamepad_button = None;
+                            }
+                        },
+                        x if x == InputConfigMenuSubOptionGamepad::ButtonStart as u8 => {
+                            if select_flag {
+                                self.input_config_menu.g_button_start_text.fragments_mut()[0].color = Some(SELECT_GREEN);
+                                self.input_config_menu.g_button_start_text.fragments_mut()[1].color = Some(SELECT_GREEN);
+                            } else {
+                                self.input_config_menu.g_button_start_text.fragments_mut()[0].color = Some(graphics::BLACK);
+                                self.input_config_menu.g_button_start_text.fragments_mut()[1].color = Some(graphics::BLACK);
+                                match self.input_config_menu.most_recently_pressed_gamepad_button {
+                                    Some(button) => self.input_config_menu.g_button_start_text.fragments_mut()[1].text = format!("{:?}", button),
+                                    None => self.input_config_menu.g_button_start_text.fragments_mut()[1].text = format!("None"),
                                 }
                                 self.input_config_menu.most_recently_pressed_gamepad_button = None;
                             }
@@ -767,56 +796,56 @@ impl Menu {
                     match self.input_config_menu.sub_selection_keyboard {
                         x if x == InputConfigMenuSubOptionKeyboard::Left as u8 => {
                             if select_flag {
-                                self.input_config_menu.left_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-                                self.input_config_menu.left_text.fragments_mut()[1].color = Some(SELECT_GREEN);
+                                self.input_config_menu.k_left_text.fragments_mut()[0].color = Some(SELECT_GREEN);
+                                self.input_config_menu.k_left_text.fragments_mut()[1].color = Some(SELECT_GREEN);
                             } else {
-                                self.input_config_menu.left_text.fragments_mut()[0].color = Some(graphics::BLACK);
-                                self.input_config_menu.left_text.fragments_mut()[1].color = Some(graphics::BLACK);
-                                self.input_config_menu.left_text.fragments_mut()[1].text = format!(" {:?}", self.input_config_menu.most_recently_pressed_key.expect("[!] was setting keycode text, but most_recently_pressed_key == None"));
+                                self.input_config_menu.k_left_text.fragments_mut()[0].color = Some(graphics::BLACK);
+                                self.input_config_menu.k_left_text.fragments_mut()[1].color = Some(graphics::BLACK);
+                                self.input_config_menu.k_left_text.fragments_mut()[1].text = format!(" {:?}", self.input_config_menu.most_recently_pressed_key.expect("[!] was setting keycode text, but most_recently_pressed_key == None"));
                                 self.input_config_menu.most_recently_pressed_key = None;
                             }
                         },
                         x if x == InputConfigMenuSubOptionKeyboard::Right as u8 => {
                             if select_flag {
-                                self.input_config_menu.right_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-                                self.input_config_menu.right_text.fragments_mut()[1].color = Some(SELECT_GREEN);
+                                self.input_config_menu.k_right_text.fragments_mut()[0].color = Some(SELECT_GREEN);
+                                self.input_config_menu.k_right_text.fragments_mut()[1].color = Some(SELECT_GREEN);
                             } else {
-                                self.input_config_menu.right_text.fragments_mut()[0].color = Some(graphics::BLACK);
-                                self.input_config_menu.right_text.fragments_mut()[1].color = Some(graphics::BLACK);
-                                self.input_config_menu.right_text.fragments_mut()[1].text = format!(" {:?}", self.input_config_menu.most_recently_pressed_key.expect("[!] was setting keycode text, but most_recently_pressed_key == None"));
+                                self.input_config_menu.k_right_text.fragments_mut()[0].color = Some(graphics::BLACK);
+                                self.input_config_menu.k_right_text.fragments_mut()[1].color = Some(graphics::BLACK);
+                                self.input_config_menu.k_right_text.fragments_mut()[1].text = format!(" {:?}", self.input_config_menu.most_recently_pressed_key.expect("[!] was setting keycode text, but most_recently_pressed_key == None"));
                                 self.input_config_menu.most_recently_pressed_key = None;
                             }
                         },
                         x if x == InputConfigMenuSubOptionKeyboard::Down as u8 => {
                             if select_flag {
-                                self.input_config_menu.down_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-                                self.input_config_menu.down_text.fragments_mut()[1].color = Some(SELECT_GREEN);
+                                self.input_config_menu.k_down_text.fragments_mut()[0].color = Some(SELECT_GREEN);
+                                self.input_config_menu.k_down_text.fragments_mut()[1].color = Some(SELECT_GREEN);
                             } else {
-                                self.input_config_menu.down_text.fragments_mut()[0].color = Some(graphics::BLACK);
-                                self.input_config_menu.down_text.fragments_mut()[1].color = Some(graphics::BLACK);
-                                self.input_config_menu.down_text.fragments_mut()[1].text = format!(" {:?}", self.input_config_menu.most_recently_pressed_key.expect("[!] was setting keycode text, but most_recently_pressed_key == None"));
+                                self.input_config_menu.k_down_text.fragments_mut()[0].color = Some(graphics::BLACK);
+                                self.input_config_menu.k_down_text.fragments_mut()[1].color = Some(graphics::BLACK);
+                                self.input_config_menu.k_down_text.fragments_mut()[1].text = format!(" {:?}", self.input_config_menu.most_recently_pressed_key.expect("[!] was setting keycode text, but most_recently_pressed_key == None"));
                                 self.input_config_menu.most_recently_pressed_key = None;
                             }
                         },
                         x if x == InputConfigMenuSubOptionKeyboard::RotateCw as u8 => {
                             if select_flag {
-                                self.input_config_menu.rotate_cw_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-                                self.input_config_menu.rotate_cw_text.fragments_mut()[1].color = Some(SELECT_GREEN);
+                                self.input_config_menu.k_rotate_cw_text.fragments_mut()[0].color = Some(SELECT_GREEN);
+                                self.input_config_menu.k_rotate_cw_text.fragments_mut()[1].color = Some(SELECT_GREEN);
                             } else {
-                                self.input_config_menu.rotate_cw_text.fragments_mut()[0].color = Some(graphics::BLACK);
-                                self.input_config_menu.rotate_cw_text.fragments_mut()[1].color = Some(graphics::BLACK);
-                                self.input_config_menu.rotate_cw_text.fragments_mut()[1].text = format!(" {:?}", self.input_config_menu.most_recently_pressed_key.expect("[!] was setting keycode text, but most_recently_pressed_key == None"));
+                                self.input_config_menu.k_rotate_cw_text.fragments_mut()[0].color = Some(graphics::BLACK);
+                                self.input_config_menu.k_rotate_cw_text.fragments_mut()[1].color = Some(graphics::BLACK);
+                                self.input_config_menu.k_rotate_cw_text.fragments_mut()[1].text = format!(" {:?}", self.input_config_menu.most_recently_pressed_key.expect("[!] was setting keycode text, but most_recently_pressed_key == None"));
                                 self.input_config_menu.most_recently_pressed_key = None;
                             }
                         },
                         x if x == InputConfigMenuSubOptionKeyboard::RotateCcw as u8 => {
                             if select_flag {
-                                self.input_config_menu.rotate_ccw_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-                                self.input_config_menu.rotate_ccw_text.fragments_mut()[1].color = Some(SELECT_GREEN);
+                                self.input_config_menu.k_rotate_ccw_text.fragments_mut()[0].color = Some(SELECT_GREEN);
+                                self.input_config_menu.k_rotate_ccw_text.fragments_mut()[1].color = Some(SELECT_GREEN);
                             } else {
-                                self.input_config_menu.rotate_ccw_text.fragments_mut()[0].color = Some(graphics::BLACK);
-                                self.input_config_menu.rotate_ccw_text.fragments_mut()[1].color = Some(graphics::BLACK);
-                                self.input_config_menu.rotate_ccw_text.fragments_mut()[1].text = format!(" {:?}", self.input_config_menu.most_recently_pressed_key.expect("[!] was setting keycode text, but most_recently_pressed_key == None"));
+                                self.input_config_menu.k_rotate_ccw_text.fragments_mut()[0].color = Some(graphics::BLACK);
+                                self.input_config_menu.k_rotate_ccw_text.fragments_mut()[1].color = Some(graphics::BLACK);
+                                self.input_config_menu.k_rotate_ccw_text.fragments_mut()[1].text = format!(" {:?}", self.input_config_menu.most_recently_pressed_key.expect("[!] was setting keycode text, but most_recently_pressed_key == None"));
                                 self.input_config_menu.most_recently_pressed_key = None;
                             }
                         },
@@ -892,160 +921,125 @@ impl Menu {
         }
     }
 
-    fn set_gamepad_specific_sub_text_strings(&mut self) {
-        self.input_config_menu.left_text.fragments_mut()[0].text = "Left (Button):  ".to_string();
-        self.input_config_menu.right_text.fragments_mut()[0].text = "Right (Button): ".to_string();
-        self.input_config_menu.down_text.fragments_mut()[0].text = "Down (Button):  ".to_string();
-        self.input_config_menu.start_text.fragments_mut()[0].text = "Start: ".to_string();
-    }
-
-    fn set_keyboard_specific_sub_text_strings(&mut self) {
-        self.input_config_menu.left_text.fragments_mut()[0].text = "Left:     ".to_string();
-        self.input_config_menu.right_text.fragments_mut()[0].text = "Right:    ".to_string();
-        self.input_config_menu.down_text.fragments_mut()[0].text = "Down:     ".to_string();
-        self.input_config_menu.start_text.fragments_mut()[0].text = "Start/Pause: ".to_string();
-        self.input_config_menu.start_text.fragments_mut()[1].text = "Esc".to_string();
-    }
-
     fn update_sub_text_strings_gamepad(&mut self) {
-        self.set_gamepad_specific_sub_text_strings();
-        match self.input_config_menu.arr_gamepad_profiles[self.input_config_menu.profile_num as usize] {
-            Some(profile) => {
-                match (profile.0).0 {
-                    Some(button) => {
-                        self.input_config_menu.left_text.fragments_mut()[1].text = format!("{:?}", button);
-                    },
-                    None => {
-                        self.input_config_menu.left_text.fragments_mut()[1].text = "None".to_string();
-                    }
-                }
-                match (profile.0).1 {
-                    Some(axis) => {
-                        self.input_config_menu.alt_left_text.fragments_mut()[1].text = format!("{:?}{}", axis.0, if axis.1 {'+'} else {'-'});
-                    },
-                    None => {
-                        self.input_config_menu.alt_left_text.fragments_mut()[1].text = "None".to_string();
-                    }
-                }
-
-                match (profile.1).0 {
-                    Some(button) => {
-                        self.input_config_menu.right_text.fragments_mut()[1].text = format!("{:?}", button);
-                    },
-                    None => {
-                        self.input_config_menu.right_text.fragments_mut()[1].text = "None".to_string();
-                    }
-                }
-                match (profile.1).1 {
-                    Some(axis) => {
-                        self.input_config_menu.alt_right_text.fragments_mut()[1].text = format!("{:?}{}", axis.0, if axis.1 {'+'} else {'-'});
-                    },
-                    None => {
-                        self.input_config_menu.alt_right_text.fragments_mut()[1].text = "None".to_string();
-                    }
-                }
-
-                match (profile.2).0 {
-                    Some(button) => {
-                        self.input_config_menu.down_text.fragments_mut()[1].text = format!("{:?}", button);
-                    },
-                    None => {
-                        self.input_config_menu.down_text.fragments_mut()[1].text = "None".to_string();
-                    }
-                }
-                match (profile.2).1 {
-                    Some(axis) => {
-                        self.input_config_menu.alt_down_text.fragments_mut()[1].text = format!("{:?}{}", axis.0, if axis.1 {'+'} else {'-'});
-                    },
-                    None => {
-                        self.input_config_menu.alt_down_text.fragments_mut()[1].text = "None".to_string();
-                    }
-                }
-
-                match profile.3 {
-                    Some(button) => {
-                        self.input_config_menu.rotate_cw_text.fragments_mut()[1].text = format!("{:?}", button);
-                    },
-                    None => {
-                        self.input_config_menu.rotate_cw_text.fragments_mut()[1].text = "None".to_string();
-                    }
-                }
-
-                match profile.4 {
-                    Some(button) => {
-                        self.input_config_menu.rotate_ccw_text.fragments_mut()[1].text = format!("{:?}", button);
-                    },
-                    None => {
-                        self.input_config_menu.rotate_ccw_text.fragments_mut()[1].text = "None".to_string();
-                    }
-                }
-
-                match profile.5 {
-                    Some(button) => {
-                        self.input_config_menu.start_text.fragments_mut()[1].text = format!("{:?}", button);
-                    },
-                    None => {
-                        self.input_config_menu.start_text.fragments_mut()[1].text = "None".to_string();
-                    }
+        if let Some(profile) = self.input_config_menu.arr_gamepad_profiles[self.input_config_menu.profile_num as usize] {
+            // axes
+            match (profile.0).1 {
+                Some(axis) => {
+                    self.input_config_menu.g_axis_left_text.fragments_mut()[1].text = format!("{:?}{}", axis.0, if axis.1 {'+'} else {'-'});
+                },
+                None => {
+                    self.input_config_menu.g_axis_left_text.fragments_mut()[1].text = "None".to_string();
                 }
             }
-            None => {
-                println!("it is none!");
-                self.input_config_menu.left_text.fragments_mut()[1].text = "None".to_string();
-                self.input_config_menu.alt_left_text.fragments_mut()[1].text = "None".to_string();
-                self.input_config_menu.right_text.fragments_mut()[1].text = "None".to_string();
-                self.input_config_menu.alt_right_text.fragments_mut()[1].text = "None".to_string();
-                self.input_config_menu.down_text.fragments_mut()[1].text = "None".to_string();
-                self.input_config_menu.alt_down_text.fragments_mut()[1].text = "None".to_string();
-                self.input_config_menu.rotate_cw_text.fragments_mut()[1].text = "None".to_string();
-                self.input_config_menu.rotate_ccw_text.fragments_mut()[1].text = "None".to_string();
-                self.input_config_menu.start_text.fragments_mut()[1].text = "None".to_string();
+            match (profile.1).1 {
+                Some(axis) => {
+                    self.input_config_menu.g_axis_right_text.fragments_mut()[1].text = format!("{:?}{}", axis.0, if axis.1 {'+'} else {'-'});
+                },
+                None => {
+                    self.input_config_menu.g_axis_right_text.fragments_mut()[1].text = "None".to_string();
+                }
+            }
+            match (profile.2).1 {
+                Some(axis) => {
+                    self.input_config_menu.g_axis_down_text.fragments_mut()[1].text = format!("{:?}{}", axis.0, if axis.1 {'+'} else {'-'});
+                },
+                None => {
+                    self.input_config_menu.g_axis_down_text.fragments_mut()[1].text = "None".to_string();
+                }
+            }
+            // buttons
+            match (profile.0).0 {
+                Some(button) => {
+                    self.input_config_menu.g_button_left_text.fragments_mut()[1].text = format!("{:?}", button);
+                },
+                None => {
+                    self.input_config_menu.g_button_left_text.fragments_mut()[1].text = "None".to_string();
+                }
+            }
+            match (profile.1).0 {
+                Some(button) => {
+                    self.input_config_menu.g_button_right_text.fragments_mut()[1].text = format!("{:?}", button);
+                },
+                None => {
+                    self.input_config_menu.g_button_right_text.fragments_mut()[1].text = "None".to_string();
+                }
+            }
+            match (profile.2).0 {
+                Some(button) => {
+                    self.input_config_menu.g_button_down_text.fragments_mut()[1].text = format!("{:?}", button);
+                },
+                None => {
+                    self.input_config_menu.g_button_down_text.fragments_mut()[1].text = "None".to_string();
+                }
+            }
+            match profile.3 {
+                Some(button) => {
+                    self.input_config_menu.g_button_rotate_cw_text.fragments_mut()[1].text = format!("{:?}", button);
+                },
+                None => {
+                    self.input_config_menu.g_button_rotate_cw_text.fragments_mut()[1].text = "None".to_string();
+                }
+            }
+            match profile.4 {
+                Some(button) => {
+                    self.input_config_menu.g_button_rotate_ccw_text.fragments_mut()[1].text = format!("{:?}", button);
+                },
+                None => {
+                    self.input_config_menu.g_button_rotate_ccw_text.fragments_mut()[1].text = "None".to_string();
+                }
+            }
+            match profile.5 {
+                Some(button) => {
+                    self.input_config_menu.g_button_start_text.fragments_mut()[1].text = format!("{:?}", button);
+                },
+                None => {
+                    self.input_config_menu.g_button_start_text.fragments_mut()[1].text = "None".to_string();
+                }
             }
         }
     }
 
     fn update_sub_text_strings_keyboard(&mut self) {
-        self.set_keyboard_specific_sub_text_strings();
-
         if let Some(ctrls) = self.input_config_menu.arr_controls[self.input_config_menu.player_controls as usize].0 {
             match ctrls.0 {
                 Some(keycode) => {
-                    self.input_config_menu.left_text.fragments_mut()[1].text = format!("{:?}", keycode);
+                    self.input_config_menu.k_left_text.fragments_mut()[1].text = format!("{:?}", keycode);
                 },
                 None => {
-                    self.input_config_menu.left_text.fragments_mut()[1].text = "None".to_string();
+                    self.input_config_menu.k_left_text.fragments_mut()[1].text = "None".to_string();
                 }
             }
             match ctrls.1 {
                 Some(keycode) => {
-                    self.input_config_menu.right_text.fragments_mut()[1].text = format!("{:?}", keycode);
+                    self.input_config_menu.k_right_text.fragments_mut()[1].text = format!("{:?}", keycode);
                 },
                 None => {
-                    self.input_config_menu.right_text.fragments_mut()[1].text = "None".to_string();
+                    self.input_config_menu.k_right_text.fragments_mut()[1].text = "None".to_string();
                 }
             }
             match ctrls.2 {
                 Some(keycode) => {
-                    self.input_config_menu.down_text.fragments_mut()[1].text = format!("{:?}", keycode);
+                    self.input_config_menu.k_down_text.fragments_mut()[1].text = format!("{:?}", keycode);
                 },
                 None => {
-                    self.input_config_menu.down_text.fragments_mut()[1].text = "None".to_string();
+                    self.input_config_menu.k_down_text.fragments_mut()[1].text = "None".to_string();
                 }
             }
             match ctrls.3 {
                 Some(keycode) => {
-                    self.input_config_menu.rotate_cw_text.fragments_mut()[1].text = format!("{:?}", keycode);
+                    self.input_config_menu.k_rotate_cw_text.fragments_mut()[1].text = format!("{:?}", keycode);
                 },
                 None => {
-                    self.input_config_menu.rotate_cw_text.fragments_mut()[1].text = "None".to_string();
+                    self.input_config_menu.k_rotate_cw_text.fragments_mut()[1].text = "None".to_string();
                 }
             }
             match ctrls.4 {
                 Some(keycode) => {
-                    self.input_config_menu.rotate_ccw_text.fragments_mut()[1].text = format!("{:?}", keycode);
+                    self.input_config_menu.k_rotate_ccw_text.fragments_mut()[1].text = format!("{:?}", keycode);
                 },
                 None => {
-                    self.input_config_menu.rotate_ccw_text.fragments_mut()[1].text = "None".to_string();
+                    self.input_config_menu.k_rotate_ccw_text.fragments_mut()[1].text = "None".to_string();
                 }
             }
         } else if let Some(profile) = self.input_config_menu.arr_controls[self.input_config_menu.player_controls as usize].1 {
@@ -1145,10 +1139,6 @@ impl Menu {
                 self.draw_text(ctx, &self.input_config_menu.gamepad_profile_text, 0.2);
                 self.draw_text(ctx, &self.input_config_menu.player_controls_text, 0.3);
 
-                if self.input_config_menu.keycode_conflict_flag {
-                    self.draw_text(ctx, &self.input_config_menu.keycode_conflict_text, 0.2);
-                }
-
                 // display nothing special on InputConfigMenuOption::Back, so just draw the extra stuff when it's not on InputConfigMenuOption::Back
                 // and then later determine which of the other InputConfigMenuOption's it is for the specifics
                 if self.input_config_menu.selection != InputConfigMenuOption::Back as u8 {
@@ -1188,33 +1178,36 @@ impl Menu {
 
                     if self.input_config_menu.selection == InputConfigMenuOption::GamepadProfile as u8 {
                         if self.input_config_menu.arr_gamepad_profiles[self.input_config_menu.profile_num as usize].is_some() {
-                            self.draw_text(ctx, &self.input_config_menu.left_text, SUB_TEXT_Y_TOP);
-                            self.draw_text(ctx, &self.input_config_menu.alt_left_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF);
-                            self.draw_text(ctx, &self.input_config_menu.right_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF * 2.0);
-                            self.draw_text(ctx, &self.input_config_menu.alt_right_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF * 3.0);
-                            self.draw_text(ctx, &self.input_config_menu.down_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF * 4.0);
-                            self.draw_text(ctx, &self.input_config_menu.alt_down_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF * 5.0);
-                            self.draw_text(ctx, &self.input_config_menu.rotate_cw_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF * 6.0);
-                            self.draw_text(ctx, &self.input_config_menu.rotate_ccw_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF * 7.0);
-                            self.draw_text(ctx, &self.input_config_menu.start_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF * 8.0);
+                            self.draw_text(ctx, &self.input_config_menu.g_axis_left_text, SUB_TEXT_Y_TOP);
+                            self.draw_text(ctx, &self.input_config_menu.g_axis_right_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF);
+                            self.draw_text(ctx, &self.input_config_menu.g_axis_down_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF * 2.0);
+                            self.draw_text(ctx, &self.input_config_menu.g_button_left_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF * 3.0);
+                            self.draw_text(ctx, &self.input_config_menu.g_button_right_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF * 4.0);
+                            self.draw_text(ctx, &self.input_config_menu.g_button_down_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF * 5.0);
+                            self.draw_text(ctx, &self.input_config_menu.g_button_rotate_cw_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF * 6.0);
+                            self.draw_text(ctx, &self.input_config_menu.g_button_rotate_ccw_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF * 7.0);
+                            self.draw_text(ctx, &self.input_config_menu.g_button_start_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF * 8.0);
                         } else {
                             self.draw_text(ctx, &self.input_config_menu.gamepad_profile_uninitialized_text, 0.5);
                         }
 
                         if self.input_config_menu.sub_selection_gamepad_flag {
-                            self.draw_text(ctx, &self.input_config_menu.skip_button_axis_text, 0.9);
+                            self.draw_text(ctx, &self.input_config_menu.skip_button_axis_text, 0.85);
                         }
                     } else if self.input_config_menu.selection == InputConfigMenuOption::PlayerInput as u8 {
+                        if self.input_config_menu.keycode_conflict_flag {
+                            self.draw_text(ctx, &self.input_config_menu.keycode_conflict_text, 0.43);
+                        }
                         if self.input_config_menu.choose_profile_flag {
                             self.draw_text(ctx, &self.input_config_menu.choose_profile_text, 0.5);
                         } else {
                             if (self.input_config_menu.arr_controls[self.input_config_menu.player_controls as usize].0).is_some() {
-                                self.draw_text(ctx, &self.input_config_menu.left_text, 0.5);
-                                self.draw_text(ctx, &self.input_config_menu.right_text, 0.55);
-                                self.draw_text(ctx, &self.input_config_menu.down_text, 0.6);
-                                self.draw_text(ctx, &self.input_config_menu.rotate_cw_text, 0.65);
-                                self.draw_text(ctx, &self.input_config_menu.rotate_ccw_text, 0.7);
-                                self.draw_text(ctx, &self.input_config_menu.start_text, 0.75);
+                                self.draw_text(ctx, &self.input_config_menu.k_left_text, 0.5);
+                                self.draw_text(ctx, &self.input_config_menu.k_right_text, 0.55);
+                                self.draw_text(ctx, &self.input_config_menu.k_down_text, 0.6);
+                                self.draw_text(ctx, &self.input_config_menu.k_rotate_cw_text, 0.65);
+                                self.draw_text(ctx, &self.input_config_menu.k_rotate_ccw_text, 0.7);
+                                self.draw_text(ctx, &self.input_config_menu.k_start_text, 0.75);
                             } else if (self.input_config_menu.arr_controls[self.input_config_menu.player_controls as usize].1).is_some() {
                                 self.draw_text(ctx, &self.input_config_menu.choose_profile_text, 0.5);
                             } else {
