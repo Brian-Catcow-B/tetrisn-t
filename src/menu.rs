@@ -128,7 +128,7 @@ struct InputConfigMenu {
     gamepad_axis_wait: (bool, Option<(Axis, bool)>),
     vec_used_keycode: Vec<KeyCode>,
     keycode_conflict_flag: bool,
-    vec_keyboard_controls: Vec<(u8, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>,
+    arr_controls: [(Option<(Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>, Option<u8>); MAX_NUM_PLAYERS as usize],
     arr_gamepad_profiles: [Option<((Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), Option<Button>, Option<Button>, Option<Button>)>; MAX_NUM_GAMEPAD_PROFILES as usize],
     // text
     back_text: Text,
@@ -152,6 +152,12 @@ struct InputConfigMenu {
 
 impl InputConfigMenu {
     fn new(window_dimensions: (f32, f32), last_used_keyboard_controls: Vec<(u8, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>) -> Self {
+        let mut arr_controls: [(Option<(Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>, Option<u8>); MAX_NUM_PLAYERS as usize] = [(None, None); MAX_NUM_PLAYERS as usize];
+        for ctrls in last_used_keyboard_controls.iter() {
+            if ctrls.0 < MAX_NUM_PLAYERS {
+                arr_controls[ctrls.0 as usize].0 = Some((ctrls.1, ctrls.2, ctrls.3, ctrls.4, ctrls.5));
+            }
+        }
         let mut player_controls_text = Text::new(TextFragment::new("Player Number: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
         player_controls_text.add(TextFragment::new("1").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
         let mut gamepad_profile_text = Text::new(TextFragment::new("GamePad Profile: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
@@ -198,7 +204,7 @@ impl InputConfigMenu {
             gamepad_axis_wait: (false, None),
             vec_used_keycode: vec![KeyCode::Escape],
             keycode_conflict_flag: false,
-            vec_keyboard_controls: last_used_keyboard_controls,
+            arr_controls,
             arr_gamepad_profiles: [None; MAX_NUM_GAMEPAD_PROFILES as usize],
             // text
             back_text: Text::new(TextFragment::new("Back").color(SELECT_GREEN).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN))),
@@ -238,12 +244,12 @@ impl Menu {
     pub fn new(ctx: &mut Context, last_used_game_options: &Option<GameOptions>) -> Self {
         let window_dimensions = graphics::size(ctx);
         // get the last used options if there are any
-        let mut vec_keyboard_controls: Vec<(u8, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)> = vec![];
+        let mut arr_controls: Vec<(u8, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)> = vec![];
         let mut num_players: u8 = 1;
         let mut starting_level: u8 = 0;
         if let Some(game_options) = last_used_game_options {
             for (player, controls) in game_options.vec_keyboard_inputs.iter().enumerate() {
-                vec_keyboard_controls.push(
+                arr_controls.push(
                     (player as u8,
                     Some(controls.left),
                     Some(controls.right),
@@ -260,7 +266,7 @@ impl Menu {
             window_dimensions,
             state: MenuState::Main,
             main_menu: MainMenu::new(window_dimensions, num_players, starting_level),
-            input_config_menu: InputConfigMenu::new(window_dimensions, vec_keyboard_controls),
+            input_config_menu: InputConfigMenu::new(window_dimensions, arr_controls),
         }
     }
 
@@ -293,18 +299,20 @@ impl Menu {
                 }
 
                 if self.input.keydown_start.1 && self.main_menu.selection == MainMenuOption::Start as u8 {
-                    self.input_config_menu.vec_keyboard_controls.sort_by_key(|ctrls| ctrls.0);
-                    let mut vec_control_scheme: Vec<KeyboardControlScheme> = Vec::with_capacity(self.input_config_menu.vec_keyboard_controls.len());
+                    self.input_config_menu.arr_controls.sort_by_key(|ctrls| ctrls.0);
+                    let mut vec_control_scheme: Vec<KeyboardControlScheme> = Vec::with_capacity(self.input_config_menu.arr_controls.len());
                     // TODO: use a closure if that's better. It's too late at night for me to figure this out; I just want this to work; I've written ~500 lines of GUI code today; help
-                    for keyboard_controls in self.input_config_menu.vec_keyboard_controls.iter() {
-                        vec_control_scheme.push(KeyboardControlScheme::new(
-                            keyboard_controls.1.expect("[!] key left set to None"),
-                            keyboard_controls.2.expect("[!] key right set to None"),
-                            keyboard_controls.3.expect("[!] key down set to None"),
-                            keyboard_controls.4.expect("[!] key rotate_cw set to None"),
-                            keyboard_controls.5.expect("[!] key rotate_ccw set to None"),
-                            KeyCode::Escape,
-                        ));
+                    for controls in self.input_config_menu.arr_controls.iter() {
+                        if let Some(ctrls) = controls.0 {
+                            vec_control_scheme.push(KeyboardControlScheme::new(
+                                ctrls.0.expect("[!] key left set to None"),
+                                ctrls.1.expect("[!] key right set to None"),
+                                ctrls.2.expect("[!] key down set to None"),
+                                ctrls.3.expect("[!] key rotate_cw set to None"),
+                                ctrls.4.expect("[!] key rotate_ccw set to None"),
+                                KeyCode::Escape,
+                            ));
+                        }
                     }
                     if vec_control_scheme.len() < self.main_menu.num_players as usize {
                         self.main_menu.not_enough_controls_flag = true;
@@ -338,24 +346,23 @@ impl Menu {
                         } else if self.input_config_menu.selection == InputConfigMenuOption::GamepadProfile as u8 {
                             self.input_config_menu.most_recently_pressed_gamepad_axis = None;
                             self.input_config_menu.most_recently_pressed_gamepad_button = None;
-                            println!("setting profile {} to Some(((None, None), (None, None), (None, None), None, None, None))", self.input_config_menu.profile_num);
                             self.input_config_menu.arr_gamepad_profiles[self.input_config_menu.profile_num as usize] = Some(((None, None), (None, None), (None, None), None, None, None));
                             self.update_sub_text_strings_gamepad();
                             self.input_config_menu.sub_selection_gamepad_flag = true;
                             self.set_select(true);
                         } else if self.input_config_menu.selection == InputConfigMenuOption::PlayerInput as u8 {
                             self.input_config_menu.most_recently_pressed_key = None;
-                            for (idx, ctrls) in self.input_config_menu.vec_keyboard_controls.iter().enumerate() {
-                                if ctrls.0 == self.input_config_menu.player_controls {
-                                    // remove the old keyboard controls after removing all the KeyCodes from the used keycodes vector since we are overwriting this one
-                                    let mut items_removed = 0;
-                                    // we must index because .remove() pulls the indices after it back by 1, so use `items_removed` to pull the index back with it
+                            // remove the old keyboard controls after removing all the KeyCodes from the used keycodes vector since we are overwriting this one
+                            let mut items_removed = 0;
+                            // we must index because .remove() pulls the indices after it back by 1, so use `items_removed` to pull the index back with it
+                            match self.input_config_menu.arr_controls[self.input_config_menu.player_controls as usize].0 {
+                                Some(ctrls) => {
                                     for used_key_idx in 0..self.input_config_menu.vec_used_keycode.len() {
-                                        if Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == self.input_config_menu.vec_keyboard_controls[idx].1
-                                        || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == self.input_config_menu.vec_keyboard_controls[idx].2
-                                        || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == self.input_config_menu.vec_keyboard_controls[idx].3
-                                        || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == self.input_config_menu.vec_keyboard_controls[idx].4
-                                        || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == self.input_config_menu.vec_keyboard_controls[idx].5 {
+                                        if Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == ctrls.0
+                                        || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == ctrls.1
+                                        || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == ctrls.2
+                                        || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == ctrls.3
+                                        || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == ctrls.4 {
                                             self.input_config_menu.vec_used_keycode.remove(used_key_idx - items_removed);
                                             items_removed += 1;
                                             // we only need to get rid of NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_TEXT_ENTRIES
@@ -364,11 +371,12 @@ impl Menu {
                                             }
                                         }
                                     }
-                                    self.input_config_menu.vec_keyboard_controls.remove(idx);
-                                    break;
-                                }
+                                },
+                                None => println!("[!] arr_controls[{}] was unexpectedly None", self.input_config_menu.player_controls),
                             }
-                            self.input_config_menu.vec_keyboard_controls.push((self.input_config_menu.player_controls, None, None, None, None, None));
+                            self.input_config_menu.arr_controls[self.input_config_menu.player_controls as usize].0 = None;
+
+                            self.input_config_menu.arr_controls[self.input_config_menu.player_controls as usize].0 = Some((None, None, None, None, None));
                             self.update_sub_text_strings_keyboard();
                             self.input_config_menu.sub_selection_keyboard_flag = true;
                             self.set_select(true);
@@ -459,9 +467,7 @@ impl Menu {
                         self.input_config_menu.sub_selection_gamepad_flag = false;
                     }
                 } else if self.input_config_menu.sub_selection_keyboard_flag {
-                    if self.input_config_menu.most_recently_pressed_key.is_some() && !self.input_config_menu.vec_keyboard_controls.is_empty() {
-                        // set the tuple index to the correct key of the tuple just pushed to the vector
-                        let vec_length = self.input_config_menu.vec_keyboard_controls.len();
+                    if self.input_config_menu.most_recently_pressed_key.is_some() && !self.input_config_menu.arr_controls.is_empty() {
                         // first check if the KeyCode is Escape, and if it is, just delete the layout entry and go out of the subselection section
                         // second check if the KeyCode was already used. If it was, set the error message flag to true
                         if self.input_config_menu.most_recently_pressed_key == Some(KeyCode::Escape) {
@@ -469,48 +475,57 @@ impl Menu {
                             self.input_config_menu.keycode_conflict_flag = false;
                             self.input_config_menu.sub_selection_keyboard = 0;
                             self.input_config_menu.sub_selection_keyboard_flag = false;
-                            if self.input_config_menu.vec_keyboard_controls[vec_length - 1].4.is_some() {
-                                for _ in 1..=4 {
+                            if let Some(ctrls) = self.input_config_menu.arr_controls[self.input_config_menu.player_controls as usize].0 {
+                                if (ctrls.3).is_some() {
+                                    for _ in 1..=4 {
+                                        self.input_config_menu.vec_used_keycode.pop();
+                                    }
+                                } else if (ctrls.2).is_some() {
+                                    for _ in 1..=3 {
+                                        self.input_config_menu.vec_used_keycode.pop();
+                                    }
+                                } else if (ctrls.1).is_some() {
+                                    for _ in 1..=2 {
+                                        self.input_config_menu.vec_used_keycode.pop();
+                                    }
+                                } else if (ctrls.0).is_some() {
                                     self.input_config_menu.vec_used_keycode.pop();
                                 }
-                            } else if self.input_config_menu.vec_keyboard_controls[vec_length - 1].3.is_some() {
-                                for _ in 1..=3 {
-                                    self.input_config_menu.vec_used_keycode.pop();
-                                }
-                            } else if self.input_config_menu.vec_keyboard_controls[vec_length - 1].2.is_some() {
-                                for _ in 1..=2 {
-                                    self.input_config_menu.vec_used_keycode.pop();
-                                }
-                            } else if self.input_config_menu.vec_keyboard_controls[vec_length - 1].1.is_some() {
-                                self.input_config_menu.vec_used_keycode.pop();
                             }
-                            self.input_config_menu.vec_keyboard_controls.pop();
+                            self.input_config_menu.arr_controls[self.input_config_menu.player_controls as usize];
                         } else if self.input_config_menu.vec_used_keycode.contains(&self.input_config_menu.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None")) {
                             self.input_config_menu.keycode_conflict_flag = true;
                         } else {
                             self.input_config_menu.keycode_conflict_flag = false;
-                            match self.input_config_menu.sub_selection_keyboard {
-                                x if x == InputConfigMenuSubOptionKeyboard::Left as u8 => {
-                                    self.input_config_menu.vec_keyboard_controls[vec_length - 1].1 = self.input_config_menu.most_recently_pressed_key;
-                                    self.input_config_menu.vec_used_keycode.push(self.input_config_menu.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None"));
+                            match (self.input_config_menu.arr_controls[self.input_config_menu.player_controls as usize].0).as_mut() {
+                                Some(mut ctrls) => {
+                                    match self.input_config_menu.sub_selection_keyboard {
+                                        x if x == InputConfigMenuSubOptionKeyboard::Left as u8 => {
+                                            ctrls.0 = self.input_config_menu.most_recently_pressed_key;
+                                            self.input_config_menu.vec_used_keycode.push(self.input_config_menu.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None"));
+                                        },
+                                        x if x == InputConfigMenuSubOptionKeyboard::Right as u8 => {
+                                            ctrls.1 = self.input_config_menu.most_recently_pressed_key;
+                                            self.input_config_menu.vec_used_keycode.push(self.input_config_menu.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None"));
+                                        },
+                                        x if x == InputConfigMenuSubOptionKeyboard::Down as u8 => {
+                                            ctrls.2 = self.input_config_menu.most_recently_pressed_key;
+                                            self.input_config_menu.vec_used_keycode.push(self.input_config_menu.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None"));
+                                        },
+                                        x if x == InputConfigMenuSubOptionKeyboard::RotateCw as u8 => {
+                                            ctrls.3 = self.input_config_menu.most_recently_pressed_key;
+                                            self.input_config_menu.vec_used_keycode.push(self.input_config_menu.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None"));
+                                        },
+                                        x if x == InputConfigMenuSubOptionKeyboard::RotateCcw as u8 => {
+                                            ctrls.4 = self.input_config_menu.most_recently_pressed_key;
+                                            self.input_config_menu.vec_used_keycode.push(self.input_config_menu.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None"));
+                                        },
+                                        _ => println!("[!] couldn't get correct tuple index to set most recently pressed key"),
+                                    }
                                 },
-                                x if x == InputConfigMenuSubOptionKeyboard::Right as u8 => {
-                                    self.input_config_menu.vec_keyboard_controls[vec_length - 1].2 = self.input_config_menu.most_recently_pressed_key;
-                                    self.input_config_menu.vec_used_keycode.push(self.input_config_menu.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None"));
-                                },
-                                x if x == InputConfigMenuSubOptionKeyboard::Down as u8 => {
-                                    self.input_config_menu.vec_keyboard_controls[vec_length - 1].3 = self.input_config_menu.most_recently_pressed_key;
-                                    self.input_config_menu.vec_used_keycode.push(self.input_config_menu.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None"));
-                                },
-                                x if x == InputConfigMenuSubOptionKeyboard::RotateCw as u8 => {
-                                    self.input_config_menu.vec_keyboard_controls[vec_length - 1].4 = self.input_config_menu.most_recently_pressed_key;
-                                    self.input_config_menu.vec_used_keycode.push(self.input_config_menu.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None"));
-                                },
-                                x if x == InputConfigMenuSubOptionKeyboard::RotateCcw as u8 => {
-                                    self.input_config_menu.vec_keyboard_controls[vec_length - 1].5 = self.input_config_menu.most_recently_pressed_key;
-                                    self.input_config_menu.vec_used_keycode.push(self.input_config_menu.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None"));
-                                },
-                                _ => println!("[!] couldn't get correct tuple index to set most recently pressed key"),
+                                None => {
+                                    println!("[!] arr_controls[{}].0 was unexpectedly None", self.input_config_menu.player_controls);
+                                }
                             }
                             self.set_select(false);
                             if self.input_config_menu.sub_selection_keyboard < NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_TEXT_ENTRIES as u8 - 1 {
@@ -964,17 +979,10 @@ impl Menu {
 
     fn update_sub_text_strings_keyboard(&mut self) {
         self.set_keyboard_specific_sub_text_strings();
-        let mut index_found: Option<u8> = None;
-        for (idx, ctrls) in self.input_config_menu.vec_keyboard_controls.iter().enumerate() {
-            if ctrls.0 == self.input_config_menu.player_controls {
-                index_found = Some(idx as u8);
-                break;
-            }
-        }
 
-        match index_found {
-            Some(index) => {
-                match self.input_config_menu.vec_keyboard_controls[index as usize].1 {
+        match self.input_config_menu.arr_controls[self.input_config_menu.player_controls as usize].0 {
+            Some(ctrls) => {
+                match ctrls.0 {
                     Some(keycode) => {
                         self.input_config_menu.left_text.fragments_mut()[1].text = format!("{:?}", keycode);
                     },
@@ -982,7 +990,7 @@ impl Menu {
                         self.input_config_menu.left_text.fragments_mut()[1].text = "None".to_string();
                     }
                 }
-                match self.input_config_menu.vec_keyboard_controls[index as usize].2 {
+                match ctrls.1 {
                     Some(keycode) => {
                         self.input_config_menu.right_text.fragments_mut()[1].text = format!("{:?}", keycode);
                     },
@@ -990,7 +998,7 @@ impl Menu {
                         self.input_config_menu.right_text.fragments_mut()[1].text = "None".to_string();
                     }
                 }
-                match self.input_config_menu.vec_keyboard_controls[index as usize].3 {
+                match ctrls.2 {
                     Some(keycode) => {
                         self.input_config_menu.down_text.fragments_mut()[1].text = format!("{:?}", keycode);
                     },
@@ -998,7 +1006,7 @@ impl Menu {
                         self.input_config_menu.down_text.fragments_mut()[1].text = "None".to_string();
                     }
                 }
-                match self.input_config_menu.vec_keyboard_controls[index as usize].4 {
+                match ctrls.3 {
                     Some(keycode) => {
                         self.input_config_menu.rotate_cw_text.fragments_mut()[1].text = format!("{:?}", keycode);
                     },
@@ -1006,7 +1014,7 @@ impl Menu {
                         self.input_config_menu.rotate_cw_text.fragments_mut()[1].text = "None".to_string();
                     }
                 }
-                match self.input_config_menu.vec_keyboard_controls[index as usize].5 {
+                match ctrls.4 {
                     Some(keycode) => {
                         self.input_config_menu.rotate_ccw_text.fragments_mut()[1].text = format!("{:?}", keycode);
                     },
@@ -1180,16 +1188,7 @@ impl Menu {
                         if self.input_config_menu.choose_profile_num_flag {
                             self.draw_text(ctx, &self.input_config_menu.left_text, 0.5);
                         } else {
-                            // determine if input_uninitialized_text xor input stuffs should be displayed
-                            let mut player_input_exists: bool = false;
-                            for inputs in self.input_config_menu.vec_keyboard_controls.iter() {
-                                if inputs.0 == self.input_config_menu.player_controls {
-                                    player_input_exists = true;
-                                    break;
-                                }
-                            }
-    
-                            if player_input_exists {
+                            if (self.input_config_menu.arr_controls[self.input_config_menu.player_controls as usize].0).is_some() {
                                 self.draw_text(ctx, &self.input_config_menu.left_text, 0.5);
                                 self.draw_text(ctx, &self.input_config_menu.right_text, 0.55);
                                 self.draw_text(ctx, &self.input_config_menu.down_text, 0.6);
