@@ -1,4 +1,4 @@
-use ggez::event::KeyCode;
+use ggez::event::{KeyCode, Axis, Button};
 
 // (is pressed down, was pressed this frame)
 pub struct Input {
@@ -56,7 +56,7 @@ impl Input {
 }
 
 #[derive(Copy, Clone)]
-pub struct ControlScheme {
+pub struct KeyboardControlScheme {
     pub left: KeyCode,
     pub right: KeyCode,
     pub down: KeyCode,
@@ -65,8 +65,45 @@ pub struct ControlScheme {
     pub start: KeyCode,
 }
 
-impl ControlScheme {
-    pub fn new(left: KeyCode, right: KeyCode, down: KeyCode, rotate_cw: KeyCode, rotate_ccw: KeyCode, start: KeyCode) -> Self {
+impl KeyboardControlScheme {
+    pub fn new(
+        left: KeyCode,
+        right: KeyCode,
+        down: KeyCode,
+        rotate_cw: KeyCode,
+        rotate_ccw: KeyCode,
+        start: KeyCode,
+    ) -> Self {
+        Self {
+            left,
+            right,
+            down,
+            rotate_cw,
+            rotate_ccw,
+            start,
+        }
+    }
+}
+
+#[derive(Copy, Clone)]
+pub struct GamepadControlScheme {
+    pub left: (Option<Button>, Option<(Axis, bool)>),
+    pub right: (Option<Button>, Option<(Axis, bool)>),
+    pub down: (Option<Button>, Option<(Axis, bool)>),
+    pub rotate_cw: Button,
+    pub rotate_ccw: Button,
+    pub start: Button,
+}
+
+impl GamepadControlScheme {
+    pub fn new(
+        left: (Option<Button>, Option<(Axis, bool)>),
+        right: (Option<Button>, Option<(Axis, bool)>),
+        down: (Option<Button>, Option<(Axis, bool)>),
+        rotate_cw: Button,
+        rotate_ccw: Button,
+        start: Button,
+    ) -> Self {
         Self {
             left,
             right,

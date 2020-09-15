@@ -1,6 +1,6 @@
 use ggez::event::KeyCode;
 use rand::random;
-use crate::inputs::{Input, ControlScheme};
+use crate::inputs::{Input, KeyboardControlScheme};
 use crate::game::piece::Shapes;
 use crate::game::{FORCE_FALL_DELAY, DAS_THRESHOLD_BIG, INITIAL_HANG_FRAMES};
 
@@ -8,7 +8,7 @@ pub const SPAWN_DELAY: i16 = 20i16;
 
 pub struct Player {
     pub player_num: u8,
-    pub control_scheme: ControlScheme,
+    pub control_scheme: KeyboardControlScheme,
     pub input: Input,
     pub spawn_piece_flag: bool,
     pub spawn_column: u8,
@@ -22,7 +22,7 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(player_num: u8, control_scheme: ControlScheme, spawn_column: u8) -> Self {
+    pub fn new(player_num: u8, control_scheme: KeyboardControlScheme, spawn_column: u8) -> Self {
         Self {
             player_num,
             control_scheme,

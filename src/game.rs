@@ -1,5 +1,4 @@
 use ggez::Context;
-// use ggez::event::{Axis, Button, GamepadId};
 use ggez::event::{Button, Axis, GamepadId, KeyCode};
 use ggez::graphics::{self, DrawParam, spritebatch};
 use ggez::nalgebra::{Point2, Vector2};
@@ -23,7 +22,7 @@ mod board;
 use crate::game::board::BOARD_HEIGHT_BUFFER_U;
 use crate::game::board::Board;
 
-use crate::inputs::ControlScheme;
+use crate::inputs::KeyboardControlScheme;
 
 
 const BOARD_HEIGHT: u8 = 20u8;
@@ -91,11 +90,11 @@ pub const INITIAL_HANG_FRAMES: u8 = 180;
 pub struct GameOptions {
     pub num_players: u8,
     pub starting_level: u8,
-    pub vec_keyboard_inputs: Vec<ControlScheme>,
+    pub vec_keyboard_inputs: Vec<KeyboardControlScheme>,
 }
 
 impl GameOptions {
-    pub fn new(num_players: u8, starting_level: u8, vec_keyboard_inputs: Vec<ControlScheme>) -> Self {
+    pub fn new(num_players: u8, starting_level: u8, vec_keyboard_inputs: Vec<KeyboardControlScheme>) -> Self {
         Self {
             num_players,
             starting_level,

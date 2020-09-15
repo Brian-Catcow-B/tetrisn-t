@@ -5,7 +5,7 @@ use ggez::graphics::{Color, Scale, Text, TextFragment};
 use ggez::nalgebra::Point2;
 
 use crate::control::ProgramState;
-use crate::inputs::{Input, ControlScheme};
+use crate::inputs::{Input, KeyboardControlScheme};
 
 use crate::game::GameOptions;
 
@@ -35,7 +35,7 @@ enum MenuState {
     InputConfig,
 }
 
-const NUM_MAINMENUOPTION_ENTRIES: u8 = 4;
+const NUM_MAINMENUOPTION_TEXT_ENTRIES: u8 = 4;
 #[repr(u8)]
 enum MainMenuOption {
     Start,
@@ -79,7 +79,7 @@ impl MainMenu {
     }
 }
 
-const NUM_INPUTCONFIGMENUOPTION_ENTRIES: u8 = 3;
+const NUM_INPUTCONFIGMENUOPTION_TEXT_ENTRIES: u8 = 3;
 #[repr(u8)]
 enum InputConfigMenuOption {
     Back,
@@ -88,7 +88,7 @@ enum InputConfigMenuOption {
 }
 
 // currently `Start` is, for keyboards, always `ESC`, and alternate controls are only for Left/Right/Down for controllers, so don't include that in the number of entries for keyboards
-const NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_ENTRIES: u8 = 5;
+const NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_TEXT_ENTRIES: u8 = 5;
 #[repr(u8)]
 enum InputConfigMenuSubOptionKeyboard {
     Left,
@@ -97,7 +97,7 @@ enum InputConfigMenuSubOptionKeyboard {
     RotateCw,
     RotateCcw,
 }
-const NUM_INPUTCONFIGMENUSUBOPTIONGAMEPAD_ENTRIES: u8 = 9;
+const NUM_INPUTCONFIGMENUSUBOPTIONGAMEPAD_TEXT_ENTRIES: u8 = 9;
 #[repr(u8)]
 enum InputConfigMenuSubOptionGamepad {
     Left,
@@ -116,6 +116,8 @@ struct InputConfigMenu {
     selection: u8,
     player_controls: u8,
     profile_num: u8,
+    choose_profile_num: u8,
+    choose_profile_num_flag: bool,
     sub_selection_keyboard: u8,
     sub_selection_keyboard_flag: bool,
     sub_selection_gamepad: u8,
@@ -127,7 +129,7 @@ struct InputConfigMenu {
     vec_used_keycode: Vec<KeyCode>,
     keycode_conflict_flag: bool,
     vec_keyboard_controls: Vec<(u8, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>,
-    vec_gamepad_profiles: Vec<Option<((Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), Option<Button>, Option<Button>, Option<Button>)>>,
+    arr_gamepad_profiles: [Option<((Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), Option<Button>, Option<Button>, Option<Button>)>; MAX_NUM_GAMEPAD_PROFILES as usize],
     // text
     back_text: Text,
     gamepad_profile_text: Text,
@@ -180,13 +182,12 @@ impl InputConfigMenu {
         alt_right_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
         alt_down_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
         start_text.add(TextFragment::new("Esc").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-
-        let mut vec_gamepad_profiles = Vec::with_capacity(MAX_NUM_GAMEPAD_PROFILES as usize);
-        vec_gamepad_profiles.append(&mut vec![None; MAX_NUM_GAMEPAD_PROFILES as usize]);
         Self {
             selection: 0,
             player_controls: 0,
             profile_num: 0,
+            choose_profile_num: 0,
+            choose_profile_num_flag: false,
             sub_selection_keyboard: 0,
             sub_selection_keyboard_flag: false,
             sub_selection_gamepad: 0,
@@ -198,7 +199,7 @@ impl InputConfigMenu {
             vec_used_keycode: vec![KeyCode::Escape],
             keycode_conflict_flag: false,
             vec_keyboard_controls: last_used_keyboard_controls,
-            vec_gamepad_profiles,
+            arr_gamepad_profiles: [None; MAX_NUM_GAMEPAD_PROFILES as usize],
             // text
             back_text: Text::new(TextFragment::new("Back").color(SELECT_GREEN).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN))),
             gamepad_profile_text,
@@ -264,14 +265,6 @@ impl Menu {
     }
 
     pub fn update(&mut self) -> Option<(ProgramState, GameOptions)> {
-        match self.input_config_menu.vec_gamepad_profiles[self.input_config_menu.profile_num as usize] {
-            Some(profile) => match (profile.0).0 {
-                    Some(button) => println!("{} it exists with left button {:?}", self.input_config_menu.sub_selection_gamepad, button),
-                    None => println!("{} it exists, but no left", self.input_config_menu.sub_selection_gamepad),
-                },
-            None => println!("{} it does not exist", self.input_config_menu.sub_selection_gamepad),
-        }
-
         if self.input.keydown_right.1 && !self.input_config_menu.sub_selection_keyboard_flag {
             self.inc_or_dec_selection(true);
         }
@@ -284,13 +277,13 @@ impl Menu {
             MenuState::Main => {
                 if self.input.keydown_down.1 {
                     self.set_select(false);
-                    self.main_menu.selection = (self.main_menu.selection + 1) % NUM_MAINMENUOPTION_ENTRIES;
+                    self.main_menu.selection = (self.main_menu.selection + 1) % NUM_MAINMENUOPTION_TEXT_ENTRIES;
                     self.set_select(true);
                 }
 
                 if self.input.keydown_up.1 {
                     self.set_select(false);
-                    self.main_menu.selection = if self.main_menu.selection == 0 {NUM_MAINMENUOPTION_ENTRIES - 1} else {self.main_menu.selection - 1};
+                    self.main_menu.selection = if self.main_menu.selection == 0 {NUM_MAINMENUOPTION_TEXT_ENTRIES - 1} else {self.main_menu.selection - 1};
                     self.set_select(true);
                 }
 
@@ -301,10 +294,10 @@ impl Menu {
 
                 if self.input.keydown_start.1 && self.main_menu.selection == MainMenuOption::Start as u8 {
                     self.input_config_menu.vec_keyboard_controls.sort_by_key(|ctrls| ctrls.0);
-                    let mut vec_control_scheme: Vec<ControlScheme> = Vec::with_capacity(self.input_config_menu.vec_keyboard_controls.len());
+                    let mut vec_control_scheme: Vec<KeyboardControlScheme> = Vec::with_capacity(self.input_config_menu.vec_keyboard_controls.len());
                     // TODO: use a closure if that's better. It's too late at night for me to figure this out; I just want this to work; I've written ~500 lines of GUI code today; help
                     for keyboard_controls in self.input_config_menu.vec_keyboard_controls.iter() {
-                        vec_control_scheme.push(ControlScheme::new(
+                        vec_control_scheme.push(KeyboardControlScheme::new(
                             keyboard_controls.1.expect("[!] key left set to None"),
                             keyboard_controls.2.expect("[!] key right set to None"),
                             keyboard_controls.3.expect("[!] key down set to None"),
@@ -321,17 +314,21 @@ impl Menu {
                 }
             },
             MenuState::InputConfig => {
-                if !self.input_config_menu.sub_selection_keyboard_flag && !self.input_config_menu.sub_selection_gamepad_flag {
+                if !self.input_config_menu.sub_selection_keyboard_flag && !self.input_config_menu.sub_selection_gamepad_flag && !self.input_config_menu.choose_profile_num_flag {
                     if self.input.keydown_down.1 {
                         self.set_select(false);
-                        self.input_config_menu.selection = (self.input_config_menu.selection + 1) % NUM_INPUTCONFIGMENUOPTION_ENTRIES;
+                        self.input_config_menu.selection = (self.input_config_menu.selection + 1) % NUM_INPUTCONFIGMENUOPTION_TEXT_ENTRIES;
                         self.set_select(true);
                     }
 
                     if self.input.keydown_up.1 {
                         self.set_select(false);
-                        self.input_config_menu.selection = if self.input_config_menu.selection == 0 {NUM_INPUTCONFIGMENUOPTION_ENTRIES - 1} else {self.input_config_menu.selection - 1};
+                        self.input_config_menu.selection = if self.input_config_menu.selection == 0 {NUM_INPUTCONFIGMENUOPTION_TEXT_ENTRIES - 1} else {self.input_config_menu.selection - 1};
                         self.set_select(true);
+                    }
+
+                    if self.input.keydown_rotate_cw.1 && self.input_config_menu.selection == InputConfigMenuOption::PlayerInput as u8 {
+                        self.input_config_menu.choose_profile_num_flag = true;
                     }
 
                     if self.input.keydown_start.1 {
@@ -342,7 +339,7 @@ impl Menu {
                             self.input_config_menu.most_recently_pressed_gamepad_axis = None;
                             self.input_config_menu.most_recently_pressed_gamepad_button = None;
                             println!("setting profile {} to Some(((None, None), (None, None), (None, None), None, None, None))", self.input_config_menu.profile_num);
-                            self.input_config_menu.vec_gamepad_profiles[self.input_config_menu.profile_num as usize] = Some(((None, None), (None, None), (None, None), None, None, None));
+                            self.input_config_menu.arr_gamepad_profiles[self.input_config_menu.profile_num as usize] = Some(((None, None), (None, None), (None, None), None, None, None));
                             self.update_sub_text_strings_gamepad();
                             self.input_config_menu.sub_selection_gamepad_flag = true;
                             self.set_select(true);
@@ -361,8 +358,8 @@ impl Menu {
                                         || Some(self.input_config_menu.vec_used_keycode[used_key_idx - items_removed]) == self.input_config_menu.vec_keyboard_controls[idx].5 {
                                             self.input_config_menu.vec_used_keycode.remove(used_key_idx - items_removed);
                                             items_removed += 1;
-                                            // we only need to get rid of NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_ENTRIES
-                                            if items_removed >= NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_ENTRIES as usize {
+                                            // we only need to get rid of NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_TEXT_ENTRIES
+                                            if items_removed >= NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_TEXT_ENTRIES as usize {
                                                 break;
                                             }
                                         }
@@ -380,34 +377,34 @@ impl Menu {
                 } else if self.input_config_menu.sub_selection_gamepad_flag {
                     if self.input_config_menu.most_recently_pressed_gamepad_button.is_some() {
                         let mut not_on_button_flag: bool = false;
-                        match self.input_config_menu.sub_selection_gamepad {
-                            x if x == InputConfigMenuSubOptionGamepad::Left as u8 => {
-                                println!("setting left to {:?}", self.input_config_menu.most_recently_pressed_gamepad_button);
-                                (self.input_config_menu.vec_gamepad_profiles[self.input_config_menu.profile_num as usize].expect("[!] gamepad profile unexpectedly None").0).0 = self.input_config_menu.most_recently_pressed_gamepad_button;
-                                println!("{:?}", self.input_config_menu.vec_gamepad_profiles[self.input_config_menu.profile_num as usize]);
-                            },
-                            x if x == InputConfigMenuSubOptionGamepad::Right as u8 => {
-                                (self.input_config_menu.vec_gamepad_profiles[self.input_config_menu.profile_num as usize].expect("[!] gamepad profile unexpectedly None").1).0 = self.input_config_menu.most_recently_pressed_gamepad_button;
-                            },
-                            x if x == InputConfigMenuSubOptionGamepad::Down as u8 => {
-                                (self.input_config_menu.vec_gamepad_profiles[self.input_config_menu.profile_num as usize].expect("[!] gamepad profile unexpectedly None").2).0 = self.input_config_menu.most_recently_pressed_gamepad_button;
-                            },
-                            x if x == InputConfigMenuSubOptionGamepad::RotateCw as u8 => {
-                                self.input_config_menu.vec_gamepad_profiles[self.input_config_menu.profile_num as usize].expect("[!] gamepad profile unexpectedly None").3 = self.input_config_menu.most_recently_pressed_gamepad_button;
-                            },
-                            x if x == InputConfigMenuSubOptionGamepad::RotateCcw as u8 => {
-                                self.input_config_menu.vec_gamepad_profiles[self.input_config_menu.profile_num as usize].expect("[!] gamepad profile unexpectedly None").4 = self.input_config_menu.most_recently_pressed_gamepad_button;
-                            },
-                            x if x == InputConfigMenuSubOptionGamepad::Start as u8 => {
-                                println!("{:?}", self.input_config_menu.most_recently_pressed_gamepad_button);
-                                self.input_config_menu.vec_gamepad_profiles[self.input_config_menu.profile_num as usize].expect("[!] gamepad profile unexpectedly None").5 = self.input_config_menu.most_recently_pressed_gamepad_button;
-                                println!("{:?}", self.input_config_menu.vec_gamepad_profiles[self.input_config_menu.profile_num as usize]);
-                            },
-                            _ => not_on_button_flag = true,
+                        if let Some(mut profile) = self.input_config_menu.arr_gamepad_profiles[self.input_config_menu.profile_num as usize].as_mut() {
+                            match self.input_config_menu.sub_selection_gamepad {
+                                x if x == InputConfigMenuSubOptionGamepad::Left as u8 => {
+                                    (profile.0).0 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                },
+                                x if x == InputConfigMenuSubOptionGamepad::Right as u8 => {
+                                    (profile.1).0 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                },
+                                x if x == InputConfigMenuSubOptionGamepad::Down as u8 => {
+                                    (profile.2).0 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                },
+                                x if x == InputConfigMenuSubOptionGamepad::RotateCw as u8 => {
+                                    profile.3 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                },
+                                x if x == InputConfigMenuSubOptionGamepad::RotateCcw as u8 => {
+                                    profile.4 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                },
+                                x if x == InputConfigMenuSubOptionGamepad::Start as u8 => {
+                                    profile.5 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                },
+                                _ => not_on_button_flag = true,
+                            }
+                        } else {
+                            println!("[!] gamepad profile unexpectedly None");
                         }
                         if !not_on_button_flag {
                             self.set_select(false);
-                            if self.input_config_menu.sub_selection_gamepad < NUM_INPUTCONFIGMENUSUBOPTIONGAMEPAD_ENTRIES as u8 - 1 {
+                            if self.input_config_menu.sub_selection_gamepad < NUM_INPUTCONFIGMENUSUBOPTIONGAMEPAD_TEXT_ENTRIES as u8 - 1 {
                                 self.input_config_menu.sub_selection_gamepad += 1;
                                 self.set_select(true);
                             } else {
@@ -424,21 +421,25 @@ impl Menu {
 
                     if self.input_config_menu.most_recently_pressed_gamepad_axis.is_some() {
                         let mut not_on_axis_flag: bool = false;
-                        match self.input_config_menu.sub_selection_gamepad {
-                            x if x == InputConfigMenuSubOptionGamepad::AltLeft as u8 => {
-                                (self.input_config_menu.vec_gamepad_profiles[self.input_config_menu.profile_num as usize].expect("[!] gamepad profile unexpectedly None").0).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
-                            },
-                            x if x == InputConfigMenuSubOptionGamepad::AltRight as u8 => {
-                                (self.input_config_menu.vec_gamepad_profiles[self.input_config_menu.profile_num as usize].expect("[!] gamepad profile unexpectedly None").1).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
-                            },
-                            x if x == InputConfigMenuSubOptionGamepad::AltDown as u8 => {
-                                (self.input_config_menu.vec_gamepad_profiles[self.input_config_menu.profile_num as usize].expect("[!] gamepad profile unexpectedly None").2).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
-                            },
-                            _ => not_on_axis_flag = true,
+                        if let Some(mut profile) = self.input_config_menu.arr_gamepad_profiles[self.input_config_menu.profile_num as usize].as_mut() {
+                            match self.input_config_menu.sub_selection_gamepad {
+                                x if x == InputConfigMenuSubOptionGamepad::AltLeft as u8 => {
+                                    (profile.0).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
+                                },
+                                x if x == InputConfigMenuSubOptionGamepad::AltRight as u8 => {
+                                    (profile.1).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
+                                },
+                                x if x == InputConfigMenuSubOptionGamepad::AltDown as u8 => {
+                                    (profile.2).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
+                                },
+                                _ => not_on_axis_flag = true,
+                            }
+                        } else {
+                            println!("[!] gamepad profile unexpectedly None");
                         }
                         if !not_on_axis_flag {
                             self.set_select(false);
-                            if self.input_config_menu.sub_selection_gamepad < NUM_INPUTCONFIGMENUSUBOPTIONGAMEPAD_ENTRIES as u8 - 1 {
+                            if self.input_config_menu.sub_selection_gamepad < NUM_INPUTCONFIGMENUSUBOPTIONGAMEPAD_TEXT_ENTRIES as u8 - 1 {
                                 self.input_config_menu.sub_selection_gamepad += 1;
                                 self.set_select(true);
                             } else {
@@ -453,11 +454,11 @@ impl Menu {
                     }
 
                     if self.input_config_menu.most_recently_pressed_key == Some(KeyCode::Escape) {
-                        self.input_config_menu.vec_gamepad_profiles[self.input_config_menu.profile_num as usize] = None;
+                        self.input_config_menu.arr_gamepad_profiles[self.input_config_menu.profile_num as usize] = None;
                         self.input_config_menu.sub_selection_gamepad = 0;
                         self.input_config_menu.sub_selection_gamepad_flag = false;
                     }
-                } else {
+                } else if self.input_config_menu.sub_selection_keyboard_flag {
                     if self.input_config_menu.most_recently_pressed_key.is_some() && !self.input_config_menu.vec_keyboard_controls.is_empty() {
                         // set the tuple index to the correct key of the tuple just pushed to the vector
                         let vec_length = self.input_config_menu.vec_keyboard_controls.len();
@@ -512,7 +513,7 @@ impl Menu {
                                 _ => println!("[!] couldn't get correct tuple index to set most recently pressed key"),
                             }
                             self.set_select(false);
-                            if self.input_config_menu.sub_selection_keyboard < NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_ENTRIES as u8 - 1 {
+                            if self.input_config_menu.sub_selection_keyboard < NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_TEXT_ENTRIES as u8 - 1 {
                                 self.input_config_menu.sub_selection_keyboard += 1;
                                 self.set_select(true);
                             } else {
@@ -520,6 +521,10 @@ impl Menu {
                                 self.input_config_menu.sub_selection_keyboard_flag = false;
                             }
                         }
+                    }
+                } else if self.input_config_menu.choose_profile_num_flag {
+                    if self.input.keydown_start.1 {
+                        
                     }
                 }
             }
@@ -573,7 +578,7 @@ impl Menu {
                 }
             },
             MenuState::InputConfig => {
-                if !self.input_config_menu.sub_selection_keyboard_flag && !self.input_config_menu.sub_selection_gamepad_flag {
+                if !self.input_config_menu.sub_selection_keyboard_flag && !self.input_config_menu.sub_selection_gamepad_flag && !self.input_config_menu.choose_profile_num_flag {
                     match self.input_config_menu.selection {
                         x if x == InputConfigMenuOption::Back as u8 => {
                             if select_flag {
@@ -822,7 +827,7 @@ impl Menu {
                 }
             },
             MenuState::InputConfig => {
-                if !self.input_config_menu.sub_selection_keyboard_flag && !self.input_config_menu.sub_selection_gamepad_flag {
+                if !self.input_config_menu.sub_selection_keyboard_flag && !self.input_config_menu.sub_selection_gamepad_flag && !self.input_config_menu.choose_profile_num_flag {
                     if self.input_config_menu.selection == InputConfigMenuOption::PlayerInput as u8 {
                         if inc_flag {
                             self.input_config_menu.player_controls = (self.input_config_menu.player_controls + 1) % MAX_NUM_PLAYERS;
@@ -861,7 +866,7 @@ impl Menu {
 
     fn update_sub_text_strings_gamepad(&mut self) {
         self.set_gamepad_specific_sub_text_strings();
-        match self.input_config_menu.vec_gamepad_profiles[self.input_config_menu.profile_num as usize] {
+        match self.input_config_menu.arr_gamepad_profiles[self.input_config_menu.profile_num as usize] {
             Some(profile) => {
                 match (profile.0).0 {
                     Some(button) => {
@@ -874,7 +879,7 @@ impl Menu {
                 }
                 match (profile.0).1 {
                     Some(axis) => {
-                        self.input_config_menu.alt_left_text.fragments_mut()[1].text = format!("{:?}", axis);
+                        self.input_config_menu.alt_left_text.fragments_mut()[1].text = format!("{:?}{}", axis.0, if axis.1 {'+'} else {'-'});
                     },
                     None => {
                         self.input_config_menu.alt_left_text.fragments_mut()[1].text = "None".to_string();
@@ -891,7 +896,7 @@ impl Menu {
                 }
                 match (profile.1).1 {
                     Some(axis) => {
-                        self.input_config_menu.alt_right_text.fragments_mut()[1].text = format!("{:?}", axis);
+                        self.input_config_menu.alt_right_text.fragments_mut()[1].text = format!("{:?}{}", axis.0, if axis.1 {'+'} else {'-'});
                     },
                     None => {
                         self.input_config_menu.alt_right_text.fragments_mut()[1].text = "None".to_string();
@@ -908,7 +913,7 @@ impl Menu {
                 }
                 match (profile.2).1 {
                     Some(axis) => {
-                        self.input_config_menu.alt_down_text.fragments_mut()[1].text = format!("{:?}", axis);
+                        self.input_config_menu.alt_down_text.fragments_mut()[1].text = format!("{:?}{}", axis.0, if axis.1 {'+'} else {'-'});
                     },
                     None => {
                         self.input_config_menu.alt_down_text.fragments_mut()[1].text = "None".to_string();
@@ -1126,7 +1131,7 @@ impl Menu {
                     let rect_h = self.window_dimensions.1 / 2.0;
                     let rect_x = (self.window_dimensions.0 - rect_w) / 2.0;
                     let rect_y = self.window_dimensions.1 * 0.4;
-                    if !self.input_config_menu.sub_selection_keyboard_flag && !self.input_config_menu.sub_selection_gamepad_flag {
+                    if !self.input_config_menu.sub_selection_keyboard_flag && !self.input_config_menu.sub_selection_gamepad_flag && !self.input_config_menu.choose_profile_num_flag {
                         editing_indicator_rectangle = graphics::Mesh::new_rectangle(
                             ctx,
                             graphics::DrawMode::fill(),
@@ -1154,7 +1159,7 @@ impl Menu {
                     graphics::draw(ctx, &editing_indicator_rectangle, (Point2::new(0.0, 0.0),)).unwrap();
 
                     if self.input_config_menu.selection == InputConfigMenuOption::GamepadProfile as u8 {
-                        if self.input_config_menu.vec_gamepad_profiles[self.input_config_menu.profile_num as usize].is_some() {
+                        if self.input_config_menu.arr_gamepad_profiles[self.input_config_menu.profile_num as usize].is_some() {
                             self.draw_text(ctx, &self.input_config_menu.left_text, SUB_TEXT_Y_TOP);
                             self.draw_text(ctx, &self.input_config_menu.alt_left_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF);
                             self.draw_text(ctx, &self.input_config_menu.right_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF * 2.0);
@@ -1172,24 +1177,28 @@ impl Menu {
                             self.draw_text(ctx, &self.input_config_menu.skip_button_axis_text, 0.9);
                         }
                     } else if self.input_config_menu.selection == InputConfigMenuOption::PlayerInput as u8 {
-                        // determine if input_uninitialized_text xor input stuffs should be displayed
-                        let mut player_input_exists: bool = false;
-                        for inputs in self.input_config_menu.vec_keyboard_controls.iter() {
-                            if inputs.0 == self.input_config_menu.player_controls {
-                                player_input_exists = true;
-                                break;
-                            }
-                        }
-
-                        if player_input_exists {
+                        if self.input_config_menu.choose_profile_num_flag {
                             self.draw_text(ctx, &self.input_config_menu.left_text, 0.5);
-                            self.draw_text(ctx, &self.input_config_menu.right_text, 0.55);
-                            self.draw_text(ctx, &self.input_config_menu.down_text, 0.6);
-                            self.draw_text(ctx, &self.input_config_menu.rotate_cw_text, 0.65);
-                            self.draw_text(ctx, &self.input_config_menu.rotate_ccw_text, 0.7);
-                            self.draw_text(ctx, &self.input_config_menu.start_text, 0.75);
                         } else {
-                            self.draw_text(ctx, &self.input_config_menu.input_uninitialized_text, 0.5);
+                            // determine if input_uninitialized_text xor input stuffs should be displayed
+                            let mut player_input_exists: bool = false;
+                            for inputs in self.input_config_menu.vec_keyboard_controls.iter() {
+                                if inputs.0 == self.input_config_menu.player_controls {
+                                    player_input_exists = true;
+                                    break;
+                                }
+                            }
+    
+                            if player_input_exists {
+                                self.draw_text(ctx, &self.input_config_menu.left_text, 0.5);
+                                self.draw_text(ctx, &self.input_config_menu.right_text, 0.55);
+                                self.draw_text(ctx, &self.input_config_menu.down_text, 0.6);
+                                self.draw_text(ctx, &self.input_config_menu.rotate_cw_text, 0.65);
+                                self.draw_text(ctx, &self.input_config_menu.rotate_ccw_text, 0.7);
+                                self.draw_text(ctx, &self.input_config_menu.start_text, 0.75);
+                            } else {
+                                self.draw_text(ctx, &self.input_config_menu.input_uninitialized_text, 0.5);
+                            }
                         }
                     }
                 }
