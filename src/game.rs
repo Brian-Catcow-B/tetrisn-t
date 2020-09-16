@@ -22,8 +22,12 @@ mod board;
 use crate::game::board::BOARD_HEIGHT_BUFFER_U;
 use crate::game::board::Board;
 
-use crate::inputs::KeyboardControlScheme;
+use crate::inputs::{KeyboardControlScheme, GamepadProfileScheme};
+use crate::menu::MAX_NUM_GAMEPAD_PROFILES;
 
+
+const DETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.6;
+const UNDETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.4;
 
 const BOARD_HEIGHT: u8 = 20u8;
 
@@ -38,7 +42,7 @@ const GAME_OVER_DELAY: i8 = 60i8;
 
 // space up of the board that is not the board in tiles
 pub const NON_BOARD_SPACE_U: u8 = 5u8;
-const LITTLE_TEXT_SCALE: f32 = 30.0;
+const LITTLE_TEXT_SCALE: f32 = 20.0;
 
 // for each level (as the index), the number of frames it takes for a piece to move down one row (everything after 29 is also 0)
 // it's actually 1 less than the number of frames it takes the piece to fall because the game logic works out better that way
@@ -86,19 +90,21 @@ const DAS_THRESHOLD_LITTLE: u8 = 5;
 // how long the pieces don't move down at the start
 pub const INITIAL_HANG_FRAMES: u8 = 180;
 
-// this struct is for when the Menu struct returns what game options to start with
+// this struct is for the Menu class so that it can return what game options to start the game with
 pub struct GameOptions {
     pub num_players: u8,
     pub starting_level: u8,
     pub vec_keyboard_inputs: Vec<KeyboardControlScheme>,
+    pub arr_profile_schemes: [Option<GamepadProfileScheme>; MAX_NUM_GAMEPAD_PROFILES as usize],
 }
 
 impl GameOptions {
-    pub fn new(num_players: u8, starting_level: u8, vec_keyboard_inputs: Vec<KeyboardControlScheme>) -> Self {
+    pub fn new(num_players: u8, starting_level: u8, vec_keyboard_inputs: Vec<KeyboardControlScheme>, arr_profile_schemes: [Option<GamepadProfileScheme>; MAX_NUM_GAMEPAD_PROFILES as usize]) -> Self {
         Self {
             num_players,
             starting_level,
             vec_keyboard_inputs,
+            arr_profile_schemes,
         }
     }
 }
@@ -111,6 +117,7 @@ pub struct Game {
     vec_players: Vec<Player>,
     vec_next_piece: Vec<NextPiece>,
     vec_gamepad_id_map_to_player: Vec<(GamepadId, u8)>,
+    arr_profile_schemes: [Option<GamepadProfileScheme>; MAX_NUM_GAMEPAD_PROFILES as usize],
     level: u8,
     starting_level: u8,
     num_cleared_lines: u16,
@@ -180,6 +187,7 @@ impl Game {
             vec_players,
             vec_next_piece,
             vec_gamepad_id_map_to_player: vec![],
+            arr_profile_schemes: game_options.arr_profile_schemes,
             level: game_options.starting_level,
             starting_level: game_options.starting_level,
             num_cleared_lines: 0u16,
@@ -425,19 +433,27 @@ impl Game {
             "Axis Event: {:?} Value: {} Gamepad_Id: {:?}",
             axis, value, id
         );
-        if axis == Axis::LeftStickX {
-            if value < -0.7 && !self.vec_players[0].input.keydown_left.0 {
+        if axis == self.arr_profile_schemes[0].expect("[!] oops").left.1.expect("[!] oops").0 {
+            if (if self.arr_profile_schemes[0].expect("[!] oops").left.1.expect("[!] oops").1 {value > DETECT_GAMEPAD_AXIS_THRESHOLD} else {value < -DETECT_GAMEPAD_AXIS_THRESHOLD}) && !self.vec_players[0].input.keydown_left.0 {
                 self.vec_players[0].input.keydown_left = (true, true);
-            } else if value > 0.7 && !self.vec_players[0].input.keydown_right.0 {
-                self.vec_players[0].input.keydown_right = (true, true);
-            } else if value < 0.6 && value > -0.6 {
+            // } else if value > DETECT_GAMEPAD_AXIS_THRESHOLD && !self.vec_players[0].input.keydown_right.0 {
+            //     self.vec_players[0].input.keydown_right = (true, true);
+            } else if value < UNDETECT_GAMEPAD_AXIS_THRESHOLD && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD {
                 self.vec_players[0].input.keydown_left = (false, false);
+                // self.vec_players[0].input.keydown_right = (false, false);
+            }
+        } 
+        if axis == self.arr_profile_schemes[0].expect("[!] oops").right.1.expect("[!] oops").0 {
+            if (if self.arr_profile_schemes[0].expect("[!] oops").right.1.expect("[!] oops").1 {value > DETECT_GAMEPAD_AXIS_THRESHOLD} else {value < -DETECT_GAMEPAD_AXIS_THRESHOLD}) && !self.vec_players[0].input.keydown_right.0 {
+                self.vec_players[0].input.keydown_right = (true, true);
+            } else if value < UNDETECT_GAMEPAD_AXIS_THRESHOLD && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD {
                 self.vec_players[0].input.keydown_right = (false, false);
             }
-        } else if axis == Axis::LeftStickY {
-            if value < -0.7 && !self.vec_players[0].input.keydown_down.0 {
+        } 
+        if axis == self.arr_profile_schemes[0].expect("[!] oops").down.1.expect("[!] oops").0 {
+            if (if self.arr_profile_schemes[0].expect("[!] oops").down.1.expect("[!] oops").1 {value > DETECT_GAMEPAD_AXIS_THRESHOLD} else {value < -DETECT_GAMEPAD_AXIS_THRESHOLD}) && !self.vec_players[0].input.keydown_down.0 {
                 self.vec_players[0].input.keydown_down = (true, true);
-            } else if value > -0.6 {
+            } else if value < UNDETECT_GAMEPAD_AXIS_THRESHOLD && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD {
                 self.vec_players[0].input.keydown_down = (false, false);
             }
         }

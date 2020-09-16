@@ -86,7 +86,7 @@ impl KeyboardControlScheme {
 }
 
 #[derive(Copy, Clone)]
-pub struct GamepadControlScheme {
+pub struct GamepadProfileScheme {
     pub left: (Option<Button>, Option<(Axis, bool)>),
     pub right: (Option<Button>, Option<(Axis, bool)>),
     pub down: (Option<Button>, Option<(Axis, bool)>),
@@ -95,7 +95,7 @@ pub struct GamepadControlScheme {
     pub start: Button,
 }
 
-impl GamepadControlScheme {
+impl GamepadProfileScheme {
     pub fn new(
         left: (Option<Button>, Option<(Axis, bool)>),
         right: (Option<Button>, Option<(Axis, bool)>),

@@ -5,13 +5,13 @@ use ggez::graphics::{Color, Scale, Text, TextFragment};
 use ggez::nalgebra::Point2;
 
 use crate::control::ProgramState;
-use crate::inputs::{Input, KeyboardControlScheme};
+use crate::inputs::{Input, KeyboardControlScheme, GamepadProfileScheme};
 
 use crate::game::GameOptions;
 
 const MAX_STARTING_LEVEL: u8 = 29; // this is just the fastest speed, so yeah
 const MAX_NUM_PLAYERS: u8 = 62; // currently held back by board width being a u8 equal to 6 + 4 * num_players
-const MAX_NUM_GAMEPAD_PROFILES: u8 = 9;
+pub const MAX_NUM_GAMEPAD_PROFILES: u8 = 9;
 
 const DETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.5;
 const UNDETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.3;
@@ -341,6 +341,7 @@ impl Menu {
                 if self.input.keydown_start.1 && self.main_menu.selection == MainMenuOption::Start as u8 {
                     self.input_config_menu.arr_controls.sort_by_key(|ctrls| ctrls.0);
                     let mut vec_control_scheme: Vec<KeyboardControlScheme> = Vec::with_capacity(self.input_config_menu.arr_controls.len());
+                    let mut arr_profile_schemes: [Option<GamepadProfileScheme>; MAX_NUM_GAMEPAD_PROFILES as usize] = [None; MAX_NUM_GAMEPAD_PROFILES as usize];
                     // TODO: use a closure if that's better. It's too late at night for me to figure this out; I just want this to work; I've written ~500 lines of GUI code today; help
                     for controls in self.input_config_menu.arr_controls.iter() {
                         if let Some(ctrls) = controls.0 {
@@ -354,10 +355,22 @@ impl Menu {
                             ));
                         }
                     }
+                    for (idx, opt_profile) in self.input_config_menu.arr_gamepad_profiles.iter().enumerate() {
+                        if let Some(profile) = opt_profile {
+                            arr_profile_schemes[idx] = Some(GamepadProfileScheme::new(
+                                ((profile.0).0, (profile.0).1),
+                                ((profile.1).0, (profile.1).1),
+                                ((profile.2).0, (profile.2).1),
+                                (profile.3).expect("[!] RotateCw was unexpectedly set to None"),
+                                (profile.4).expect("[!] RotateCcw was unexpectedly set to None"),
+                                (profile.5).expect("[!] Start was unexpectedly set to None"),
+                            ));
+                        }
+                    }
                     if vec_control_scheme.len() < self.main_menu.num_players as usize {
                         self.main_menu.not_enough_controls_flag = true;
                     } else {
-                        return Some((ProgramState::Game, GameOptions::new(self.main_menu.num_players, self.main_menu.starting_level, vec_control_scheme)));
+                        return Some((ProgramState::Game, GameOptions::new(self.main_menu.num_players, self.main_menu.starting_level, vec_control_scheme, arr_profile_schemes)));
                     }
                 }
             },
