@@ -85,7 +85,7 @@ impl KeyboardControlScheme {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct GamepadProfileScheme {
     pub left: (Option<Button>, Option<(Axis, bool)>),
     pub right: (Option<Button>, Option<(Axis, bool)>),

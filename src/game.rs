@@ -407,49 +407,60 @@ impl Game {
     }
 
     pub fn gamepad_button_down_event(&mut self, btn: Button, id: GamepadId) {
-        println!("Gamepad button pressed: {:?} Gamepad_Id: {:?}", btn, id);
-        if btn == Button::South {
+        // println!("Gamepad button pressed: {:?} Gamepad_Id: {:?}", btn, id);
+        if btn == self.arr_profile_schemes[0].expect("[!] oops").left.0.expect("[!] oops") {
+            self.vec_players[0].input.keydown_left = (true, true);
+            self.vec_players[0].input.keydown_right = (false, false);
+        } else if btn == self.arr_profile_schemes[0].expect("[!] oops").right.0.expect("[!] oops") {
+            self.vec_players[0].input.keydown_right = (true, true);
+            self.vec_players[0].input.keydown_left = (false, false);
+        } else if btn == self.arr_profile_schemes[0].expect("[!] oops").down.0.expect("[!] oops") {
+            self.vec_players[0].input.keydown_down = (true, true);
+        } else if btn == self.arr_profile_schemes[0].expect("[!] oops").rotate_cw {
             self.vec_players[0].input.keydown_rotate_cw = (true, true);
-        } else if btn == Button::West {
+        } else if btn == self.arr_profile_schemes[0].expect("[!] oops").rotate_ccw {
             self.vec_players[0].input.keydown_rotate_ccw = (true, true);
-        } else if btn == Button::Start {
+        } else if btn == self.arr_profile_schemes[0].expect("[!] oops").start {
             self.vec_players[0].input.keydown_start = (true, true);
         }
     }
 
     pub fn gamepad_button_up_event(&mut self, btn: Button, id: GamepadId) {
-        println!("Gamepad button released: {:?} Gamepad_Id: {:?}", btn, id);
-        if btn == Button::South {
+        // println!("Gamepad button released: {:?} Gamepad_Id: {:?}", btn, id);
+        if btn == self.arr_profile_schemes[0].expect("[!] oops").left.0.expect("[!] oops") {
+            self.vec_players[0].input.keydown_left = (false, false);
+        } else if btn == self.arr_profile_schemes[0].expect("[!] oops").right.0.expect("[!] oops") {
+            self.vec_players[0].input.keydown_right = (false, false);
+        } else if btn == self.arr_profile_schemes[0].expect("[!] oops").down.0.expect("[!] oops") {
+            self.vec_players[0].input.keydown_down = (false, false);
+        } else if btn == self.arr_profile_schemes[0].expect("[!] oops").rotate_cw {
             self.vec_players[0].input.keydown_rotate_cw = (false, false);
-        } else if btn == Button::West {
+        } else if btn == self.arr_profile_schemes[0].expect("[!] oops").rotate_ccw {
             self.vec_players[0].input.keydown_rotate_ccw = (false, false);
-        } else if btn == Button::Start {
-            self.vec_players[0].input.keydown_start = (false, false);
         }
     }
 
     pub fn gamepad_axis_event(&mut self, axis: Axis, value: f32, id: GamepadId) {
-        println!(
-            "Axis Event: {:?} Value: {} Gamepad_Id: {:?}",
-            axis, value, id
-        );
+        // println!(
+        //     "Axis Event: {:?} Value: {} Gamepad_Id: {:?}",
+        //     axis, value, id
+        // );
         if axis == self.arr_profile_schemes[0].expect("[!] oops").left.1.expect("[!] oops").0 {
             if (if self.arr_profile_schemes[0].expect("[!] oops").left.1.expect("[!] oops").1 {value > DETECT_GAMEPAD_AXIS_THRESHOLD} else {value < -DETECT_GAMEPAD_AXIS_THRESHOLD}) && !self.vec_players[0].input.keydown_left.0 {
                 self.vec_players[0].input.keydown_left = (true, true);
-            // } else if value > DETECT_GAMEPAD_AXIS_THRESHOLD && !self.vec_players[0].input.keydown_right.0 {
-            //     self.vec_players[0].input.keydown_right = (true, true);
+                self.vec_players[0].input.keydown_right = (false, false);
             } else if value < UNDETECT_GAMEPAD_AXIS_THRESHOLD && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD {
                 self.vec_players[0].input.keydown_left = (false, false);
-                // self.vec_players[0].input.keydown_right = (false, false);
             }
-        } 
+        }
         if axis == self.arr_profile_schemes[0].expect("[!] oops").right.1.expect("[!] oops").0 {
             if (if self.arr_profile_schemes[0].expect("[!] oops").right.1.expect("[!] oops").1 {value > DETECT_GAMEPAD_AXIS_THRESHOLD} else {value < -DETECT_GAMEPAD_AXIS_THRESHOLD}) && !self.vec_players[0].input.keydown_right.0 {
                 self.vec_players[0].input.keydown_right = (true, true);
+                self.vec_players[0].input.keydown_left = (false, false);
             } else if value < UNDETECT_GAMEPAD_AXIS_THRESHOLD && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD {
                 self.vec_players[0].input.keydown_right = (false, false);
             }
-        } 
+        }
         if axis == self.arr_profile_schemes[0].expect("[!] oops").down.1.expect("[!] oops").0 {
             if (if self.arr_profile_schemes[0].expect("[!] oops").down.1.expect("[!] oops").1 {value > DETECT_GAMEPAD_AXIS_THRESHOLD} else {value < -DETECT_GAMEPAD_AXIS_THRESHOLD}) && !self.vec_players[0].input.keydown_down.0 {
                 self.vec_players[0].input.keydown_down = (true, true);
