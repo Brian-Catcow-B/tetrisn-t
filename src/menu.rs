@@ -131,6 +131,7 @@ struct InputConfigMenu {
     button_conflict_flag: bool,
     axis_conflict_flag: bool,
     cant_skip_both_flag: bool,
+    input_type_unknown_flag: bool,
     arr_controls: [(Option<(Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>, Option<u8>); MAX_NUM_PLAYERS as usize],
     arr_gamepad_profiles: [Option<((Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), Option<Button>, Option<Button>, Option<Button>)>; MAX_NUM_GAMEPAD_PROFILES as usize],
     // text
@@ -145,6 +146,7 @@ struct InputConfigMenu {
     axis_conflict_text: Text,
     skip_button_axis_text: Text,
     cant_skip_both_text: Text,
+    input_type_unknown_text: Text,
     choose_profile_text: Text,
     k_left_text: Text,
     k_right_text: Text,
@@ -234,6 +236,7 @@ impl InputConfigMenu {
             button_conflict_flag: false,
             axis_conflict_flag: false,
             cant_skip_both_flag: false,
+            input_type_unknown_flag: false,
             arr_controls,
             arr_gamepad_profiles: [None; MAX_NUM_GAMEPAD_PROFILES as usize],
             // text
@@ -247,6 +250,7 @@ impl InputConfigMenu {
             button_conflict_text: Text::new(TextFragment::new("[!] Redundant Button; ignoring").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
             axis_conflict_text: Text::new(TextFragment::new("[!] Redundant Axis; ignoring").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
             cant_skip_both_text: Text::new(TextFragment::new("[!] Can't skip both").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
+            input_type_unknown_text: Text::new(TextFragment::new("[!] Unknown input; see README").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
             skip_button_axis_text: Text::new(TextFragment::new("Skip Button/Axis: Space/Enter").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
             choose_profile_text,
             k_left_text,
@@ -504,133 +508,143 @@ impl Menu {
                     }
 
                     if self.input_config_menu.most_recently_pressed_gamepad_axis.is_some() {
-                        let mut not_on_axis_flag: bool = false;
-                        if let Some(mut profile) = self.input_config_menu.arr_gamepad_profiles[self.input_config_menu.profile_num as usize].as_mut() {
-                            match self.input_config_menu.sub_selection_gamepad {
-                                x if x == InputConfigMenuSubOptionGamepad::AxisLeft as u8 => {
-                                    (profile.0).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
-                                },
-                                x if x == InputConfigMenuSubOptionGamepad::AxisRight as u8 => {
-                                    if self.input_config_menu.most_recently_pressed_gamepad_axis != (profile.0).1 {
-                                        (profile.1).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
-                                        self.input_config_menu.axis_conflict_flag = false;
-                                    } else {
-                                        self.input_config_menu.most_recently_pressed_gamepad_axis = None;
-                                        self.input_config_menu.axis_conflict_flag = true;
-                                    }
-                                },
-                                x if x == InputConfigMenuSubOptionGamepad::AxisDown as u8 => {
-                                    if self.input_config_menu.most_recently_pressed_gamepad_axis != (profile.0).1
-                                    && self.input_config_menu.most_recently_pressed_gamepad_axis != (profile.1).1 {
-                                        (profile.2).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
-                                        self.input_config_menu.axis_conflict_flag = false;
-                                    } else {
-                                        self.input_config_menu.most_recently_pressed_gamepad_axis = None;
-                                        self.input_config_menu.axis_conflict_flag = true;
-                                    }
-                                },
-                                _ => not_on_axis_flag = true,
-                            }
+                        if self.input_config_menu.most_recently_pressed_gamepad_axis == Some((Axis::Unknown, false))
+                        || self.input_config_menu.most_recently_pressed_gamepad_axis == Some((Axis::Unknown, true)) {
+                            self.input_config_menu.input_type_unknown_flag = true;
                         } else {
-                            println!("[!] gamepad profile unexpectedly None");
-                        }
-                        if !not_on_axis_flag && !self.input_config_menu.axis_conflict_flag {
-                            self.set_select(false);
-                            if self.input_config_menu.sub_selection_gamepad < NUM_INPUTCONFIGMENUSUBOPTIONGAMEPAD_TEXT_ENTRIES as u8 - 1 {
-                                self.input_config_menu.sub_selection_gamepad += 1;
-                                self.set_select(true);
+                            let mut not_on_axis_flag: bool = false;
+                            if let Some(mut profile) = self.input_config_menu.arr_gamepad_profiles[self.input_config_menu.profile_num as usize].as_mut() {
+                                match self.input_config_menu.sub_selection_gamepad {
+                                    x if x == InputConfigMenuSubOptionGamepad::AxisLeft as u8 => {
+                                        (profile.0).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
+                                    },
+                                    x if x == InputConfigMenuSubOptionGamepad::AxisRight as u8 => {
+                                        if self.input_config_menu.most_recently_pressed_gamepad_axis != (profile.0).1 {
+                                            (profile.1).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
+                                            self.input_config_menu.axis_conflict_flag = false;
+                                        } else {
+                                            self.input_config_menu.most_recently_pressed_gamepad_axis = None;
+                                            self.input_config_menu.axis_conflict_flag = true;
+                                        }
+                                    },
+                                    x if x == InputConfigMenuSubOptionGamepad::AxisDown as u8 => {
+                                        if self.input_config_menu.most_recently_pressed_gamepad_axis != (profile.0).1
+                                        && self.input_config_menu.most_recently_pressed_gamepad_axis != (profile.1).1 {
+                                            (profile.2).1 = self.input_config_menu.most_recently_pressed_gamepad_axis;
+                                            self.input_config_menu.axis_conflict_flag = false;
+                                        } else {
+                                            self.input_config_menu.most_recently_pressed_gamepad_axis = None;
+                                            self.input_config_menu.axis_conflict_flag = true;
+                                        }
+                                    },
+                                    _ => not_on_axis_flag = true,
+                                }
                             } else {
-                                self.input_config_menu.sub_selection_gamepad = 0;
-                                self.input_config_menu.sub_selection_gamepad_flag = false;
+                                println!("[!] gamepad profile unexpectedly None");
                             }
-                        } else {
-                            self.input_config_menu.most_recently_pressed_gamepad_axis = None;
+                            if !not_on_axis_flag && !self.input_config_menu.axis_conflict_flag {
+                                self.set_select(false);
+                                if self.input_config_menu.sub_selection_gamepad < NUM_INPUTCONFIGMENUSUBOPTIONGAMEPAD_TEXT_ENTRIES as u8 - 1 {
+                                    self.input_config_menu.sub_selection_gamepad += 1;
+                                    self.set_select(true);
+                                } else {
+                                    self.input_config_menu.sub_selection_gamepad = 0;
+                                    self.input_config_menu.sub_selection_gamepad_flag = false;
+                                }
+                            } else {
+                                self.input_config_menu.most_recently_pressed_gamepad_axis = None;
+                            }
+                            self.input_config_menu.cant_skip_both_flag = false;
+                            self.input_config_menu.input_type_unknown_flag = false;
                         }
-                        self.input_config_menu.cant_skip_both_flag = false;
-
                         self.input_config_menu.most_recently_pressed_key = None;
                     }
 
                     if self.input_config_menu.most_recently_pressed_gamepad_button.is_some() {
-                        let mut not_on_button_flag: bool = false;
-                        if let Some(mut profile) = self.input_config_menu.arr_gamepad_profiles[self.input_config_menu.profile_num as usize].as_mut() {
-                            match self.input_config_menu.sub_selection_gamepad {
-                                x if x == InputConfigMenuSubOptionGamepad::ButtonLeft as u8 => {
-                                    (profile.0).0 = self.input_config_menu.most_recently_pressed_gamepad_button;
-                                },
-                                x if x == InputConfigMenuSubOptionGamepad::ButtonRight as u8 => {
-                                    if self.input_config_menu.most_recently_pressed_gamepad_button != (profile.0).0 {
-                                        (profile.1).0 = self.input_config_menu.most_recently_pressed_gamepad_button;
-                                        self.input_config_menu.button_conflict_flag = false;
-                                    } else {
-                                        self.input_config_menu.most_recently_pressed_gamepad_button = None;
-                                        self.input_config_menu.button_conflict_flag = true;
-                                    }
-                                },
-                                x if x == InputConfigMenuSubOptionGamepad::ButtonDown as u8 => {
-                                    if self.input_config_menu.most_recently_pressed_gamepad_button != (profile.0).0
-                                    && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.1).0 {
-                                        (profile.2).0 = self.input_config_menu.most_recently_pressed_gamepad_button;
-                                        self.input_config_menu.button_conflict_flag = false;
-                                    } else {
-                                        self.input_config_menu.most_recently_pressed_gamepad_button = None;
-                                        self.input_config_menu.button_conflict_flag = true;
-                                    }
-                                },
-                                x if x == InputConfigMenuSubOptionGamepad::ButtonRotateCw as u8 => {
-                                    if self.input_config_menu.most_recently_pressed_gamepad_button != (profile.0).0
-                                    && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.1).0
-                                    && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.2).0 {
-                                        profile.3 = self.input_config_menu.most_recently_pressed_gamepad_button;
-                                        self.input_config_menu.button_conflict_flag = false;
-                                    } else {
-                                        self.input_config_menu.most_recently_pressed_gamepad_button = None;
-                                        self.input_config_menu.button_conflict_flag = true;
-                                    }
-                                },
-                                x if x == InputConfigMenuSubOptionGamepad::ButtonRotateCcw as u8 => {
-                                    if self.input_config_menu.most_recently_pressed_gamepad_button != (profile.0).0
-                                    && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.1).0
-                                    && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.2).0
-                                    && self.input_config_menu.most_recently_pressed_gamepad_button != profile.3 {
-                                        profile.4 = self.input_config_menu.most_recently_pressed_gamepad_button;
-                                        self.input_config_menu.button_conflict_flag = false;
-                                    } else {
-                                        self.input_config_menu.most_recently_pressed_gamepad_button = None;
-                                        self.input_config_menu.button_conflict_flag = true;
-                                    }
-                                },
-                                x if x == InputConfigMenuSubOptionGamepad::ButtonStart as u8 => {
-                                    if self.input_config_menu.most_recently_pressed_gamepad_button != (profile.0).0
-                                    && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.1).0
-                                    && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.2).0
-                                    && self.input_config_menu.most_recently_pressed_gamepad_button != profile.3
-                                    && self.input_config_menu.most_recently_pressed_gamepad_button != profile.4 {
-                                        profile.5 = self.input_config_menu.most_recently_pressed_gamepad_button;
-                                        self.input_config_menu.button_conflict_flag = false;
-                                    } else {
-                                        self.input_config_menu.most_recently_pressed_gamepad_button = None;
-                                        self.input_config_menu.button_conflict_flag = true;
-                                    }
-                                },
-                                _ => not_on_button_flag = true,
-                            }
+                        if self.input_config_menu.most_recently_pressed_gamepad_button == Some(Button::Unknown) {
+                            self.input_config_menu.input_type_unknown_flag = true;
                         } else {
-                            println!("[!] gamepad profile unexpectedly None");
-                        }
-                        if !not_on_button_flag && !self.input_config_menu.button_conflict_flag {
-                            self.set_select(false);
-                            if self.input_config_menu.sub_selection_gamepad < NUM_INPUTCONFIGMENUSUBOPTIONGAMEPAD_TEXT_ENTRIES as u8 - 1 {
-                                self.input_config_menu.sub_selection_gamepad += 1;
-                                self.set_select(true);
+                            let mut not_on_button_flag: bool = false;
+                            if let Some(mut profile) = self.input_config_menu.arr_gamepad_profiles[self.input_config_menu.profile_num as usize].as_mut() {
+                                match self.input_config_menu.sub_selection_gamepad {
+                                    x if x == InputConfigMenuSubOptionGamepad::ButtonLeft as u8 => {
+                                        (profile.0).0 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                    },
+                                    x if x == InputConfigMenuSubOptionGamepad::ButtonRight as u8 => {
+                                        if self.input_config_menu.most_recently_pressed_gamepad_button != (profile.0).0 {
+                                            (profile.1).0 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                            self.input_config_menu.button_conflict_flag = false;
+                                        } else {
+                                            self.input_config_menu.most_recently_pressed_gamepad_button = None;
+                                            self.input_config_menu.button_conflict_flag = true;
+                                        }
+                                    },
+                                    x if x == InputConfigMenuSubOptionGamepad::ButtonDown as u8 => {
+                                        if self.input_config_menu.most_recently_pressed_gamepad_button != (profile.0).0
+                                        && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.1).0 {
+                                            (profile.2).0 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                            self.input_config_menu.button_conflict_flag = false;
+                                        } else {
+                                            self.input_config_menu.most_recently_pressed_gamepad_button = None;
+                                            self.input_config_menu.button_conflict_flag = true;
+                                        }
+                                    },
+                                    x if x == InputConfigMenuSubOptionGamepad::ButtonRotateCw as u8 => {
+                                        if self.input_config_menu.most_recently_pressed_gamepad_button != (profile.0).0
+                                        && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.1).0
+                                        && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.2).0 {
+                                            profile.3 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                            self.input_config_menu.button_conflict_flag = false;
+                                        } else {
+                                            self.input_config_menu.most_recently_pressed_gamepad_button = None;
+                                            self.input_config_menu.button_conflict_flag = true;
+                                        }
+                                    },
+                                    x if x == InputConfigMenuSubOptionGamepad::ButtonRotateCcw as u8 => {
+                                        if self.input_config_menu.most_recently_pressed_gamepad_button != (profile.0).0
+                                        && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.1).0
+                                        && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.2).0
+                                        && self.input_config_menu.most_recently_pressed_gamepad_button != profile.3 {
+                                            profile.4 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                            self.input_config_menu.button_conflict_flag = false;
+                                        } else {
+                                            self.input_config_menu.most_recently_pressed_gamepad_button = None;
+                                            self.input_config_menu.button_conflict_flag = true;
+                                        }
+                                    },
+                                    x if x == InputConfigMenuSubOptionGamepad::ButtonStart as u8 => {
+                                        if self.input_config_menu.most_recently_pressed_gamepad_button != (profile.0).0
+                                        && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.1).0
+                                        && self.input_config_menu.most_recently_pressed_gamepad_button != (profile.2).0
+                                        && self.input_config_menu.most_recently_pressed_gamepad_button != profile.3
+                                        && self.input_config_menu.most_recently_pressed_gamepad_button != profile.4 {
+                                            profile.5 = self.input_config_menu.most_recently_pressed_gamepad_button;
+                                            self.input_config_menu.button_conflict_flag = false;
+                                        } else {
+                                            self.input_config_menu.most_recently_pressed_gamepad_button = None;
+                                            self.input_config_menu.button_conflict_flag = true;
+                                        }
+                                    },
+                                    _ => not_on_button_flag = true,
+                                }
                             } else {
-                                self.input_config_menu.sub_selection_gamepad = 0;
-                                self.input_config_menu.sub_selection_gamepad_flag = false;
+                                println!("[!] gamepad profile unexpectedly None");
                             }
-                        } else {
-                            self.input_config_menu.most_recently_pressed_gamepad_button = None;
+                            if !not_on_button_flag && !self.input_config_menu.button_conflict_flag {
+                                self.set_select(false);
+                                if self.input_config_menu.sub_selection_gamepad < NUM_INPUTCONFIGMENUSUBOPTIONGAMEPAD_TEXT_ENTRIES as u8 - 1 {
+                                    self.input_config_menu.sub_selection_gamepad += 1;
+                                    self.set_select(true);
+                                } else {
+                                    self.input_config_menu.sub_selection_gamepad = 0;
+                                    self.input_config_menu.sub_selection_gamepad_flag = false;
+                                }
+                            } else {
+                                self.input_config_menu.most_recently_pressed_gamepad_button = None;
+                            }
+                            self.input_config_menu.cant_skip_both_flag = false;
+                            self.input_config_menu.input_type_unknown_flag = false;
                         }
-                        self.input_config_menu.cant_skip_both_flag = false;
 
                         self.input_config_menu.most_recently_pressed_gamepad_axis = None;
                         self.input_config_menu.most_recently_pressed_key = None;
@@ -1350,6 +1364,8 @@ impl Menu {
                             self.draw_text(ctx, &self.input_config_menu.axis_conflict_text, 0.43);
                         } else if self.input_config_menu.cant_skip_both_flag {
                             self.draw_text(ctx, &self.input_config_menu.cant_skip_both_text, 0.43);
+                        } else if self.input_config_menu.input_type_unknown_flag {
+                            self.draw_text(ctx, &self.input_config_menu.input_type_unknown_text, 0.43);
                         }
 
                         if self.input_config_menu.arr_gamepad_profiles[self.input_config_menu.profile_num as usize].is_some() {
