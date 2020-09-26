@@ -12,5 +12,7 @@ overflow-checks = false  # it's a feature, not a bug; overflow is used for playe
 opt-level = 3
 
 [dependencies]
-ggez = "0.5"
+# ggez = "0.5"
+ggez = { git = "https://github.com/Brian-Catcow-B/ggez.git", branch = "master-custom-gamepads" }
 rand = "0.7.3"
+gilrs = "0.7.4"
