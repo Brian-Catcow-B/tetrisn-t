@@ -109,10 +109,26 @@ pub struct InputConfigMenu {
 
 impl InputConfigMenu {
     pub fn new(window_dimensions: (f32, f32), last_used_keyboard_controls: Vec<(u8, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>) -> Self {
+        let mut vec_used_keycode: Vec<KeyCode> = vec![];
         let mut arr_controls: [(Option<(Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>, Option<u8>); MAX_NUM_PLAYERS as usize] = [(None, None); MAX_NUM_PLAYERS as usize];
         for ctrls in last_used_keyboard_controls.iter() {
             if ctrls.0 < MAX_NUM_PLAYERS {
                 arr_controls[ctrls.0 as usize].0 = Some((ctrls.1, ctrls.2, ctrls.3, ctrls.4, ctrls.5));
+            }
+            if let Some(key) = ctrls.1 {
+                vec_used_keycode.push(key);
+            }
+            if let Some(key) = ctrls.2 {
+                vec_used_keycode.push(key);
+            }
+            if let Some(key) = ctrls.3 {
+                vec_used_keycode.push(key);
+            }
+            if let Some(key) = ctrls.4 {
+                vec_used_keycode.push(key);
+            }
+            if let Some(key) = ctrls.5 {
+                vec_used_keycode.push(key);
             }
         }
         let mut player_controls_text = Text::new(TextFragment::new("Player Number: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
@@ -173,7 +189,7 @@ impl InputConfigMenu {
             most_recently_pressed_gamepad_button: None,
             most_recently_pressed_gamepad_axis: None,
             gamepad_axis_wait: (false, None),
-            vec_used_keycode: vec![],
+            vec_used_keycode,
             keycode_conflict_flag: false,
             button_conflict_flag: false,
             axis_conflict_flag: false,

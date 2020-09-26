@@ -49,10 +49,11 @@ pub struct Menu {
 impl Menu {
     pub fn new(ctx: &mut Context, last_used_game_options: &Option<GameOptions>) -> Self {
         let window_dimensions = graphics::size(ctx);
-        // get the last used options if there are any
+        // defaults
         let mut arr_controls: Vec<(u8, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)> = vec![];
         let mut num_players: u8 = 1;
         let mut starting_level: u8 = 0;
+        // if there were game options, use those
         if let Some(game_options) = last_used_game_options {
             for (player, controls) in game_options.vec_keyboard_inputs.iter().enumerate() {
                 arr_controls.push(
