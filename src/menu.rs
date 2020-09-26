@@ -81,7 +81,6 @@ impl Menu {
             MenuState::Start => {
                 let ret_bools: (bool, bool) = self.start_menu.update(&self.input);
                 if ret_bools.0 {
-                    self.input_config_menu.arr_controls.sort_by_key(|ctrls| ctrls.0);
                     let mut vec_control_scheme: Vec<KeyboardControlScheme> = Vec::with_capacity(self.input_config_menu.arr_controls.len());
                     let mut arr_profile_schemes: [Option<GamepadProfileScheme>; MAX_NUM_GAMEPAD_PROFILES as usize] = [None; MAX_NUM_GAMEPAD_PROFILES as usize];
                     // TODO: use a closure if that's better. It's too late at night for me to figure this out; I just want this to work; I've written ~500 lines of GUI code today; help
