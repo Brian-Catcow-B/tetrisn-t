@@ -4,7 +4,7 @@ use ggez::event::{Button, Axis, KeyCode};
 use ggez::graphics::{Scale, Text, TextFragment};
 use ggez::nalgebra::Point2;
 
-use crate::inputs::Input;
+use crate::inputs::{Input, GamepadProfileScheme, KeyboardControlScheme};
 
 use crate::menu::MAX_NUM_GAMEPAD_PROFILES;
 use crate::menu::MAX_NUM_PLAYERS;
@@ -75,8 +75,8 @@ pub struct InputConfigMenu {
     cant_skip_both_flag: bool,
     input_type_unknown_flag: bool,
     create_profile_first_flag: bool,
-    pub arr_controls: [(Option<(Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>, Option<u8>); MAX_NUM_PLAYERS as usize],
-    pub arr_gamepad_profiles: [Option<((Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), Option<Button>, Option<Button>, Option<Button>)>; MAX_NUM_GAMEPAD_PROFILES as usize],
+    pub arr_split_controls: [(Option<(Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>, Option<u8>); MAX_NUM_PLAYERS as usize],
+    pub arr_split_gamepad_profiles: [Option<((Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), Option<Button>, Option<Button>, Option<Button>)>; MAX_NUM_GAMEPAD_PROFILES as usize],
     // text
     back_text: Text,
     gamepad_profile_text: Text,
@@ -111,29 +111,26 @@ pub struct InputConfigMenu {
 
 impl InputConfigMenu {
     pub fn new(window_dimensions: (f32, f32),
-        last_used_keyboard_controls: Vec<(u8, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>,
-        arr_gamepad_profiles: [Option<((Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), Option<Button>, Option<Button>, Option<Button>)>; MAX_NUM_GAMEPAD_PROFILES as usize]
+        last_used_arr_controls: [(Option<KeyboardControlScheme>, Option<u8>); MAX_NUM_PLAYERS as usize],
+        last_used_arr_gamepad_profiles: [Option<GamepadProfileScheme>; MAX_NUM_GAMEPAD_PROFILES as usize],
     ) -> Self {
         let mut vec_used_keycode: Vec<KeyCode> = vec![];
-        let mut arr_controls: [(Option<(Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>, Option<u8>); MAX_NUM_PLAYERS as usize] = [(None, None); MAX_NUM_PLAYERS as usize];
-        for ctrls in last_used_keyboard_controls.iter() {
-            if ctrls.0 < MAX_NUM_PLAYERS {
-                arr_controls[ctrls.0 as usize].0 = Some((ctrls.1, ctrls.2, ctrls.3, ctrls.4, ctrls.5));
+        let mut arr_split_controls: [(Option<(Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>, Option<u8>); MAX_NUM_PLAYERS as usize] = [(None, None); MAX_NUM_PLAYERS as usize];
+        let mut arr_split_gamepad_profiles: [Option<((Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), Option<Button>, Option<Button>, Option<Button>)>; MAX_NUM_GAMEPAD_PROFILES as usize] = [None; MAX_NUM_GAMEPAD_PROFILES as usize];
+        for (idx, ctrls) in last_used_arr_controls.iter().enumerate() {
+            if let Some(k_ctrls) = ctrls.0 {
+                arr_split_controls[idx].0 = Some(k_ctrls.split());
+                vec_used_keycode.push(k_ctrls.left);
+                vec_used_keycode.push(k_ctrls.right);
+                vec_used_keycode.push(k_ctrls.down);
+                vec_used_keycode.push(k_ctrls.rotate_cw);
+                vec_used_keycode.push(k_ctrls.rotate_ccw);
             }
-            if let Some(key) = ctrls.1 {
-                vec_used_keycode.push(key);
-            }
-            if let Some(key) = ctrls.2 {
-                vec_used_keycode.push(key);
-            }
-            if let Some(key) = ctrls.3 {
-                vec_used_keycode.push(key);
-            }
-            if let Some(key) = ctrls.4 {
-                vec_used_keycode.push(key);
-            }
-            if let Some(key) = ctrls.5 {
-                vec_used_keycode.push(key);
+            arr_split_controls[idx].1 = ctrls.1;
+        }
+        for (idx, profile_opt) in last_used_arr_gamepad_profiles.iter().enumerate() {
+            if let Some(profile) = profile_opt {
+                arr_split_gamepad_profiles[idx] = Some(profile.split());
             }
         }
         let mut player_controls_text = Text::new(TextFragment::new("Player Number: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
@@ -156,21 +153,20 @@ impl InputConfigMenu {
         let mut g_button_rotate_cw_text = Text::new(TextFragment::new("RotateCw: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
         let mut g_button_rotate_ccw_text = Text::new(TextFragment::new("RotateCcw: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
         let mut g_button_start_text = Text::new(TextFragment::new("Start/Pause: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        if last_used_keyboard_controls.is_empty() {
-            // they'll get set to have the string "None" later in this case anyways
-            k_left_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            k_right_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            k_down_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            k_rotate_cw_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            k_rotate_ccw_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        if let Some(ctrls) = last_used_arr_controls[0].0 {
+            k_left_text.add(TextFragment::new(format!("{:?}", ctrls.left)).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_right_text.add(TextFragment::new(format!("{:?}", ctrls.right)).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_down_text.add(TextFragment::new(format!("{:?}", ctrls.down)).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_rotate_cw_text.add(TextFragment::new(format!("{:?}", ctrls.rotate_cw)).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_rotate_ccw_text.add(TextFragment::new(format!("{:?}", ctrls.rotate_ccw)).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
         } else {
-            k_left_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].1.expect("[!] passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            k_right_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].2.expect("[!] passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            k_down_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].3.expect("[!] passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            k_rotate_cw_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].4.expect("[!] passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            k_rotate_ccw_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].5.expect("[!] passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_left_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_right_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_down_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_rotate_cw_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_rotate_ccw_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
         }
-        if let Some(profile) = arr_gamepad_profiles[0] {
+        if let Some(profile) = arr_split_gamepad_profiles[0] {
             match (profile.0).1 {
                 Some(a) => g_axis_left_text.add(TextFragment::new(format!("{:?}{}", a.0, if a.1 {"+"} else {"-"})).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN))),
                 None => g_axis_left_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN))),
@@ -231,8 +227,8 @@ impl InputConfigMenu {
             cant_skip_both_flag: false,
             input_type_unknown_flag: false,
             create_profile_first_flag: false,
-            arr_controls,
-            arr_gamepad_profiles,
+            arr_split_controls,
+            arr_split_gamepad_profiles,
             // text
             back_text: Text::new(TextFragment::new("Back").color(SELECT_GREEN).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN))),
             gamepad_profile_text,
@@ -301,18 +297,18 @@ impl InputConfigMenu {
                 } else if self.selection == InputConfigMenuOption::GamepadProfile as u8 {
                     self.most_recently_pressed_gamepad_axis = None;
                     self.most_recently_pressed_gamepad_button = None;
-                    self.arr_gamepad_profiles[self.profile_num as usize] = Some(((None, None), (None, None), (None, None), None, None, None));
+                    self.arr_split_gamepad_profiles[self.profile_num as usize] = Some(((None, None), (None, None), (None, None), None, None, None));
                     self.update_sub_text_strings_gamepad();
                     self.sub_selection_gamepad_flag = true;
                     self.set_select(true);
                 } else if self.selection == InputConfigMenuOption::PlayerInput as u8 {
                     self.most_recently_pressed_key = None;
-                    if let Some(ctrls) = self.arr_controls[self.player_controls as usize].0 {
+                    if let Some(ctrls) = self.arr_split_controls[self.player_controls as usize].0 {
                         self.remove_from_used_keycodes(ctrls);
                     }
-                    self.arr_controls[self.player_controls as usize].0 = None;
+                    self.arr_split_controls[self.player_controls as usize].0 = None;
 
-                    self.arr_controls[self.player_controls as usize].0 = Some((None, None, None, None, None));
+                    self.arr_split_controls[self.player_controls as usize].0 = Some((None, None, None, None, None));
                     self.update_sub_text_strings_keyboard();
                     self.sub_selection_keyboard_flag = true;
                     self.set_select(true);
@@ -353,7 +349,7 @@ impl InputConfigMenu {
                         }
                     },
                     x if x == InputConfigMenuSubOptionGamepad::ButtonLeft as u8 => {
-                        if ((self.arr_gamepad_profiles[self.profile_num as usize].expect("[!] profile unexpectedly None").0).1).is_some() {
+                        if ((self.arr_split_gamepad_profiles[self.profile_num as usize].expect("[!] profile unexpectedly None").0).1).is_some() {
                             self.set_select(false);
                             if self.sub_selection_gamepad < NUM_INPUTCONFIGMENUSUBOPTIONGAMEPAD_TEXT_ENTRIES as u8 - 1 {
                                 self.sub_selection_gamepad += 1;
@@ -368,7 +364,7 @@ impl InputConfigMenu {
                         }
                     },
                     x if x == InputConfigMenuSubOptionGamepad::ButtonRight as u8 => {
-                        if ((self.arr_gamepad_profiles[self.profile_num as usize].expect("[!] profile unexpectedly None").1).1).is_some() {
+                        if ((self.arr_split_gamepad_profiles[self.profile_num as usize].expect("[!] profile unexpectedly None").1).1).is_some() {
                             self.set_select(false);
                             if self.sub_selection_gamepad < NUM_INPUTCONFIGMENUSUBOPTIONGAMEPAD_TEXT_ENTRIES as u8 - 1 {
                                 self.sub_selection_gamepad += 1;
@@ -383,7 +379,7 @@ impl InputConfigMenu {
                         }
                     },
                     x if x == InputConfigMenuSubOptionGamepad::ButtonDown as u8 => {
-                        if ((self.arr_gamepad_profiles[self.profile_num as usize].expect("[!] profile unexpectedly None").2).1).is_some() {
+                        if ((self.arr_split_gamepad_profiles[self.profile_num as usize].expect("[!] profile unexpectedly None").2).1).is_some() {
                             self.set_select(false);
                             if self.sub_selection_gamepad < NUM_INPUTCONFIGMENUSUBOPTIONGAMEPAD_TEXT_ENTRIES as u8 - 1 {
                                 self.sub_selection_gamepad += 1;
@@ -410,7 +406,7 @@ impl InputConfigMenu {
                     self.input_type_unknown_flag = true;
                 } else {
                     let mut not_on_axis_flag: bool = false;
-                    if let Some(mut profile) = self.arr_gamepad_profiles[self.profile_num as usize].as_mut() {
+                    if let Some(mut profile) = self.arr_split_gamepad_profiles[self.profile_num as usize].as_mut() {
                         match self.sub_selection_gamepad {
                             x if x == InputConfigMenuSubOptionGamepad::AxisLeft as u8 => {
                                 (profile.0).1 = self.most_recently_pressed_gamepad_axis;
@@ -462,7 +458,7 @@ impl InputConfigMenu {
                     self.input_type_unknown_flag = true;
                 } else {
                     let mut not_on_button_flag: bool = false;
-                    if let Some(mut profile) = self.arr_gamepad_profiles[self.profile_num as usize].as_mut() {
+                    if let Some(mut profile) = self.arr_split_gamepad_profiles[self.profile_num as usize].as_mut() {
                         match self.sub_selection_gamepad {
                             x if x == InputConfigMenuSubOptionGamepad::ButtonLeft as u8 => {
                                 (profile.0).0 = self.most_recently_pressed_gamepad_button;
@@ -551,7 +547,7 @@ impl InputConfigMenu {
                 self.set_select(false);
                 self.button_conflict_flag = false;
                 self.axis_conflict_flag = false;
-                self.arr_gamepad_profiles[self.profile_num as usize] = None;
+                self.arr_split_gamepad_profiles[self.profile_num as usize] = None;
                 self.sub_selection_gamepad = 0;
                 self.sub_selection_gamepad_flag = false;
             }
@@ -565,7 +561,7 @@ impl InputConfigMenu {
                     self.sub_selection_keyboard = 0;
                     self.sub_selection_keyboard_flag = false;
                     // the user was in the middle of creating keyboard controls when they hit Escape, so pop however many KeyCode's off vec_used_keycode as the user set up
-                    if let Some(ctrls) = self.arr_controls[self.player_controls as usize].0 {
+                    if let Some(ctrls) = self.arr_split_controls[self.player_controls as usize].0 {
                         if (ctrls.3).is_some() {
                             for _ in 1..=4 {
                                 self.vec_used_keycode.pop();
@@ -582,12 +578,12 @@ impl InputConfigMenu {
                             self.vec_used_keycode.pop();
                         }
                     }
-                    self.arr_controls[self.player_controls as usize].0 = None;
+                    self.arr_split_controls[self.player_controls as usize].0 = None;
                 } else if self.vec_used_keycode.contains(&self.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None")) {
                     self.keycode_conflict_flag = true;
                 } else {
                     self.keycode_conflict_flag = false;
-                    match (self.arr_controls[self.player_controls as usize].0).as_mut() {
+                    match (self.arr_split_controls[self.player_controls as usize].0).as_mut() {
                         Some(mut ctrls) => {
                             match self.sub_selection_keyboard {
                                 x if x == InputConfigMenuSubOptionKeyboard::Left as u8 => {
@@ -614,7 +610,7 @@ impl InputConfigMenu {
                             }
                         },
                         None => {
-                            println!("[!] arr_controls[{}].0 was unexpectedly None", self.player_controls);
+                            println!("[!] arr_split_controls[{}].0 was unexpectedly None", self.player_controls);
                         }
                     }
                     self.set_select(false);
@@ -629,12 +625,12 @@ impl InputConfigMenu {
             }
         } else if self.choose_profile_flag {
             if input.keydown_start.1 {
-                if self.arr_gamepad_profiles[self.choose_profile_num as usize].is_some() {
+                if self.arr_split_gamepad_profiles[self.choose_profile_num as usize].is_some() {
                     self.set_select(false);
-                    self.arr_controls[self.player_controls as usize].1 = Some(self.choose_profile_num);
-                    if let Some(ctrls) = self.arr_controls[self.player_controls as usize].0 {
+                    self.arr_split_controls[self.player_controls as usize].1 = Some(self.choose_profile_num);
+                    if let Some(ctrls) = self.arr_split_controls[self.player_controls as usize].0 {
                         self.remove_from_used_keycodes(ctrls);
-                        self.arr_controls[self.player_controls as usize].0 = None;
+                        self.arr_split_controls[self.player_controls as usize].0 = None;
                     }
                     self.choose_profile_flag = false;
                     self.create_profile_first_flag = false;
@@ -936,7 +932,7 @@ impl InputConfigMenu {
     }
 
     fn update_sub_text_strings_gamepad(&mut self) {
-        if let Some(profile) = self.arr_gamepad_profiles[self.profile_num as usize] {
+        if let Some(profile) = self.arr_split_gamepad_profiles[self.profile_num as usize] {
             // axes
             match (profile.0).1 {
                 Some(axis) => {
@@ -1015,7 +1011,7 @@ impl InputConfigMenu {
     }
 
     fn update_sub_text_strings_keyboard(&mut self) {
-        if let Some(ctrls) = self.arr_controls[self.player_controls as usize].0 {
+        if let Some(ctrls) = self.arr_split_controls[self.player_controls as usize].0 {
             match ctrls.0 {
                 Some(keycode) => {
                     self.k_left_text.fragments_mut()[1].text = format!("{:?}", keycode);
@@ -1056,7 +1052,7 @@ impl InputConfigMenu {
                     self.k_rotate_ccw_text.fragments_mut()[1].text = "None".to_string();
                 }
             }
-        } else if let Some(profile) = self.arr_controls[self.player_controls as usize].1 {
+        } else if let Some(profile) = self.arr_split_controls[self.player_controls as usize].1 {
             self.choose_profile_text.fragments_mut()[1].text = format!(" {}", profile + 1);
         }
     }
@@ -1116,7 +1112,7 @@ impl InputConfigMenu {
                     self.draw_text(ctx, &self.input_type_unknown_text, 0.43, &window_dimensions);
                 }
 
-                if self.arr_gamepad_profiles[self.profile_num as usize].is_some() {
+                if self.arr_split_gamepad_profiles[self.profile_num as usize].is_some() {
                     self.draw_text(ctx, &self.g_axis_left_text, SUB_TEXT_Y_TOP, &window_dimensions);
                     self.draw_text(ctx, &self.g_axis_right_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF, &window_dimensions);
                     self.draw_text(ctx, &self.g_axis_down_text, SUB_TEXT_Y_TOP + SUB_TEXT_Y_DIFF * 2.0, &window_dimensions);
@@ -1144,14 +1140,14 @@ impl InputConfigMenu {
                     }
                     self.draw_text(ctx, &self.choose_profile_text, 0.5, &window_dimensions);
                 } else {
-                    if (self.arr_controls[self.player_controls as usize].0).is_some() {
+                    if (self.arr_split_controls[self.player_controls as usize].0).is_some() {
                         self.draw_text(ctx, &self.k_left_text, 0.5, &window_dimensions);
                         self.draw_text(ctx, &self.k_right_text, 0.55, &window_dimensions);
                         self.draw_text(ctx, &self.k_down_text, 0.6, &window_dimensions);
                         self.draw_text(ctx, &self.k_rotate_cw_text, 0.65, &window_dimensions);
                         self.draw_text(ctx, &self.k_rotate_ccw_text, 0.7, &window_dimensions);
                         self.draw_text(ctx, &self.k_start_text, 0.75, &window_dimensions);
-                    } else if (self.arr_controls[self.player_controls as usize].1).is_some() {
+                    } else if (self.arr_split_controls[self.player_controls as usize].1).is_some() {
                         self.draw_text(ctx, &self.choose_profile_text, 0.5, &window_dimensions);
                     } else {
                         self.draw_text(ctx, &self.input_uninitialized_text, 0.5, &window_dimensions);

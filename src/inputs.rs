@@ -83,6 +83,16 @@ impl KeyboardControlScheme {
             start,
         }
     }
+
+    pub fn split(&self) -> (Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>) {
+        (
+            Some(self.left),
+            Some(self.right),
+            Some(self.down),
+            Some(self.rotate_cw),
+            Some(self.rotate_ccw),
+        )
+    }
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -112,5 +122,16 @@ impl GamepadProfileScheme {
             rotate_ccw,
             start,
         }
+    }
+
+    pub fn split(&self) -> ((Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), Option<Button>, Option<Button>, Option<Button>) {
+        (
+            self.left,
+            self.right,
+            self.down,
+            Some(self.rotate_cw),
+            Some(self.rotate_ccw),
+            Some(self.start),
+        )
     }
 }

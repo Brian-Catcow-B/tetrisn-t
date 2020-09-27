@@ -3,7 +3,7 @@ use ggez::event::EventHandler;
 use ggez::event::{Axis, Button, GamepadId, KeyCode, KeyMods};
 use ggez::graphics;
 
-use crate::menu::Menu;
+use crate::menu::{Menu, MenuGameOptions};
 use crate::game::{Game, GameOptions};
 
 #[repr(u8)]
@@ -17,7 +17,7 @@ pub struct Control {
     state: ProgramState,
     menu: Option<Menu>,
     game: Option<Game>,
-    game_options: Option<GameOptions>,
+    game_options: Option<MenuGameOptions>,
 }
 
 impl Control {
@@ -38,7 +38,7 @@ impl Control {
             },
             ProgramState::Game => {
                 self.game = Some(Game::new(ctx,
-                    self.game_options.as_ref().expect("[!] attempted to start Game with no GameOptions"),
+                    &GameOptions::from(self.game_options.as_ref().expect("[!] attempted to start Game with no GameOptions")),
                 ));
                 ProgramState::Game
             },

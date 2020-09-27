@@ -8,7 +8,7 @@ pub const SPAWN_DELAY: i16 = 20i16;
 
 pub struct Player {
     pub player_num: u8,
-    pub control_scheme: KeyboardControlScheme,
+    pub control_scheme: (Option<KeyboardControlScheme>, Option<u8>),
     pub input: Input,
     pub spawn_piece_flag: bool,
     pub spawn_column: u8,
@@ -22,7 +22,7 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(player_num: u8, control_scheme: KeyboardControlScheme, spawn_column: u8) -> Self {
+    pub fn new(player_num: u8, control_scheme: (Option<KeyboardControlScheme>, Option<u8>), spawn_column: u8) -> Self {
         Self {
             player_num,
             control_scheme,
@@ -40,74 +40,78 @@ impl Player {
     }
 
     pub fn update_input_keydown(&mut self, input: KeyCode) -> bool {
-        if input == self.control_scheme.left {
-            if !self.input.keydown_left.0 {
-                self.input.keydown_left = (true, true);
-                // for auto-shift reasons and controller reasons...
-                self.input.keydown_right.0 = false;
-                return true;
-            }
-        } else if input == self.control_scheme.right {
-            if !self.input.keydown_right.0 {
-                self.input.keydown_right = (true, true);
-                // for auto-shift reasons and controller reasons...
-                self.input.keydown_left.0 = false;
-                return true;
-            }
-        } else if input == self.control_scheme.down {
-            if !self.input.keydown_down.0 {
-                self.input.keydown_down = (true, true);
-                return true;
-            }
-        } else if input == self.control_scheme.rotate_cw {
-            if !self.input.keydown_rotate_cw.0 {
-                self.input.keydown_rotate_cw = (true, true);
-                return true;
-            }
-        } else if input == self.control_scheme.rotate_ccw {
-            if !self.input.keydown_rotate_ccw.0 {
-                self.input.keydown_rotate_ccw = (true, true);
-                return true;
-            }
-        } else if input == self.control_scheme.start {
-            if !self.input.keydown_start.0 {
-                self.input.keydown_start = (true, true);
-                return true;
+        if let Some(k_ctrls) = self.control_scheme.0 {
+            if input == k_ctrls.left {
+                if !self.input.keydown_left.0 {
+                    self.input.keydown_left = (true, true);
+                    // for auto-shift reasons and controller reasons...
+                    self.input.keydown_right.0 = false;
+                    return true;
+                }
+            } else if input == k_ctrls.right {
+                if !self.input.keydown_right.0 {
+                    self.input.keydown_right = (true, true);
+                    // for auto-shift reasons and controller reasons...
+                    self.input.keydown_left.0 = false;
+                    return true;
+                }
+            } else if input == k_ctrls.down {
+                if !self.input.keydown_down.0 {
+                    self.input.keydown_down = (true, true);
+                    return true;
+                }
+            } else if input == k_ctrls.rotate_cw {
+                if !self.input.keydown_rotate_cw.0 {
+                    self.input.keydown_rotate_cw = (true, true);
+                    return true;
+                }
+            } else if input == k_ctrls.rotate_ccw {
+                if !self.input.keydown_rotate_ccw.0 {
+                    self.input.keydown_rotate_ccw = (true, true);
+                    return true;
+                }
+            } else if input == k_ctrls.start {
+                if !self.input.keydown_start.0 {
+                    self.input.keydown_start = (true, true);
+                    return true;
+                }
             }
         }
 
         false
     }
 
-pub fn update_input_keyup(&mut self, input: KeyCode) -> bool {
-        if input == self.control_scheme.left {
-            // for auto-shift reasons
-            if self.input.keydown_left.0 {
-                self.das_countdown = DAS_THRESHOLD_BIG;
-                self.waiting_to_shift = false;
+    pub fn update_input_keyup(&mut self, input: KeyCode) -> bool {
+        if let Some(k_ctrls) = self.control_scheme.0 {
+            if input == k_ctrls.left {
+                // for auto-shift reasons
+                if self.input.keydown_left.0 {
+                    self.das_countdown = DAS_THRESHOLD_BIG;
+                    self.waiting_to_shift = false;
+                }
+                self.input.keydown_left = (false, false);
+                return true;
+            } else if input == k_ctrls.right {
+                // for auto-shift reasons
+                if self.input.keydown_right.0 {
+                    self.das_countdown = DAS_THRESHOLD_BIG;
+                    self.waiting_to_shift = false;
+                }
+                self.input.keydown_right = (false, false);
+                return true;
+            } else if input == k_ctrls.down {
+                self.input.keydown_down = (false, false);
+                return true;
+            } else if input == k_ctrls.rotate_cw {
+                self.input.keydown_rotate_cw = (false, false);
+                return true;
+            } else if input == k_ctrls.rotate_ccw {
+                self.input.keydown_rotate_ccw = (false, false);
+                return true;
+            } else if input == k_ctrls.start {
+                self.input.keydown_start = (false, false);
+                return true;
             }
-            self.input.keydown_left = (false, false);
-            return true;
-        } else if input == self.control_scheme.right {
-            // for auto-shift reasons
-            if self.input.keydown_right.0 {
-                self.das_countdown = DAS_THRESHOLD_BIG;
-                self.waiting_to_shift = false;
-            }
-            self.input.keydown_right = (false, false);
-            return true;
-        } else if input == self.control_scheme.down {
-            self.input.keydown_down = (false, false);
-            return true;
-        } else if input == self.control_scheme.rotate_cw {
-            self.input.keydown_rotate_cw = (false, false);
-            return true;
-        } else if input == self.control_scheme.rotate_ccw {
-            self.input.keydown_rotate_ccw = (false, false);
-            return true;
-        } else if input == self.control_scheme.start {
-            self.input.keydown_start = (false, false);
-            return true;
         }
 
         false
