@@ -6,7 +6,7 @@ use ggez::graphics;
 use std::path;
 use std::env;
 use std::fs::File;
-use ggez::filesystem::{resources_dir,};
+use ggez::filesystem::resources_dir;
 
 // rustrisnt files
 mod control;
@@ -30,7 +30,6 @@ fn main() {
         path.push("resources");
         println!("Adding path {:?}", path);
         context = context.add_resource_path(path);
-        // gamecontrollerdb_path = Some(path.join("gamecontrollerdb.txt"));
     }
 
     let (ctx, event_loop) = &mut context.build().expect("[!] Failed to build context");

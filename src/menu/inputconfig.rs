@@ -74,6 +74,7 @@ pub struct InputConfigMenu {
     axis_conflict_flag: bool,
     cant_skip_both_flag: bool,
     input_type_unknown_flag: bool,
+    create_profile_first_flag: bool,
     pub arr_controls: [(Option<(Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>, Option<u8>); MAX_NUM_PLAYERS as usize],
     pub arr_gamepad_profiles: [Option<((Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), Option<Button>, Option<Button>, Option<Button>)>; MAX_NUM_GAMEPAD_PROFILES as usize],
     // text
@@ -89,6 +90,7 @@ pub struct InputConfigMenu {
     skip_button_axis_text: Text,
     cant_skip_both_text: Text,
     input_type_unknown_text: Text,
+    create_profile_first_text: Text,
     choose_profile_text: Text,
     k_left_text: Text,
     k_right_text: Text,
@@ -108,7 +110,10 @@ pub struct InputConfigMenu {
 }
 
 impl InputConfigMenu {
-    pub fn new(window_dimensions: (f32, f32), last_used_keyboard_controls: Vec<(u8, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>) -> Self {
+    pub fn new(window_dimensions: (f32, f32),
+        last_used_keyboard_controls: Vec<(u8, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>,
+        arr_gamepad_profiles: [Option<((Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), Option<Button>, Option<Button>, Option<Button>)>; MAX_NUM_GAMEPAD_PROFILES as usize]
+    ) -> Self {
         let mut vec_used_keycode: Vec<KeyCode> = vec![];
         let mut arr_controls: [(Option<(Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>, Option<u8>); MAX_NUM_PLAYERS as usize] = [(None, None); MAX_NUM_PLAYERS as usize];
         for ctrls in last_used_keyboard_controls.iter() {
@@ -159,22 +164,52 @@ impl InputConfigMenu {
             k_rotate_cw_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
             k_rotate_ccw_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
         } else {
-            k_left_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].1.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            k_right_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].2.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            k_down_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].3.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            k_rotate_cw_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].4.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            k_rotate_ccw_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].5.expect("[!] Passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_left_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].1.expect("[!] passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_right_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].2.expect("[!] passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_down_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].3.expect("[!] passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_rotate_cw_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].4.expect("[!] passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_rotate_ccw_text.add(TextFragment::new(format!("{:?}", last_used_keyboard_controls[0].5.expect("[!] passed in Option<KeyCode> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        }
+        if let Some(profile) = arr_gamepad_profiles[0] {
+            match (profile.0).1 {
+                Some(a) => g_axis_left_text.add(TextFragment::new(format!("{:?}{}", a.0, if a.1 {"+"} else {"-"})).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN))),
+                None => g_axis_left_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN))),
+            };
+            match (profile.1).1 {
+                Some(a) => g_axis_right_text.add(TextFragment::new(format!("{:?}{}", a.0, if a.1 {"+"} else {"-"})).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN))),
+                None => g_axis_right_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN))),
+            };
+            match (profile.2).1 {
+                Some(a) => g_axis_down_text.add(TextFragment::new(format!("{:?}{}", a.0, if a.1 {"+"} else {"-"})).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN))),
+                None => g_axis_down_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN))),
+            };
+            match (profile.0).0 {
+                Some(b) => g_button_left_text.add(TextFragment::new(format!("{:?}", b)).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
+                None => g_button_left_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
+            };
+            match (profile.1).0 {
+                Some(b) => g_button_right_text.add(TextFragment::new(format!("{:?}", b)).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
+                None => g_button_right_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
+            };
+            match (profile.2).0 {
+                Some(b) => g_button_down_text.add(TextFragment::new(format!("{:?}", b)).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
+                None => g_button_down_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
+            };
+            g_button_rotate_cw_text.add(TextFragment::new(format!("{:?}", profile.3.expect("[!] passed in Option<Button> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            g_button_rotate_ccw_text.add(TextFragment::new(format!("{:?}", profile.4.expect("[!] passed in Option<Button> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            g_button_start_text.add(TextFragment::new(format!("{:?}", profile.5.expect("[!] passed in Option<Button> is None"))).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        } else {
+            g_axis_left_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
+            g_axis_right_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
+            g_axis_down_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
+            g_button_left_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            g_button_right_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            g_button_down_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            g_button_rotate_cw_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            g_button_rotate_ccw_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            g_button_start_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
         }
         choose_profile_text.add(TextFragment::new(" 1").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        g_axis_left_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
-        g_axis_right_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
-        g_axis_down_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / MINI_TEXT_SCALE_DOWN)));
-        g_button_left_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        g_button_right_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        g_button_down_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        g_button_rotate_cw_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        g_button_rotate_ccw_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        g_button_start_text.add(TextFragment::new("").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
         Self {
             selection: 0,
             player_controls: 0,
@@ -195,8 +230,9 @@ impl InputConfigMenu {
             axis_conflict_flag: false,
             cant_skip_both_flag: false,
             input_type_unknown_flag: false,
+            create_profile_first_flag: false,
             arr_controls,
-            arr_gamepad_profiles: [None; MAX_NUM_GAMEPAD_PROFILES as usize],
+            arr_gamepad_profiles,
             // text
             back_text: Text::new(TextFragment::new("Back").color(SELECT_GREEN).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN))),
             gamepad_profile_text,
@@ -210,6 +246,7 @@ impl InputConfigMenu {
             cant_skip_both_text: Text::new(TextFragment::new("[!] Can't skip both").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
             input_type_unknown_text: Text::new(TextFragment::new("[!] Unknown input; see README").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
             skip_button_axis_text: Text::new(TextFragment::new("Skip Button/Axis: Space/Enter").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
+            create_profile_first_text: Text::new(TextFragment::new("[!] Create profile first").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
             choose_profile_text,
             k_left_text,
             k_right_text,
@@ -253,6 +290,7 @@ impl InputConfigMenu {
 
             if input.keydown_rotate_cw.1 && self.selection == InputConfigMenuOption::PlayerInput as u8 {
                 self.choose_profile_flag = true;
+                self.most_recently_pressed_key = None;
                 self.set_select(true);
             }
 
@@ -591,13 +629,21 @@ impl InputConfigMenu {
             }
         } else if self.choose_profile_flag {
             if input.keydown_start.1 {
-                self.set_select(false);
-                self.arr_controls[self.player_controls as usize].1 = Some(self.choose_profile_num);
-                if let Some(ctrls) = self.arr_controls[self.player_controls as usize].0 {
-                    self.remove_from_used_keycodes(ctrls);
-                    self.arr_controls[self.player_controls as usize].0 = None;
+                if self.arr_gamepad_profiles[self.choose_profile_num as usize].is_some() {
+                    self.set_select(false);
+                    self.arr_controls[self.player_controls as usize].1 = Some(self.choose_profile_num);
+                    if let Some(ctrls) = self.arr_controls[self.player_controls as usize].0 {
+                        self.remove_from_used_keycodes(ctrls);
+                        self.arr_controls[self.player_controls as usize].0 = None;
+                    }
+                    self.choose_profile_flag = false;
+                    self.create_profile_first_flag = false;
+                } else {
+                    self.create_profile_first_flag = true;
                 }
+            } else if self.most_recently_pressed_key == Some(KeyCode::Escape) {
                 self.choose_profile_flag = false;
+                self.create_profile_first_flag = false;
             }
         }
         false
@@ -1093,6 +1139,9 @@ impl InputConfigMenu {
                 }
 
                 if self.choose_profile_flag {
+                    if self.create_profile_first_flag {
+                        self.draw_text(ctx, &self.create_profile_first_text, 0.43, &window_dimensions);
+                    }
                     self.draw_text(ctx, &self.choose_profile_text, 0.5, &window_dimensions);
                 } else {
                     if (self.arr_controls[self.player_controls as usize].0).is_some() {

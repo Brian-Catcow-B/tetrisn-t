@@ -50,13 +50,15 @@ impl Menu {
     pub fn new(ctx: &mut Context, last_used_game_options: &Option<GameOptions>) -> Self {
         let window_dimensions = graphics::size(ctx);
         // defaults
-        let mut arr_controls: Vec<(u8, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)> = vec![];
+        let mut vec_keyboard_controls: Vec<(u8, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)> = vec![];
+        let mut arr_profile_schemes: [Option<((Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), Option<Button>, Option<Button>, Option<Button>)>; MAX_NUM_GAMEPAD_PROFILES as usize]
+            = [None; MAX_NUM_GAMEPAD_PROFILES as usize];
         let mut num_players: u8 = 1;
         let mut starting_level: u8 = 0;
         // if there were game options, use those
         if let Some(game_options) = last_used_game_options {
             for (player, controls) in game_options.vec_keyboard_inputs.iter().enumerate() {
-                arr_controls.push(
+                vec_keyboard_controls.push(
                     (player as u8,
                     Some(controls.left),
                     Some(controls.right),
@@ -65,6 +67,12 @@ impl Menu {
                     Some(controls.rotate_ccw),)
                 );
             }
+            for (profile_idx, profile) in game_options.arr_profile_schemes.iter().enumerate() {
+                arr_profile_schemes[profile_idx] = match profile {
+                    Some(p) => Some((p.left, p.right, p.down, Some(p.rotate_cw), Some(p.rotate_ccw), Some(p.start))),
+                    None => None,
+                }
+            }
             num_players = game_options.num_players;
             starting_level = game_options.starting_level;
         }
@@ -72,7 +80,7 @@ impl Menu {
             input: Input::new(),
             state: MenuState::Start,
             start_menu: StartMenu::new(window_dimensions, num_players, starting_level),
-            input_config_menu: InputConfigMenu::new(window_dimensions, arr_controls),
+            input_config_menu: InputConfigMenu::new(window_dimensions, vec_keyboard_controls, arr_profile_schemes),
         }
     }
 
