@@ -98,33 +98,7 @@ pub struct Menu {
 impl Menu {
     pub fn new(ctx: &mut Context, last_used_game_options: &Option<MenuGameOptions>) -> Self {
         let window_dimensions = graphics::size(ctx);
-        // defaults
-        // let mut vec_keyboard_controls: Vec<(u8, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)> = vec![];
-        // let mut arr_profile_schemes: [Option<((Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), Option<Button>, Option<Button>, Option<Button>)>; MAX_NUM_GAMEPAD_PROFILES as usize]
-        //     = [None; MAX_NUM_GAMEPAD_PROFILES as usize];
-        // let mut num_players: u8 = 1;
-        // let mut starting_level: u8 = 0;
-        // if there were game options, use those
         if let Some(menu_game_options) = last_used_game_options {
-            // for (player, controls) in game_options.vec_keyboard_inputs.iter().enumerate() {
-            //     vec_keyboard_controls.push(
-            //         (player as u8,
-            //         Some(controls.left),
-            //         Some(controls.right),
-            //         Some(controls.down),
-            //         Some(controls.rotate_cw),
-            //         Some(controls.rotate_ccw),)
-            //     );
-            // }
-            // for (profile_idx, profile) in game_options.arr_profile_schemes.iter().enumerate() {
-            //     arr_profile_schemes[profile_idx] = match profile {
-            //         Some(p) => Some((p.left, p.right, p.down, Some(p.rotate_cw), Some(p.rotate_ccw), Some(p.start))),
-            //         None => None,
-            //     }
-            // }
-            // num_players = game_options.num_players;
-            // starting_level = game_options.starting_level;
-
             // previously used
             Self {
                 input: Input::new(),
@@ -148,34 +122,6 @@ impl Menu {
             MenuState::Start => {
                 let ret_bools: (bool, bool) = self.start_menu.update(&self.input);
                 if ret_bools.0 {
-                    // we are starting the game
-                    // let mut vec_control_scheme: Vec<KeyboardControlScheme> = Vec::with_capacity(self.input_config_menu.arr_controls.len());
-                    // let mut arr_profile_schemes: [Option<GamepadProfileScheme>; MAX_NUM_GAMEPAD_PROFILES as usize] = [None; MAX_NUM_GAMEPAD_PROFILES as usize];
-                    // // TODO: use a closure if that's better. It's too late at night for me to figure this out; I just want this to work; I've written ~500 lines of GUI code today; help
-                    // for controls in self.input_config_menu.arr_controls.iter() {
-                    //     if let Some(ctrls) = controls.0 {
-                    //         vec_control_scheme.push(KeyboardControlScheme::new(
-                    //             ctrls.0.expect("[!] key left set to None"),
-                    //             ctrls.1.expect("[!] key right set to None"),
-                    //             ctrls.2.expect("[!] key down set to None"),
-                    //             ctrls.3.expect("[!] key rotate_cw set to None"),
-                    //             ctrls.4.expect("[!] key rotate_ccw set to None"),
-                    //             KeyCode::Escape,
-                    //         ));
-                    //     }
-                    // }
-                    // for (idx, opt_profile) in self.input_config_menu.arr_gamepad_profiles.iter().enumerate() {
-                    //     if let Some(profile) = opt_profile {
-                    //         arr_profile_schemes[idx] = Some(GamepadProfileScheme::new(
-                    //             ((profile.0).0, (profile.0).1),
-                    //             ((profile.1).0, (profile.1).1),
-                    //             ((profile.2).0, (profile.2).1),
-                    //             (profile.3).expect("[!] RotateCw was unexpectedly set to None"),
-                    //             (profile.4).expect("[!] RotateCcw was unexpectedly set to None"),
-                    //             (profile.5).expect("[!] Start was unexpectedly set to None"),
-                    //         ));
-                    //     }
-                    // }
                     if self.ensure_enough_controls() {
                         return Some((ProgramState::Game, MenuGameOptions::new(self.start_menu.num_players, self.start_menu.starting_level, self.input_config_menu.arr_split_controls, self.input_config_menu.arr_split_gamepad_profiles)));
                     } else {

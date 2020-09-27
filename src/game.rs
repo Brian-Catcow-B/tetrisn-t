@@ -122,18 +122,6 @@ impl GameOptions {
                 }
             }
         }
-        // for (idx, opt_profile) in menu_game_options.arr_gamepad_profiles.iter().enumerate() {
-        //     if let Some(profile) = opt_profile {
-        //         arr_gamepad_profiles[idx] = Some(GamepadProfileScheme::new(
-        //             ((profile.left).0, (profile.left).1),
-        //             ((profile.right).0, (profile.right).1),
-        //             ((profile.down).0, (profile.down).1),
-        //             (profile.rotate_cw),
-        //             (profile.rotate_ccw),
-        //             (profile.start),
-        //         ));
-        //     }
-        // }
 
         Self {
             num_players: menu_game_options.num_players,
