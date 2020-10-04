@@ -116,4 +116,22 @@ impl Player {
 
         false
     }
+
+    // pub fn update_input_buttondown(&mut self, input: Button) -> bool {
+    //     if btn == self.arr_gamepad_profiles[0].expect("[!] oops").left.0.expect("[!] oops") {
+    //         self.vec_players[0].input.keydown_left = (true, true);
+    //         self.vec_players[0].input.keydown_right = (false, false);
+    //     } else if btn == self.arr_gamepad_profiles[0].expect("[!] oops").right.0.expect("[!] oops") {
+    //         self.vec_players[0].input.keydown_right = (true, true);
+    //         self.vec_players[0].input.keydown_left = (false, false);
+    //     } else if btn == self.arr_gamepad_profiles[0].expect("[!] oops").down.0.expect("[!] oops") {
+    //         self.vec_players[0].input.keydown_down = (true, true);
+    //     } else if btn == self.arr_gamepad_profiles[0].expect("[!] oops").rotate_cw {
+    //         self.vec_players[0].input.keydown_rotate_cw = (true, true);
+    //     } else if btn == self.arr_gamepad_profiles[0].expect("[!] oops").rotate_ccw {
+    //         self.vec_players[0].input.keydown_rotate_ccw = (true, true);
+    //     } else if btn == self.arr_gamepad_profiles[0].expect("[!] oops").start {
+    //         self.vec_players[0].input.keydown_start = (true, true);
+    //     }
+    // }
 }

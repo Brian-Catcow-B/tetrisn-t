@@ -35,15 +35,15 @@ fn main() {
     let (ctx, event_loop) = &mut context.build().expect("[!] Failed to build context");
 
     // custom controller setup stuffs
-    let mut gilrs_builder = gilrs::GilrsBuilder::new();
+    let mut gilrs_builder = gilrs::GilrsBuilder::new().add_included_mappings(false);
 
     match resources_dir(&ctx).join("gamecontrollerdb.txt").as_path().to_str() {
         Some(path) => {
             match std::fs::read_to_string(path) {
                 Ok(string) => {
-                    for line in string.split_ascii_whitespace() {
-                        gilrs_builder = gilrs_builder.add_mappings(line);
-                    }
+                    // for line in string.split_ascii_whitespace() {
+                        gilrs_builder = gilrs_builder.add_mappings(&string);
+                    // }
                 },
                 Err(_) => {
                     println!("[!] couldn't read contents of {} to string; creating file; no custom controller layouts will function", path);

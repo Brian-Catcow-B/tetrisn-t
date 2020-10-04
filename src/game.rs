@@ -139,7 +139,7 @@ pub struct Game {
     num_players: u8,
     vec_players: Vec<Player>,
     vec_next_piece: Vec<NextPiece>,
-    vec_gamepad_id_map_to_player: Vec<(GamepadId, u8)>,
+    vec_gamepad_id_map_to_player: Vec<(Option<GamepadId>, u8)>,
     arr_gamepad_profiles: [Option<GamepadProfileScheme>; MAX_NUM_GAMEPAD_PROFILES as usize],
     level: u8,
     starting_level: u8,
@@ -431,6 +431,7 @@ impl Game {
 
     pub fn gamepad_button_down_event(&mut self, btn: Button, id: GamepadId) {
         // println!("Gamepad button pressed: {:?} Gamepad_Id: {:?}", btn, id);
+        // self.vec_gamepad_id_map_to_player
         if btn == self.arr_gamepad_profiles[0].expect("[!] oops").left.0.expect("[!] oops") {
             self.vec_players[0].input.keydown_left = (true, true);
             self.vec_players[0].input.keydown_right = (false, false);
