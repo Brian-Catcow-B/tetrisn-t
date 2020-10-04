@@ -41,9 +41,7 @@ fn main() {
         Some(path) => {
             match std::fs::read_to_string(path) {
                 Ok(string) => {
-                    // for line in string.split_ascii_whitespace() {
-                        gilrs_builder = gilrs_builder.add_mappings(&string);
-                    // }
+                    gilrs_builder = gilrs_builder.add_mappings(&string);
                 },
                 Err(_) => {
                     println!("[!] couldn't read contents of {} to string; creating file; no custom controller layouts will function", path);

@@ -22,8 +22,7 @@ mod board;
 use crate::game::board::BOARD_HEIGHT_BUFFER_U;
 use crate::game::board::Board;
 
-use crate::inputs::{KeyboardControlScheme, GamepadProfileScheme};
-use crate::menu::MAX_NUM_GAMEPAD_PROFILES;
+use crate::inputs::KeyboardControlScheme;
 use crate::menu::MenuGameOptions;
 
 
@@ -95,14 +94,12 @@ pub const INITIAL_HANG_FRAMES: u8 = 180;
 pub struct GameOptions {
     pub num_players: u8,
     pub starting_level: u8,
-    pub vec_controls: Vec<(Option<KeyboardControlScheme>, Option<u8>)>,
-    pub arr_gamepad_profiles: [Option<GamepadProfileScheme>; MAX_NUM_GAMEPAD_PROFILES as usize],
+    pub vec_controls: Vec<(Option<KeyboardControlScheme>, bool)>,
 }
 
 impl GameOptions {
     pub fn from(menu_game_options: &MenuGameOptions) -> Self {
-        let mut vec_controls: Vec<(Option<KeyboardControlScheme>, Option<u8>)> = Vec::with_capacity(menu_game_options.arr_controls.len());
-        // let mut arr_gamepad_profiles: [Option<GamepadProfileScheme>; MAX_NUM_GAMEPAD_PROFILES as usize] = [None; MAX_NUM_GAMEPAD_PROFILES as usize];
+        let mut vec_controls: Vec<(Option<KeyboardControlScheme>, bool)> = Vec::with_capacity(menu_game_options.arr_controls.len());
         // TODO: use a closure if that's better. It's too late at night for me to figure this out; I just want this to work; I've written ~500 lines of GUI code today; help
         for controls in menu_game_options.arr_controls.iter() {
             if let Some(ctrls) = controls.0 {
@@ -113,13 +110,9 @@ impl GameOptions {
                     ctrls.rotate_cw,
                     ctrls.rotate_ccw,
                     KeyCode::Escape,
-                )), None));
-            } else if let Some(profile_num) = controls.1 {
-                if profile_num < MAX_NUM_GAMEPAD_PROFILES {
-                    vec_controls.push((None, Some(profile_num)));
-                } else {
-                    println!("[!] passed in profile_num is {}, which is bigger than {}; completely ignoring player", profile_num, MAX_NUM_GAMEPAD_PROFILES);
-                }
+                )), false));
+            } else if controls.1 {
+                vec_controls.push((None, true));
             }
         }
 
@@ -127,7 +120,6 @@ impl GameOptions {
             num_players: menu_game_options.num_players,
             starting_level: menu_game_options.starting_level,
             vec_controls,
-            arr_gamepad_profiles: menu_game_options.arr_gamepad_profiles,
         }
     }
 }
@@ -140,7 +132,6 @@ pub struct Game {
     vec_players: Vec<Player>,
     vec_next_piece: Vec<NextPiece>,
     vec_gamepad_id_map_to_player: Vec<(Option<GamepadId>, u8)>,
-    arr_gamepad_profiles: [Option<GamepadProfileScheme>; MAX_NUM_GAMEPAD_PROFILES as usize],
     level: u8,
     starting_level: u8,
     num_cleared_lines: u16,
@@ -210,7 +201,6 @@ impl Game {
             vec_players,
             vec_next_piece,
             vec_gamepad_id_map_to_player: vec![],
-            arr_gamepad_profiles: game_options.arr_gamepad_profiles,
             level: game_options.starting_level,
             starting_level: game_options.starting_level,
             num_cleared_lines: 0u16,
@@ -432,36 +422,36 @@ impl Game {
     pub fn gamepad_button_down_event(&mut self, btn: Button, id: GamepadId) {
         // println!("Gamepad button pressed: {:?} Gamepad_Id: {:?}", btn, id);
         // self.vec_gamepad_id_map_to_player
-        if btn == self.arr_gamepad_profiles[0].expect("[!] oops").left.0.expect("[!] oops") {
-            self.vec_players[0].input.keydown_left = (true, true);
-            self.vec_players[0].input.keydown_right = (false, false);
-        } else if btn == self.arr_gamepad_profiles[0].expect("[!] oops").right.0.expect("[!] oops") {
-            self.vec_players[0].input.keydown_right = (true, true);
-            self.vec_players[0].input.keydown_left = (false, false);
-        } else if btn == self.arr_gamepad_profiles[0].expect("[!] oops").down.0.expect("[!] oops") {
-            self.vec_players[0].input.keydown_down = (true, true);
-        } else if btn == self.arr_gamepad_profiles[0].expect("[!] oops").rotate_cw {
-            self.vec_players[0].input.keydown_rotate_cw = (true, true);
-        } else if btn == self.arr_gamepad_profiles[0].expect("[!] oops").rotate_ccw {
-            self.vec_players[0].input.keydown_rotate_ccw = (true, true);
-        } else if btn == self.arr_gamepad_profiles[0].expect("[!] oops").start {
-            self.vec_players[0].input.keydown_start = (true, true);
-        }
+        // if btn == self.[0].expect("[!] oops").left.0.expect("[!] oops") {
+        //     self.vec_players[0].input.keydown_left = (true, true);
+        //     self.vec_players[0].input.keydown_right = (false, false);
+        // } else if btn == self.[0].expect("[!] oops").right.0.expect("[!] oops") {
+        //     self.vec_players[0].input.keydown_right = (true, true);
+        //     self.vec_players[0].input.keydown_left = (false, false);
+        // } else if btn == self.[0].expect("[!] oops").down.0.expect("[!] oops") {
+        //     self.vec_players[0].input.keydown_down = (true, true);
+        // } else if btn == self.[0].expect("[!] oops").rotate_cw {
+        //     self.vec_players[0].input.keydown_rotate_cw = (true, true);
+        // } else if btn == self.[0].expect("[!] oops").rotate_ccw {
+        //     self.vec_players[0].input.keydown_rotate_ccw = (true, true);
+        // } else if btn == self.[0].expect("[!] oops").start {
+        //     self.vec_players[0].input.keydown_start = (true, true);
+        // }
     }
 
     pub fn gamepad_button_up_event(&mut self, btn: Button, id: GamepadId) {
         // println!("Gamepad button released: {:?} Gamepad_Id: {:?}", btn, id);
-        if btn == self.arr_gamepad_profiles[0].expect("[!] oops").left.0.expect("[!] oops") {
-            self.vec_players[0].input.keydown_left = (false, false);
-        } else if btn == self.arr_gamepad_profiles[0].expect("[!] oops").right.0.expect("[!] oops") {
-            self.vec_players[0].input.keydown_right = (false, false);
-        } else if btn == self.arr_gamepad_profiles[0].expect("[!] oops").down.0.expect("[!] oops") {
-            self.vec_players[0].input.keydown_down = (false, false);
-        } else if btn == self.arr_gamepad_profiles[0].expect("[!] oops").rotate_cw {
-            self.vec_players[0].input.keydown_rotate_cw = (false, false);
-        } else if btn == self.arr_gamepad_profiles[0].expect("[!] oops").rotate_ccw {
-            self.vec_players[0].input.keydown_rotate_ccw = (false, false);
-        }
+        // if btn == self.[0].expect("[!] oops").left.0.expect("[!] oops") {
+        //     self.vec_players[0].input.keydown_left = (false, false);
+        // } else if btn == self.[0].expect("[!] oops").right.0.expect("[!] oops") {
+        //     self.vec_players[0].input.keydown_right = (false, false);
+        // } else if btn == self.[0].expect("[!] oops").down.0.expect("[!] oops") {
+        //     self.vec_players[0].input.keydown_down = (false, false);
+        // } else if btn == self.[0].expect("[!] oops").rotate_cw {
+        //     self.vec_players[0].input.keydown_rotate_cw = (false, false);
+        // } else if btn == self.[0].expect("[!] oops").rotate_ccw {
+        //     self.vec_players[0].input.keydown_rotate_ccw = (false, false);
+        // }
     }
 
     pub fn gamepad_axis_event(&mut self, axis: Axis, value: f32, id: GamepadId) {
@@ -469,29 +459,29 @@ impl Game {
         //     "Axis Event: {:?} Value: {} Gamepad_Id: {:?}",
         //     axis, value, id
         // );
-        if axis == self.arr_gamepad_profiles[0].expect("[!] oops").left.1.expect("[!] oops").0 {
-            if (if self.arr_gamepad_profiles[0].expect("[!] oops").left.1.expect("[!] oops").1 {value > DETECT_GAMEPAD_AXIS_THRESHOLD} else {value < -DETECT_GAMEPAD_AXIS_THRESHOLD}) && !self.vec_players[0].input.keydown_left.0 {
-                self.vec_players[0].input.keydown_left = (true, true);
-                self.vec_players[0].input.keydown_right = (false, false);
-            } else if value < UNDETECT_GAMEPAD_AXIS_THRESHOLD && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD {
-                self.vec_players[0].input.keydown_left = (false, false);
-            }
-        }
-        if axis == self.arr_gamepad_profiles[0].expect("[!] oops").right.1.expect("[!] oops").0 {
-            if (if self.arr_gamepad_profiles[0].expect("[!] oops").right.1.expect("[!] oops").1 {value > DETECT_GAMEPAD_AXIS_THRESHOLD} else {value < -DETECT_GAMEPAD_AXIS_THRESHOLD}) && !self.vec_players[0].input.keydown_right.0 {
-                self.vec_players[0].input.keydown_right = (true, true);
-                self.vec_players[0].input.keydown_left = (false, false);
-            } else if value < UNDETECT_GAMEPAD_AXIS_THRESHOLD && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD {
-                self.vec_players[0].input.keydown_right = (false, false);
-            }
-        }
-        if axis == self.arr_gamepad_profiles[0].expect("[!] oops").down.1.expect("[!] oops").0 {
-            if (if self.arr_gamepad_profiles[0].expect("[!] oops").down.1.expect("[!] oops").1 {value > DETECT_GAMEPAD_AXIS_THRESHOLD} else {value < -DETECT_GAMEPAD_AXIS_THRESHOLD}) && !self.vec_players[0].input.keydown_down.0 {
-                self.vec_players[0].input.keydown_down = (true, true);
-            } else if value < UNDETECT_GAMEPAD_AXIS_THRESHOLD && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD {
-                self.vec_players[0].input.keydown_down = (false, false);
-            }
-        }
+        // if axis == self.[0].expect("[!] oops").left.1.expect("[!] oops").0 {
+        //     if (if self.[0].expect("[!] oops").left.1.expect("[!] oops").1 {value > DETECT_GAMEPAD_AXIS_THRESHOLD} else {value < -DETECT_GAMEPAD_AXIS_THRESHOLD}) && !self.vec_players[0].input.keydown_left.0 {
+        //         self.vec_players[0].input.keydown_left = (true, true);
+        //         self.vec_players[0].input.keydown_right = (false, false);
+        //     } else if value < UNDETECT_GAMEPAD_AXIS_THRESHOLD && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD {
+        //         self.vec_players[0].input.keydown_left = (false, false);
+        //     }
+        // }
+        // if axis == self.[0].expect("[!] oops").right.1.expect("[!] oops").0 {
+        //     if (if self.[0].expect("[!] oops").right.1.expect("[!] oops").1 {value > DETECT_GAMEPAD_AXIS_THRESHOLD} else {value < -DETECT_GAMEPAD_AXIS_THRESHOLD}) && !self.vec_players[0].input.keydown_right.0 {
+        //         self.vec_players[0].input.keydown_right = (true, true);
+        //         self.vec_players[0].input.keydown_left = (false, false);
+        //     } else if value < UNDETECT_GAMEPAD_AXIS_THRESHOLD && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD {
+        //         self.vec_players[0].input.keydown_right = (false, false);
+        //     }
+        // }
+        // if axis == self.[0].expect("[!] oops").down.1.expect("[!] oops").0 {
+        //     if (if self.[0].expect("[!] oops").down.1.expect("[!] oops").1 {value > DETECT_GAMEPAD_AXIS_THRESHOLD} else {value < -DETECT_GAMEPAD_AXIS_THRESHOLD}) && !self.vec_players[0].input.keydown_down.0 {
+        //         self.vec_players[0].input.keydown_down = (true, true);
+        //     } else if value < UNDETECT_GAMEPAD_AXIS_THRESHOLD && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD {
+        //         self.vec_players[0].input.keydown_down = (false, false);
+        //     }
+        // }
     }
 
     // when drawing, we make an unscaled board with the tiles (so the pixel dimensions are 8 * num_tiles_wide by 8 * num_tiles_tall)

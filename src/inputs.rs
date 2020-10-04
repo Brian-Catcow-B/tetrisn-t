@@ -1,4 +1,4 @@
-use ggez::event::{KeyCode, Axis, Button};
+use ggez::event::KeyCode;
 
 // (is pressed down, was pressed this frame)
 pub struct Input {
@@ -91,47 +91,6 @@ impl KeyboardControlScheme {
             Some(self.down),
             Some(self.rotate_cw),
             Some(self.rotate_ccw),
-        )
-    }
-}
-
-#[derive(Copy, Clone, Debug)]
-pub struct GamepadProfileScheme {
-    pub left: (Option<Button>, Option<(Axis, bool)>),
-    pub right: (Option<Button>, Option<(Axis, bool)>),
-    pub down: (Option<Button>, Option<(Axis, bool)>),
-    pub rotate_cw: Button,
-    pub rotate_ccw: Button,
-    pub start: Button,
-}
-
-impl GamepadProfileScheme {
-    pub fn new(
-        left: (Option<Button>, Option<(Axis, bool)>),
-        right: (Option<Button>, Option<(Axis, bool)>),
-        down: (Option<Button>, Option<(Axis, bool)>),
-        rotate_cw: Button,
-        rotate_ccw: Button,
-        start: Button,
-    ) -> Self {
-        Self {
-            left,
-            right,
-            down,
-            rotate_cw,
-            rotate_ccw,
-            start,
-        }
-    }
-
-    pub fn split(&self) -> ((Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), Option<Button>, Option<Button>, Option<Button>) {
-        (
-            self.left,
-            self.right,
-            self.down,
-            Some(self.rotate_cw),
-            Some(self.rotate_ccw),
-            Some(self.start),
         )
     }
 }

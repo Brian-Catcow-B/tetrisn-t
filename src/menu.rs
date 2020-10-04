@@ -3,18 +3,13 @@ use ggez::event::{Button, Axis, KeyCode};
 use ggez::graphics::{self, Color};
 
 use crate::control::ProgramState;
-use crate::inputs::{Input, KeyboardControlScheme, GamepadProfileScheme};
+use crate::inputs::{Input, KeyboardControlScheme};
 
 pub const MAX_STARTING_LEVEL: u8 = 29; // this is just the fastest speed, so yeah
 pub const MAX_NUM_PLAYERS: u8 = 62; // currently held back by board width being a u8 equal to 6 + 4 * num_players
-pub const MAX_NUM_GAMEPAD_PROFILES: u8 = 9;
-
-const DETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.5;
-const UNDETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.3;
 
 pub const TEXT_SCALE_DOWN: f32 = 15.0;
 pub const SUB_TEXT_SCALE_DOWN: f32 = 25.0;
-pub const MINI_TEXT_SCALE_DOWN: f32 = 30.0;
 
 const GRAY: Color = Color::new(0.5, 0.5, 0.5, 1.0);
 pub const DARK_GRAY: Color = Color::new(0.3, 0.3, 0.3, 1.0);
@@ -30,19 +25,16 @@ use inputconfig::InputConfigMenu;
 pub struct MenuGameOptions {
     pub num_players: u8,
     pub starting_level: u8,
-    pub arr_controls: [(Option<KeyboardControlScheme>, Option<u8>); MAX_NUM_PLAYERS as usize],
-    pub arr_gamepad_profiles: [Option<GamepadProfileScheme>; MAX_NUM_GAMEPAD_PROFILES as usize],
+    pub arr_controls: [(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize],
 }
 
 impl MenuGameOptions {
     fn new(
         num_players: u8,
         starting_level: u8,
-        arr_split_controls: [(Option<(Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>, Option<u8>); MAX_NUM_PLAYERS as usize],
-        arr_split_gamepad_profiles: [Option<((Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), (Option<Button>, Option<(Axis, bool)>), Option<Button>, Option<Button>, Option<Button>)>; MAX_NUM_GAMEPAD_PROFILES as usize],
+        arr_split_controls: [(Option<(Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>, bool); MAX_NUM_PLAYERS as usize],
     ) -> Self {
-        let mut arr_controls: [(Option<KeyboardControlScheme>, Option<u8>); MAX_NUM_PLAYERS as usize] = [(None, None); MAX_NUM_PLAYERS as usize];
-        let mut arr_gamepad_profiles: [Option<GamepadProfileScheme>; MAX_NUM_GAMEPAD_PROFILES as usize] = [None; MAX_NUM_GAMEPAD_PROFILES as usize];
+        let mut arr_controls: [(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize] = [(None, false); MAX_NUM_PLAYERS as usize];
         for (idx, ctrls) in arr_split_controls.iter().enumerate() {
             if let Some(k_ctrls) = ctrls.0 {
                 arr_controls[idx] = (Some(KeyboardControlScheme::new(
@@ -52,28 +44,15 @@ impl MenuGameOptions {
                     k_ctrls.3.expect("[!] attempted to create KeyboardControlScheme with RotateCw == None"),
                     k_ctrls.4.expect("[!] attempted to create KeyboardControlScheme with RotateCcw == None"),
                     KeyCode::Escape,
-                )), None);
-            } else if let Some(profile_num) = ctrls.1 {
-                arr_controls[idx] = (None, Some(profile_num));
-            }
-        }
-        for (idx, profile_opt) in arr_split_gamepad_profiles.iter().enumerate() {
-            if let Some(profile) = profile_opt {
-                arr_gamepad_profiles[idx] = Some(GamepadProfileScheme::new(
-                    profile.0,
-                    profile.1,
-                    profile.2,
-                    (profile.3).expect("[!] attempted to create GamepadProfileScheme with RotateCw == None"),
-                    (profile.4).expect("[!] attempted to create GamepadProfileScheme with RotateCcw == None"),
-                    (profile.5).expect("[!] attempted to create GamepadProfileScheme with Start == None"),
-                ));
+                )), false);
+            } else if ctrls.1 {
+                arr_controls[idx] = (None, true);
             }
         }
         Self {
             num_players,
             starting_level,
             arr_controls,
-            arr_gamepad_profiles,
         }
     }
 }
@@ -104,7 +83,7 @@ impl Menu {
                 input: Input::new(),
                 state: MenuState::Start,
                 start_menu: StartMenu::new(window_dimensions, menu_game_options.num_players, menu_game_options.starting_level),
-                input_config_menu: InputConfigMenu::new(window_dimensions, menu_game_options.arr_controls, menu_game_options.arr_gamepad_profiles),
+                input_config_menu: InputConfigMenu::new(window_dimensions, menu_game_options.arr_controls),
             }
         } else {
             // defaults
@@ -112,7 +91,7 @@ impl Menu {
                 input: Input::new(),
                 state: MenuState::Start,
                 start_menu: StartMenu::new(window_dimensions, 1, 0),
-                input_config_menu: InputConfigMenu::new(window_dimensions, [(None, None); MAX_NUM_PLAYERS as usize], [None; MAX_NUM_GAMEPAD_PROFILES as usize]),
+                input_config_menu: InputConfigMenu::new(window_dimensions, [(None, false); MAX_NUM_PLAYERS as usize]),
             }
         }
     }
@@ -123,7 +102,7 @@ impl Menu {
                 let ret_bools: (bool, bool) = self.start_menu.update(&self.input);
                 if ret_bools.0 {
                     if self.ensure_enough_controls() {
-                        return Some((ProgramState::Game, MenuGameOptions::new(self.start_menu.num_players, self.start_menu.starting_level, self.input_config_menu.arr_split_controls, self.input_config_menu.arr_split_gamepad_profiles)));
+                        return Some((ProgramState::Game, MenuGameOptions::new(self.start_menu.num_players, self.start_menu.starting_level, self.input_config_menu.arr_split_controls)));
                     } else {
                         self.start_menu.not_enough_controls_flag = true;
                     }
@@ -146,7 +125,7 @@ impl Menu {
     fn ensure_enough_controls(&self) -> bool {
         let mut ctrls_count = 0;
         for ctrls in self.input_config_menu.arr_split_controls.iter() {
-            if ctrls.0.is_some() || ctrls.1.is_some() {
+            if ctrls.0.is_some() || ctrls.1 {
                 ctrls_count += 1;
             }
         }
@@ -205,25 +184,25 @@ impl Menu {
     }
 
     pub fn gamepad_button_down_event(&mut self, btn: Button) {
-        self.input_config_menu.most_recently_pressed_gamepad_button = Some(btn);
-        println!("just set most_recently_pressed_gamepad_button to Some({:?})", btn);
+        // self.input_config_menu.most_recently_pressed_gamepad_button = Some(btn);
+        // println!("just set most_recently_pressed_gamepad_button to Some({:?})", btn);
     }
 
     pub fn gamepad_axis_event(&mut self, axis: Axis, value: f32) {
-        if !self.input_config_menu.gamepad_axis_wait.0 {
-            if value < -DETECT_GAMEPAD_AXIS_THRESHOLD {
-                self.input_config_menu.gamepad_axis_wait = (true, Some((axis, if value < 0.0 {false} else {true})));
-                self.input_config_menu.most_recently_pressed_gamepad_axis = Some((axis, false));
-                println!("just set most_recently_pressed_gamepad_axis to Some(({:?}, false))", axis);
-            } else if value > DETECT_GAMEPAD_AXIS_THRESHOLD {
-                self.input_config_menu.gamepad_axis_wait = (true, Some((axis, if value < 0.0 {false} else {true})));
-                self.input_config_menu.most_recently_pressed_gamepad_axis = Some((axis, true));
-                println!("just set most_recently_pressed_gamepad_axis to Some(({:?}, true))", axis);
-            }
-        } else if value < UNDETECT_GAMEPAD_AXIS_THRESHOLD && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD && (self.input_config_menu.gamepad_axis_wait.1).expect("[!] axis waiting on None").0 == axis {
-            self.input_config_menu.gamepad_axis_wait = (false, None);
-            println!("set false");
-        }
+        // if !self.input_config_menu.gamepad_axis_wait.0 {
+        //     if value < -DETECT_GAMEPAD_AXIS_THRESHOLD {
+        //         self.input_config_menu.gamepad_axis_wait = (true, Some((axis, if value < 0.0 {false} else {true})));
+        //         self.input_config_menu.most_recently_pressed_gamepad_axis = Some((axis, false));
+        //         println!("just set most_recently_pressed_gamepad_axis to Some(({:?}, false))", axis);
+        //     } else if value > DETECT_GAMEPAD_AXIS_THRESHOLD {
+        //         self.input_config_menu.gamepad_axis_wait = (true, Some((axis, if value < 0.0 {false} else {true})));
+        //         self.input_config_menu.most_recently_pressed_gamepad_axis = Some((axis, true));
+        //         println!("just set most_recently_pressed_gamepad_axis to Some(({:?}, true))", axis);
+        //     }
+        // } else if value < UNDETECT_GAMEPAD_AXIS_THRESHOLD && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD && (self.input_config_menu.gamepad_axis_wait.1).expect("[!] axis waiting on None").0 == axis {
+        //     self.input_config_menu.gamepad_axis_wait = (false, None);
+        //     println!("set false");
+        // }
     }
 
     pub fn draw(&mut self, ctx: &mut Context) {
