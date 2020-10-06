@@ -112,9 +112,7 @@ impl EventHandler for Control {
 
     fn gamepad_button_down_event(&mut self, _ctx: &mut Context, btn: Button, id: GamepadId) {
         match self.state {
-            ProgramState::Menu => self.menu.as_mut()
-                .expect("[!] control.state == ProgramState::Menu but control.menu == None")
-                .gamepad_button_down_event(btn),
+            ProgramState::Menu => (),
             ProgramState::Game => self.game.as_mut()
                 .expect("[!] control.state == ProgramState::Game but control.game == None")
                 .gamepad_button_down_event(btn, id),
@@ -124,9 +122,6 @@ impl EventHandler for Control {
     fn gamepad_button_up_event(&mut self, _ctx: &mut Context, btn: Button, id: GamepadId) {
         match self.state {
             ProgramState::Menu => (),
-                // self.menu.as_mut()
-                // .expect("[!] control.state == ProgramState::Menu but control.menu == None")
-                // .gamepad_button_up_event(btn, id),
             ProgramState::Game => self.game.as_mut()
                 .expect("[!] control.state == ProgramState::Game but control.game == None")
                 .gamepad_button_up_event(btn, id),
@@ -135,9 +130,7 @@ impl EventHandler for Control {
 
     fn gamepad_axis_event(&mut self, _ctx: &mut Context, axis: Axis, value: f32, id: GamepadId) {
         match self.state {
-            ProgramState::Menu => self.menu.as_mut()
-                .expect("[!] control.state == ProgramState::Menu but control.menu == None")
-                .gamepad_axis_event(axis, value),
+            ProgramState::Menu => (),
             ProgramState::Game => self.game.as_mut()
                 .expect("[!] control.state == ProgramState::Game but control.game == None")
                 .gamepad_axis_event(axis, value, id),

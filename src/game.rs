@@ -26,9 +26,6 @@ use crate::inputs::KeyboardControlScheme;
 use crate::menu::MenuGameOptions;
 
 
-const DETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.6;
-const UNDETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.4;
-
 const BOARD_HEIGHT: u8 = 20u8;
 
 pub const CLEAR_DELAY: i8 = 30i8;
@@ -132,6 +129,7 @@ pub struct Game {
     vec_players: Vec<Player>,
     vec_next_piece: Vec<NextPiece>,
     vec_gamepad_id_map_to_player: Vec<(Option<GamepadId>, u8)>,
+    num_gamepads_to_initialize: u8,
     level: u8,
     starting_level: u8,
     num_cleared_lines: u16,
@@ -151,7 +149,6 @@ pub struct Game {
 
 impl Game {
     pub fn new(ctx: &mut Context, game_options: &GameOptions) -> Game {
-        // Load/create resources here: images, fonts, sounds, etc.
         let board_width = 6 + 4 * game_options.num_players;
         let mut vec_players: Vec<Player> = Vec::with_capacity(game_options.num_players as usize);
         // spawn columns
@@ -178,6 +175,21 @@ impl Game {
             }
         }
         let mut vec_next_piece: Vec<NextPiece> = Vec::with_capacity(game_options.num_players as usize);
+        let mut vec_gamepad_id_map_to_player: Vec<(Option<GamepadId>, u8)>;
+        let mut temp_vec: Vec<(Option<GamepadId>, u8)> = vec![];
+        let mut num_gamepads_to_initialize: u8 = 0;
+        for (idx, controls) in game_options.vec_controls.iter().enumerate() {
+            if controls.1 {
+                temp_vec.push((None, idx as u8));
+                num_gamepads_to_initialize += 1;
+            }
+        }
+        if !temp_vec.is_empty() {
+            vec_gamepad_id_map_to_player = Vec::with_capacity(temp_vec.len());
+            vec_gamepad_id_map_to_player.append(&mut temp_vec);
+        } else {
+            vec_gamepad_id_map_to_player = Vec::with_capacity(1);
+        }
         let mut vec_batch_player_piece: Vec<spritebatch::SpriteBatch> = Vec::with_capacity(game_options.num_players as usize);
         let mut vec_batch_next_piece: Vec<spritebatch::SpriteBatch> = Vec::with_capacity(game_options.num_players as usize);
         for player in 0..game_options.num_players {
@@ -200,7 +212,8 @@ impl Game {
             num_players: game_options.num_players,
             vec_players,
             vec_next_piece,
-            vec_gamepad_id_map_to_player: vec![],
+            vec_gamepad_id_map_to_player,
+            num_gamepads_to_initialize,
             level: game_options.starting_level,
             starting_level: game_options.starting_level,
             num_cleared_lines: 0u16,
@@ -243,10 +256,10 @@ impl Game {
             } else {
                 for player in &mut self.vec_players {
                     // should we quit to main menu?
-                    if     player.input.keydown_down.0
-                        && player.input.keydown_rotate_ccw.0
-                        && player.input.keydown_rotate_cw.0
-                        && player.input.keydown_start.1
+                    if player.input.keydown_down.0
+                    && player.input.keydown_rotate_ccw.0
+                    && player.input.keydown_rotate_cw.0
+                    && player.input.keydown_start.1
                     {
                         return ProgramState::Menu;
                     }
@@ -280,11 +293,25 @@ impl Game {
                             player.spawn_delay = SPAWN_DELAY;
                             player.spawn_piece_flag = false;
                             // set next piece to random; reroll once if it chooses the same piece as it just was
-                            let random_shape = Shapes::from_u8(random::<u8>() % 7);
+                            let mut rand: u8;
+                            loop {
+                                rand = random::<u8>();
+                                if rand < 252 {
+                                    break;
+                                }
+                            }
+                            let random_shape = Shapes::from_u8(rand % 7);
                             if self.board.vec_active_piece[player.player_num as usize].shape != random_shape {
                                 player.next_piece_shape = random_shape;
                             } else {
-                                player.next_piece_shape = Shapes::from_u8(random::<u8>() % 7);
+                                let mut rand: u8;
+                                loop {
+                                    rand = random::<u8>();
+                                    if rand < 252 {
+                                        break;
+                                    }
+                                }
+                                player.next_piece_shape = Shapes::from_u8(rand % 7);
                             }
                             self.vec_next_piece[player.player_num as usize] = NextPiece::new(player.next_piece_shape);
                             player.redraw_next_piece_flag = true;
@@ -405,7 +432,9 @@ impl Game {
     ) {
         if !repeat {
             for player in &mut self.vec_players {
-                if player.update_input_keydown(keycode) {break;}
+                if player.update_input_keydown(keycode) {
+                    return;
+                }
             }
         }
     }
@@ -415,73 +444,73 @@ impl Game {
         keycode: KeyCode,
     ) {
         for player in &mut self.vec_players {
-            player.update_input_keyup(keycode);
+            if player.update_input_keyup(keycode) {
+                return;
+            }
         }
     }
 
     pub fn gamepad_button_down_event(&mut self, btn: Button, id: GamepadId) {
-        // println!("Gamepad button pressed: {:?} Gamepad_Id: {:?}", btn, id);
-        // self.vec_gamepad_id_map_to_player
-        // if btn == self.[0].expect("[!] oops").left.0.expect("[!] oops") {
-        //     self.vec_players[0].input.keydown_left = (true, true);
-        //     self.vec_players[0].input.keydown_right = (false, false);
-        // } else if btn == self.[0].expect("[!] oops").right.0.expect("[!] oops") {
-        //     self.vec_players[0].input.keydown_right = (true, true);
-        //     self.vec_players[0].input.keydown_left = (false, false);
-        // } else if btn == self.[0].expect("[!] oops").down.0.expect("[!] oops") {
-        //     self.vec_players[0].input.keydown_down = (true, true);
-        // } else if btn == self.[0].expect("[!] oops").rotate_cw {
-        //     self.vec_players[0].input.keydown_rotate_cw = (true, true);
-        // } else if btn == self.[0].expect("[!] oops").rotate_ccw {
-        //     self.vec_players[0].input.keydown_rotate_ccw = (true, true);
-        // } else if btn == self.[0].expect("[!] oops").start {
-        //     self.vec_players[0].input.keydown_start = (true, true);
-        // }
+        for map in self.vec_gamepad_id_map_to_player.iter() {
+            if Some(id) == map.0 {
+                self.vec_players[map.1 as usize].update_input_buttondown(btn);
+                return;
+            }
+        }
+        if self.num_gamepads_to_initialize > 0 {
+            for map in self.vec_gamepad_id_map_to_player.iter_mut() {
+                if None == map.0 {
+                    map.0 = Some(id);
+                    self.vec_players[map.1 as usize].update_input_buttondown(btn);
+                    if self.vec_gamepad_id_map_to_player.len() == self.vec_gamepad_id_map_to_player.capacity() {
+                        self.num_gamepads_to_initialize -= 1;
+                    }
+                    return;
+                }
+            }
+        }
     }
 
     pub fn gamepad_button_up_event(&mut self, btn: Button, id: GamepadId) {
-        // println!("Gamepad button released: {:?} Gamepad_Id: {:?}", btn, id);
-        // if btn == self.[0].expect("[!] oops").left.0.expect("[!] oops") {
-        //     self.vec_players[0].input.keydown_left = (false, false);
-        // } else if btn == self.[0].expect("[!] oops").right.0.expect("[!] oops") {
-        //     self.vec_players[0].input.keydown_right = (false, false);
-        // } else if btn == self.[0].expect("[!] oops").down.0.expect("[!] oops") {
-        //     self.vec_players[0].input.keydown_down = (false, false);
-        // } else if btn == self.[0].expect("[!] oops").rotate_cw {
-        //     self.vec_players[0].input.keydown_rotate_cw = (false, false);
-        // } else if btn == self.[0].expect("[!] oops").rotate_ccw {
-        //     self.vec_players[0].input.keydown_rotate_ccw = (false, false);
-        // }
+        for map in self.vec_gamepad_id_map_to_player.iter() {
+            if Some(id) == map.0 {
+                self.vec_players[map.1 as usize].update_input_buttonup(btn);
+                return;
+            }
+        }
+        if self.num_gamepads_to_initialize > 0 {
+            for map in self.vec_gamepad_id_map_to_player.iter_mut() {
+                if None == map.0 {
+                    map.0 = Some(id);
+                    self.vec_players[map.1 as usize].update_input_buttonup(btn);
+                    if self.vec_gamepad_id_map_to_player.len() == self.vec_gamepad_id_map_to_player.capacity() {
+                        self.num_gamepads_to_initialize -= 1;
+                    }
+                    return;
+                }
+            }
+        }
     }
 
     pub fn gamepad_axis_event(&mut self, axis: Axis, value: f32, id: GamepadId) {
-        // println!(
-        //     "Axis Event: {:?} Value: {} Gamepad_Id: {:?}",
-        //     axis, value, id
-        // );
-        // if axis == self.[0].expect("[!] oops").left.1.expect("[!] oops").0 {
-        //     if (if self.[0].expect("[!] oops").left.1.expect("[!] oops").1 {value > DETECT_GAMEPAD_AXIS_THRESHOLD} else {value < -DETECT_GAMEPAD_AXIS_THRESHOLD}) && !self.vec_players[0].input.keydown_left.0 {
-        //         self.vec_players[0].input.keydown_left = (true, true);
-        //         self.vec_players[0].input.keydown_right = (false, false);
-        //     } else if value < UNDETECT_GAMEPAD_AXIS_THRESHOLD && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD {
-        //         self.vec_players[0].input.keydown_left = (false, false);
-        //     }
-        // }
-        // if axis == self.[0].expect("[!] oops").right.1.expect("[!] oops").0 {
-        //     if (if self.[0].expect("[!] oops").right.1.expect("[!] oops").1 {value > DETECT_GAMEPAD_AXIS_THRESHOLD} else {value < -DETECT_GAMEPAD_AXIS_THRESHOLD}) && !self.vec_players[0].input.keydown_right.0 {
-        //         self.vec_players[0].input.keydown_right = (true, true);
-        //         self.vec_players[0].input.keydown_left = (false, false);
-        //     } else if value < UNDETECT_GAMEPAD_AXIS_THRESHOLD && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD {
-        //         self.vec_players[0].input.keydown_right = (false, false);
-        //     }
-        // }
-        // if axis == self.[0].expect("[!] oops").down.1.expect("[!] oops").0 {
-        //     if (if self.[0].expect("[!] oops").down.1.expect("[!] oops").1 {value > DETECT_GAMEPAD_AXIS_THRESHOLD} else {value < -DETECT_GAMEPAD_AXIS_THRESHOLD}) && !self.vec_players[0].input.keydown_down.0 {
-        //         self.vec_players[0].input.keydown_down = (true, true);
-        //     } else if value < UNDETECT_GAMEPAD_AXIS_THRESHOLD && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD {
-        //         self.vec_players[0].input.keydown_down = (false, false);
-        //     }
-        // }
+        for map in self.vec_gamepad_id_map_to_player.iter() {
+            if Some(id) == map.0 {
+                self.vec_players[map.1 as usize].update_input_axis(axis, value);
+                return;
+            }
+        }
+        if self.num_gamepads_to_initialize > 0 {
+            for map in self.vec_gamepad_id_map_to_player.iter_mut() {
+                if None == map.0 {
+                    map.0 = Some(id);
+                    self.vec_players[map.1 as usize].update_input_axis(axis, value);
+                    if self.vec_gamepad_id_map_to_player.len() == self.vec_gamepad_id_map_to_player.capacity() {
+                        self.num_gamepads_to_initialize -= 1;
+                    }
+                    return;
+                }
+            }
+        }
     }
 
     // when drawing, we make an unscaled board with the tiles (so the pixel dimensions are 8 * num_tiles_wide by 8 * num_tiles_tall)

@@ -50,7 +50,7 @@ pub struct InputConfigMenu {
     // subtext
     input_uninitialized_text: Text,
     keycode_conflict_text: Text,
-    is_gamepad_text: Text, // TODO
+    is_gamepad_text: Text,
     k_left_text: Text,
     k_right_text: Text,
     k_down_text: Text,

@@ -1,5 +1,5 @@
 use ggez::Context;
-use ggez::event::{Button, Axis, KeyCode};
+use ggez::event::KeyCode;
 use ggez::graphics::{self, Color};
 
 use crate::control::ProgramState;
@@ -181,28 +181,6 @@ impl Menu {
         } else if keycode == KeyCode::Space || keycode == KeyCode::Return {
             self.input.keydown_start = (false, false);
         }
-    }
-
-    pub fn gamepad_button_down_event(&mut self, btn: Button) {
-        // self.input_config_menu.most_recently_pressed_gamepad_button = Some(btn);
-        // println!("just set most_recently_pressed_gamepad_button to Some({:?})", btn);
-    }
-
-    pub fn gamepad_axis_event(&mut self, axis: Axis, value: f32) {
-        // if !self.input_config_menu.gamepad_axis_wait.0 {
-        //     if value < -DETECT_GAMEPAD_AXIS_THRESHOLD {
-        //         self.input_config_menu.gamepad_axis_wait = (true, Some((axis, if value < 0.0 {false} else {true})));
-        //         self.input_config_menu.most_recently_pressed_gamepad_axis = Some((axis, false));
-        //         println!("just set most_recently_pressed_gamepad_axis to Some(({:?}, false))", axis);
-        //     } else if value > DETECT_GAMEPAD_AXIS_THRESHOLD {
-        //         self.input_config_menu.gamepad_axis_wait = (true, Some((axis, if value < 0.0 {false} else {true})));
-        //         self.input_config_menu.most_recently_pressed_gamepad_axis = Some((axis, true));
-        //         println!("just set most_recently_pressed_gamepad_axis to Some(({:?}, true))", axis);
-        //     }
-        // } else if value < UNDETECT_GAMEPAD_AXIS_THRESHOLD && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD && (self.input_config_menu.gamepad_axis_wait.1).expect("[!] axis waiting on None").0 == axis {
-        //     self.input_config_menu.gamepad_axis_wait = (false, None);
-        //     println!("set false");
-        // }
     }
 
     pub fn draw(&mut self, ctx: &mut Context) {
