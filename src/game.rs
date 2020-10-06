@@ -80,7 +80,7 @@ const FALL_DELAY_VALUES: [u8; 30] = [
 pub const FORCE_FALL_DELAY: u8 = 2;
 
 // first das threshold (eg left is pressed; how many frames to until the piece auto-shifts left?)
-const DAS_THRESHOLD_BIG: u8 = 12;
+const DAS_THRESHOLD_BIG: u8 = 14;
 // second das threshold (eg left is pressed and it auto shifts once; how many frames until it auto-shifts again?)
 const DAS_THRESHOLD_LITTLE: u8 = 5;
 
@@ -292,6 +292,10 @@ impl Game {
                             self.board.playerify_piece(player.player_num);
                             player.spawn_delay = SPAWN_DELAY;
                             player.spawn_piece_flag = false;
+                            // set das_countdown to the smaller das value if input left or right is pressed as the piece spawns in
+                            if player.input.keydown_left.0 || player.input.keydown_right.0 {
+                                player.das_countdown = DAS_THRESHOLD_LITTLE;
+                            }
                             // set next piece to random; reroll once if it chooses the same piece as it just was
                             let mut rand: u8;
                             loop {

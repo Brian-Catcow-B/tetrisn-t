@@ -4,8 +4,8 @@ use crate::inputs::{Input, KeyboardControlScheme};
 use crate::game::piece::Shapes;
 use crate::game::{FORCE_FALL_DELAY, DAS_THRESHOLD_BIG, INITIAL_HANG_FRAMES};
 
-const DETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.6;
-const UNDETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.4;
+const DETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.5;
+const UNDETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.2;
 
 pub const SPAWN_DELAY: i16 = 20i16;
 
@@ -153,8 +153,18 @@ impl Player {
 
     pub fn update_input_buttonup(&mut self, btn: Button) {
         if btn == Button::DPadLeft {
+            // for auto-shift reasons
+            if self.input.keydown_left.0 {
+                self.das_countdown = DAS_THRESHOLD_BIG;
+                self.waiting_to_shift = false;
+            }
             self.input.keydown_left = (false, false);
         } else if btn == Button::DPadRight {
+            // for auto-shift reasons
+            if self.input.keydown_right.0 {
+                self.das_countdown = DAS_THRESHOLD_BIG;
+                self.waiting_to_shift = false;
+            }
             self.input.keydown_right = (false, false);
         } else if btn == Button::DPadDown {
             self.input.keydown_down = (false, false);
@@ -180,8 +190,10 @@ impl Player {
                 self.axis_wait_for_unpress_x = true;
                 self.input.keydown_right = (true, true);
                 self.input.keydown_left = (false, false);
-            } else if self.axis_wait_for_unpress_x && (value < UNDETECT_GAMEPAD_AXIS_THRESHOLD || value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD) {
+            } else if self.axis_wait_for_unpress_x && value < UNDETECT_GAMEPAD_AXIS_THRESHOLD && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD {
                 // unpress left and right
+                self.das_countdown = DAS_THRESHOLD_BIG;
+                self.waiting_to_shift = false;
                 self.axis_wait_for_unpress_x = false;
                 self.input.keydown_left = (false, false);
                 self.input.keydown_right = (false, false);
