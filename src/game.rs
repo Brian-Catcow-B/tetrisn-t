@@ -87,6 +87,10 @@ const DAS_THRESHOLD_LITTLE: u8 = 5;
 // how long the pieces don't move down at the start
 pub const INITIAL_HANG_FRAMES: u8 = 180;
 
+// gamepad joystick thresholds
+pub const DETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.5;
+pub const UNDETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.2;
+
 // this struct is for the Menu class so that it can return what game options to start the game with
 pub struct GameOptions {
     pub num_players: u8,
@@ -503,7 +507,7 @@ impl Game {
                 return;
             }
         }
-        if self.num_gamepads_to_initialize > 0 {
+        if self.num_gamepads_to_initialize > 0 && (value > DETECT_GAMEPAD_AXIS_THRESHOLD || value < -DETECT_GAMEPAD_AXIS_THRESHOLD) {
             for map in self.vec_gamepad_id_map_to_player.iter_mut() {
                 if None == map.0 {
                     map.0 = Some(id);

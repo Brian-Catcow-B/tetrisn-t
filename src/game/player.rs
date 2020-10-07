@@ -3,9 +3,7 @@ use rand::random;
 use crate::inputs::{Input, KeyboardControlScheme};
 use crate::game::piece::Shapes;
 use crate::game::{FORCE_FALL_DELAY, DAS_THRESHOLD_BIG, INITIAL_HANG_FRAMES};
-
-const DETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.5;
-const UNDETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.2;
+use crate::game::{DETECT_GAMEPAD_AXIS_THRESHOLD, UNDETECT_GAMEPAD_AXIS_THRESHOLD};
 
 pub const SPAWN_DELAY: i16 = 20i16;
 
