@@ -27,12 +27,13 @@ This program uses SDL2 gamepad configurations for controllers.
 A list of automatically-detected controllers can be found in the `resources` folder in `gamecontrollerdb.txt`, which is a copy of this file: https://github.com/gabomdq/SDL_GameControllerDB/blob/master/gamecontrollerdb.txt  
 The `resources` folder with its contents must be in the same location as the binary (exe for Windows users) in order for gamepads to continue to be detected; create a shortcut to the binary if you want to open it from elsewhere.
 
-In case custom layouts or compatibility for obscure gamepads are desired, here is a cross-platform SDL2 configurer: https://generalarcade.com/gamepadtool/. A quick guide on how to use it is as follows:  
-1. Download, install, open  
-2. Select desired gamepad in the dropdown on the top  
-3. Select "Create A New Mapping"  
-4. Create the desired mapping using input on your gamepad  
-5. Select "Copy Mapping String" and paste the string into a newline of `gamecontrollerdb.txt`, deleting the line of the controller with the same Gamepad GUID (the first really long number) if it exists  
+In case custom layouts or compatibility for obscure gamepads are desired, here is a cross-platform SDL2 configurer: https://generalarcade.com/gamepadtool/. A quick guide on how to use it is as follows:
+1. Download, install, open
+2. Select desired gamepad in the dropdown on the top
+3. Select "Create A New Mapping"
+4. Create the desired mapping using input on your gamepad
+5. Select "Copy Mapping String" and paste the string into a newline of `gamecontrollerdb.txt`, deleting the line of the controller with the same Gamepad GUID (the first really long number) if it exists
+
 Then the gamepad should be recognized when the program is opened again. When creating a gamepad mapping, consider which buttons the program has set to do which action:
 ```
 Axis::LeftAxisX- and Button::DPadLeft -> Left
