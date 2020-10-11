@@ -1,7 +1,7 @@
 # Rustrisn-t
 Tetrisn-t rewritten in Rust, better.
 
-`rustrisn-t.exe` is included on each tagged `master` branch commit so that Windows users don't have to compile the code.
+Binaries for Windows and Linux are included in each tagged release (except 0.0.1) in the `release` folder.
 
 Make sure your monitor's refresh rate is set to 60FPS; otherwise the game runs at a different speed than intended; this will eventually be fixed.
 
