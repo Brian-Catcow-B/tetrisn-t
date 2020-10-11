@@ -137,18 +137,20 @@ impl InputConfigMenu {
                 self.set_select(false);
                 self.selection = (self.selection + 1) % NUM_INPUTCONFIGMENUOPTION_TEXT_ENTRIES;
                 self.set_select(true);
+                self.most_recently_pressed_key = None;
             }
 
             if input.keydown_up.1 {
                 self.set_select(false);
                 self.selection = if self.selection == 0 {NUM_INPUTCONFIGMENUOPTION_TEXT_ENTRIES - 1} else {self.selection - 1};
                 self.set_select(true);
+                self.most_recently_pressed_key = None;
             }
 
             if input.keydown_rotate_cw.1 && self.selection == InputConfigMenuOption::PlayerInput as u8 {
                 self.arr_split_controls[self.player_num as usize].1 = true;
                 if let Some(ctrls) = self.arr_split_controls[self.player_num as usize].0 {
-                    self.remove_from_used_keycodes(ctrls);
+                    self.remove_from_used_keycodes(&ctrls);
                     self.arr_split_controls[self.player_num as usize].0 = None;
                 }
             }
@@ -160,7 +162,7 @@ impl InputConfigMenu {
                 } else if self.selection == InputConfigMenuOption::PlayerInput as u8 {
                     self.most_recently_pressed_key = None;
                     if let Some(ctrls) = self.arr_split_controls[self.player_num as usize].0 {
-                        self.remove_from_used_keycodes(ctrls);
+                        self.remove_from_used_keycodes(&ctrls);
                     }
                     self.arr_split_controls[self.player_num as usize].0 = None;
 
@@ -169,6 +171,15 @@ impl InputConfigMenu {
                     self.sub_selection_keyboard_flag = true;
                     self.set_select(true);
                 }
+            }
+
+            // remove input stuff from selection if we are on PlayerInput and Escape is pressed
+            if self.selection == InputConfigMenuOption::PlayerInput as u8 && self.most_recently_pressed_key == Some(KeyCode::Escape) {
+                if let Some(ctrls) = self.arr_split_controls[self.player_num as usize].0 {
+                    self.remove_from_used_keycodes(&ctrls);
+                    self.arr_split_controls[self.player_num as usize].0 = None;
+                }
+                self.arr_split_controls[self.player_num as usize].1 = false;
             }
         } else if self.sub_selection_keyboard_flag {
             if self.most_recently_pressed_key.is_some() {
@@ -246,7 +257,7 @@ impl InputConfigMenu {
         false
     }
 
-    fn remove_from_used_keycodes(&mut self, ctrls: (Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)) {
+    fn remove_from_used_keycodes(&mut self, ctrls: &(Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)) {
         let mut items_removed = 0;
         for used_key_idx in 0..self.vec_used_keycode.len() {
             if Some(self.vec_used_keycode[used_key_idx - items_removed]) == ctrls.0

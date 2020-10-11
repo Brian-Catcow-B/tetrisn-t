@@ -101,7 +101,7 @@ pub struct GameOptions {
 impl GameOptions {
     pub fn from(menu_game_options: &MenuGameOptions) -> Self {
         let mut vec_controls: Vec<(Option<KeyboardControlScheme>, bool)> = Vec::with_capacity(menu_game_options.arr_controls.len());
-        // TODO: use a closure if that's better. It's too late at night for me to figure this out; I just want this to work; I've written ~500 lines of GUI code today; help
+        let mut counted_active_controls: u8 = 0;
         for controls in menu_game_options.arr_controls.iter() {
             if let Some(ctrls) = controls.0 {
                 vec_controls.push((Some(KeyboardControlScheme::new(
@@ -112,8 +112,13 @@ impl GameOptions {
                     ctrls.rotate_ccw,
                     KeyCode::Escape,
                 )), false));
+                counted_active_controls += 1;
             } else if controls.1 {
                 vec_controls.push((None, true));
+                counted_active_controls += 1;
+            }
+            if counted_active_controls == menu_game_options.num_players {
+                break;
             }
         }
 

@@ -11,7 +11,7 @@ Almost all gameplay functional as intended.
 #########
 Unreleased.
 Added a list of used KeyCode's stored in the inputconfig menu that notifies the user if they try to reuse a KeyCode and ignores the input.
-Escape quits out of creating a keyboard layout.
+Escape clears selected input layout.
 G sets a player to be controlled by a gamepad.
 Users can setup their own gamepad layouts by adding their SDL2 Gamepad string to /resources/gamecontrollerdb.txt.
 Gamepads auto-map to the first player that doesn't have a GamepadId mapping to it for easy setup.
