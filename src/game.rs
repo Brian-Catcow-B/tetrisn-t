@@ -38,7 +38,14 @@ pub const SCORE_QUADRUPLE_BASE: u16 = 1200u16;
 const GAME_OVER_DELAY: i8 = 60i8;
 
 // space up of the board that is not the board in tiles
-pub const NON_BOARD_SPACE_U: u8 = 5u8;
+const NON_BOARD_SPACE_U: u8 = 4u8;
+// space between the top of the board and the next piece in tiles
+const BOARD_NEXT_PIECE_SPACING: u8 = 3;
+// space down of the board that is not the board in tiles
+const NON_BOARD_SPACE_D: u8 = 3u8;
+// each tile is actually 8x8 pixels, so we scale down by 8 and then some because with 8.0, window resizing can clip off the bottom of the board
+const TILE_SIZE_DOWN_SCALE: f32 = 8.5;
+
 const LITTLE_TEXT_SCALE: f32 = 20.0;
 
 // for each level (as the index), the number of frames it takes for a piece to move down one row (everything after 29 is also 0)
@@ -533,14 +540,14 @@ impl Game {
     pub fn draw(&mut self, ctx: &mut Context) {
         graphics::clear(ctx, graphics::BLACK);
         let (window_width, window_height) = graphics::size(ctx);
-        self.tile_size = TileGraphic::get_size(ctx, self.board.width, self.board.height + NON_BOARD_SPACE_U);
+        self.tile_size = TileGraphic::get_size(ctx, self.board.width, self.board.height + NON_BOARD_SPACE_U + NON_BOARD_SPACE_D);
         if self.game_over_flag && self.game_over_delay == 0 {
             // DRAW GAME OVER
-            self.draw_text(ctx, &self.game_over_text, 0.4, (window_width, window_height));
-            self.draw_text(ctx, &self.game_info_text, 0.55, (window_width, window_height));
+            self.draw_text(ctx, &self.game_over_text, 0.4, &(window_width, window_height));
+            self.draw_text(ctx, &self.game_info_text, 0.55, &(window_width, window_height));
         } else if self.pause_flag.0 {
             // DRAW PAUSE
-            self.draw_text(ctx, &self.pause_text, 0.4, (window_width, window_height));
+            self.draw_text(ctx, &self.pause_text, 0.4, &(window_width, window_height));
         } else {
             // DRAW GAME
             // add each non-empty tile to the correct SpriteBatch
@@ -570,7 +577,6 @@ impl Game {
                 }
             }
 
-            const TILE_SIZE_DOWN_SCALE: f32 = 8.5; // each tile is actually 8x8 pixels, so we scale down by 8 and then some because with 8.0, window resizing can clip off the bottom of the board
             let scaled_tile_size = self.tile_size / TILE_SIZE_DOWN_SCALE;
 
             // draw each SpriteBatch
@@ -588,11 +594,11 @@ impl Game {
             // next piece tiles
             for player in self.vec_players.iter() {
                 graphics::draw(ctx, &self.vec_batch_next_piece[player.player_num as usize], DrawParam::new()
-                    .dest(Point2::new(board_top_left_corner + (player.spawn_column - 2) as f32 * scaled_tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, (NON_BOARD_SPACE_U - 2) as f32 * self.tile_size))
+                    .dest(Point2::new(board_top_left_corner + (player.spawn_column - 2) as f32 * scaled_tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, (NON_BOARD_SPACE_U - BOARD_NEXT_PIECE_SPACING) as f32 * self.tile_size))
                     .scale(Vector2::new(scaled_tile_size, scaled_tile_size))).unwrap();
             }
-            // score text
-            self.draw_text(ctx, &self.game_info_text, 0.05, (window_width, window_height));
+            // score text; TODO: perhaps make a separate function for something based on the bottom, or just figure out how to do this better so we don't divide out by the window_height
+            self.draw_text(ctx, &self.game_info_text, 1.0 - ((NON_BOARD_SPACE_D as f32 * self.tile_size) / window_height), &(window_width, window_height));
 
             // clear player sprite batches
             for player in 0..self.num_players {
@@ -601,7 +607,7 @@ impl Game {
         }
     }
 
-    fn draw_text(&self, ctx: &mut Context, text_var: &Text, vertical_position: f32, window_dimensions: (f32, f32)) {
+    fn draw_text(&self, ctx: &mut Context, text_var: &Text, vertical_position: f32, window_dimensions: &(f32, f32)) {
         let (text_width, text_height) = text_var.dimensions(ctx);
         graphics::draw(ctx, text_var, DrawParam::new()
         .dest(Point2::new((window_dimensions.0 - text_width as f32) / 2.0, (window_dimensions.1 - text_height as f32) * vertical_position))
