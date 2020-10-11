@@ -223,49 +223,49 @@ impl Piece {
             }
             Shapes::O => {
                 return [
-                    (BOARD_HEIGHT_BUFFER_U, spawn_column - 1), // [-][-][-][-]
-                    (BOARD_HEIGHT_BUFFER_U, spawn_column),     // [-][-][-][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column - 1), //     [-][-][-][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column),     //     [-][-][-][-]
                     (1 + BOARD_HEIGHT_BUFFER_U, spawn_column - 1), // [-][0][1][-]
-                    (1 + BOARD_HEIGHT_BUFFER_U, spawn_column), // [-][2][3][-]
+                    (1 + BOARD_HEIGHT_BUFFER_U, spawn_column), //     [-][2][3][-]
                 ];
             }
             Shapes::T => {
                 return [
                     (BOARD_HEIGHT_BUFFER_U, spawn_column - 1), // [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
-                    (BOARD_HEIGHT_BUFFER_U, spawn_column), // [-][-][-][-] | [-][-][0][-] | [-][-][3][-] | [-][-][2][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column), //     [-][-][-][-] | [-][-][0][-] | [-][-][3][-] | [-][-][2][-]
                     (BOARD_HEIGHT_BUFFER_U, spawn_column + 1), // [-][0][1][2] | [-][3][1][-] | [-][2][1][0] | [-][-][1][3]
                     (1 + BOARD_HEIGHT_BUFFER_U, spawn_column), // [-][-][3][-] | [-][-][2][-] | [-][-][-][-] | [-][-][0][-]
                 ];
             }
             Shapes::J => {
                 return [
-                    (BOARD_HEIGHT_BUFFER_U, spawn_column - 1), // [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
-                    (BOARD_HEIGHT_BUFFER_U, spawn_column), // [-][-][-][-] | [-][-][0][-] | [-][3][-][-] | [-][-][2][3]
-                    (BOARD_HEIGHT_BUFFER_U, spawn_column + 1), // [-][0][1][2] | [-][-][1][-] | [-][2][1][0] | [-][-][1][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column - 1), //     [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column), //         [-][-][-][-] | [-][-][0][-] | [-][3][-][-] | [-][-][2][3]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column + 1), //     [-][0][1][2] | [-][-][1][-] | [-][2][1][0] | [-][-][1][-]
                     (1 + BOARD_HEIGHT_BUFFER_U, spawn_column + 1), // [-][-][-][3] | [-][3][2][-] | [-][-][-][-] | [-][-][0][-]
                 ];
             }
             Shapes::L => {
                 return [
-                    (BOARD_HEIGHT_BUFFER_U, spawn_column - 1), // [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
-                    (BOARD_HEIGHT_BUFFER_U, spawn_column), // [-][-][-][-] | [-][3][0][-] | [-][-][-][3] | [-][-][2][-]
-                    (BOARD_HEIGHT_BUFFER_U, spawn_column + 1), // [-][0][1][2] | [-][-][1][-] | [-][2][1][0] | [-][-][1][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column - 1), //     [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column), //         [-][-][-][-] | [-][3][0][-] | [-][-][-][3] | [-][-][2][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column + 1), //     [-][0][1][2] | [-][-][1][-] | [-][2][1][0] | [-][-][1][-]
                     (1 + BOARD_HEIGHT_BUFFER_U, spawn_column - 1), // [-][3][-][-] | [-][-][2][-] | [-][-][-][-] | [-][-][0][3]
                 ];
             }
             Shapes::S => {
                 return [
-                    (BOARD_HEIGHT_BUFFER_U, spawn_column), // [-][-][-][-] | [-][-][-][-]
-                    (BOARD_HEIGHT_BUFFER_U, spawn_column + 1), // [-][-][-][-] | [-][-][1][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column), //         [-][-][-][-] | [-][-][-][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column + 1), //     [-][-][-][-] | [-][-][1][-]
                     (1 + BOARD_HEIGHT_BUFFER_U, spawn_column - 1), // [-][-][0][1] | [-][-][0][3]
-                    (1 + BOARD_HEIGHT_BUFFER_U, spawn_column), // [-][2][3][-] | [-][-][-][2]
+                    (1 + BOARD_HEIGHT_BUFFER_U, spawn_column), //     [-][2][3][-] | [-][-][-][2]
                 ];
             }
             Shapes::Z => {
                 return [
-                    (BOARD_HEIGHT_BUFFER_U, spawn_column - 1), // [-][-][-][-] | [-][-][-][-]
-                    (BOARD_HEIGHT_BUFFER_U, spawn_column),     // [-][-][-][-] | [-][-][-][3]
-                    (1 + BOARD_HEIGHT_BUFFER_U, spawn_column), // [-][0][1][-] | [-][-][1][2]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column - 1), //     [-][-][-][-] | [-][-][-][-]
+                    (BOARD_HEIGHT_BUFFER_U, spawn_column),     //     [-][-][-][-] | [-][-][-][3]
+                    (1 + BOARD_HEIGHT_BUFFER_U, spawn_column), //     [-][0][1][-] | [-][-][1][2]
                     (1 + BOARD_HEIGHT_BUFFER_U, spawn_column + 1), // [-][-][2][3] | [-][-][0][-]
                 ];
             }
