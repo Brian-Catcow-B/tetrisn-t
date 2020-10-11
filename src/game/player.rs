@@ -1,9 +1,9 @@
-use ggez::event::{KeyCode, Axis, Button};
-use rand::random;
-use crate::inputs::{Input, KeyboardControlScheme};
 use crate::game::piece::Shapes;
-use crate::game::{FORCE_FALL_DELAY, DAS_THRESHOLD_BIG, INITIAL_HANG_FRAMES};
+use crate::game::{DAS_THRESHOLD_BIG, FORCE_FALL_DELAY, INITIAL_HANG_FRAMES};
 use crate::game::{DETECT_GAMEPAD_AXIS_THRESHOLD, UNDETECT_GAMEPAD_AXIS_THRESHOLD};
+use crate::inputs::{Input, KeyboardControlScheme};
+use ggez::event::{Axis, Button, KeyCode};
+use rand::random;
 
 pub const SPAWN_DELAY: i16 = 20i16;
 
@@ -25,7 +25,11 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(player_num: u8, control_scheme: (Option<KeyboardControlScheme>, bool), spawn_column: u8) -> Self {
+    pub fn new(
+        player_num: u8,
+        control_scheme: (Option<KeyboardControlScheme>, bool),
+        spawn_column: u8,
+    ) -> Self {
         Self {
             player_num,
             control_scheme,
@@ -188,7 +192,10 @@ impl Player {
                 self.axis_wait_for_unpress_x = true;
                 self.input.keydown_right = (true, true);
                 self.input.keydown_left = (false, false);
-            } else if self.axis_wait_for_unpress_x && value < UNDETECT_GAMEPAD_AXIS_THRESHOLD && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD {
+            } else if self.axis_wait_for_unpress_x
+                && value < UNDETECT_GAMEPAD_AXIS_THRESHOLD
+                && value > -UNDETECT_GAMEPAD_AXIS_THRESHOLD
+            {
                 // unpress left and right
                 self.das_countdown = DAS_THRESHOLD_BIG;
                 self.waiting_to_shift = false;
