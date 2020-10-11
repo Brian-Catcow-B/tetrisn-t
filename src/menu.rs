@@ -1,6 +1,6 @@
-use ggez::Context;
 use ggez::event::KeyCode;
 use ggez::graphics::{self, Color};
+use ggez::Context;
 
 use crate::control::ProgramState;
 use crate::inputs::{Input, KeyboardControlScheme};
@@ -17,10 +17,10 @@ pub const LIGHT_GRAY: Color = Color::new(0.6, 0.6, 0.6, 1.0);
 pub const SELECT_GREEN: Color = Color::new(0.153, 0.839, 0.075, 1.0);
 pub const HELP_RED: Color = Color::new(0.9, 0.11, 0.11, 1.0);
 
-mod start;
 mod inputconfig;
-use start::StartMenu;
+mod start;
 use inputconfig::InputConfigMenu;
+use start::StartMenu;
 
 pub struct MenuGameOptions {
     pub num_players: u8,
@@ -32,19 +32,42 @@ impl MenuGameOptions {
     fn new(
         num_players: u8,
         starting_level: u8,
-        arr_split_controls: [(Option<(Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>, bool); MAX_NUM_PLAYERS as usize],
+        arr_split_controls: [(
+            Option<(
+                Option<KeyCode>,
+                Option<KeyCode>,
+                Option<KeyCode>,
+                Option<KeyCode>,
+                Option<KeyCode>,
+            )>,
+            bool,
+        ); MAX_NUM_PLAYERS as usize],
     ) -> Self {
-        let mut arr_controls: [(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize] = [(None, false); MAX_NUM_PLAYERS as usize];
+        let mut arr_controls: [(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize] =
+            [(None, false); MAX_NUM_PLAYERS as usize];
         for (idx, ctrls) in arr_split_controls.iter().enumerate() {
             if let Some(k_ctrls) = ctrls.0 {
-                arr_controls[idx] = (Some(KeyboardControlScheme::new(
-                    k_ctrls.0.expect("[!] attempted to create KeyboardControlScheme with Left == None"),
-                    k_ctrls.1.expect("[!] attempted to create KeyboardControlScheme with Right == None"),
-                    k_ctrls.2.expect("[!] attempted to create KeyboardControlScheme with Down == None"),
-                    k_ctrls.3.expect("[!] attempted to create KeyboardControlScheme with RotateCw == None"),
-                    k_ctrls.4.expect("[!] attempted to create KeyboardControlScheme with RotateCcw == None"),
-                    KeyCode::Escape,
-                )), false);
+                arr_controls[idx] = (
+                    Some(KeyboardControlScheme::new(
+                        k_ctrls.0.expect(
+                            "[!] attempted to create KeyboardControlScheme with Left == None",
+                        ),
+                        k_ctrls.1.expect(
+                            "[!] attempted to create KeyboardControlScheme with Right == None",
+                        ),
+                        k_ctrls.2.expect(
+                            "[!] attempted to create KeyboardControlScheme with Down == None",
+                        ),
+                        k_ctrls.3.expect(
+                            "[!] attempted to create KeyboardControlScheme with RotateCw == None",
+                        ),
+                        k_ctrls.4.expect(
+                            "[!] attempted to create KeyboardControlScheme with RotateCcw == None",
+                        ),
+                        KeyCode::Escape,
+                    )),
+                    false,
+                );
             } else if ctrls.1 {
                 arr_controls[idx] = (None, true);
             }
@@ -82,8 +105,15 @@ impl Menu {
             Self {
                 input: Input::new(),
                 state: MenuState::Start,
-                start_menu: StartMenu::new(window_dimensions, menu_game_options.num_players, menu_game_options.starting_level),
-                input_config_menu: InputConfigMenu::new(window_dimensions, menu_game_options.arr_controls),
+                start_menu: StartMenu::new(
+                    window_dimensions,
+                    menu_game_options.num_players,
+                    menu_game_options.starting_level,
+                ),
+                input_config_menu: InputConfigMenu::new(
+                    window_dimensions,
+                    menu_game_options.arr_controls,
+                ),
             }
         } else {
             // defaults
@@ -91,7 +121,10 @@ impl Menu {
                 input: Input::new(),
                 state: MenuState::Start,
                 start_menu: StartMenu::new(window_dimensions, 1, 0),
-                input_config_menu: InputConfigMenu::new(window_dimensions, [(None, false); MAX_NUM_PLAYERS as usize]),
+                input_config_menu: InputConfigMenu::new(
+                    window_dimensions,
+                    [(None, false); MAX_NUM_PLAYERS as usize],
+                ),
             }
         }
     }
@@ -102,7 +135,14 @@ impl Menu {
                 let ret_bools: (bool, bool) = self.start_menu.update(&self.input);
                 if ret_bools.0 {
                     if self.ensure_enough_controls() {
-                        return Some((ProgramState::Game, MenuGameOptions::new(self.start_menu.num_players, self.start_menu.starting_level, self.input_config_menu.arr_split_controls)));
+                        return Some((
+                            ProgramState::Game,
+                            MenuGameOptions::new(
+                                self.start_menu.num_players,
+                                self.start_menu.starting_level,
+                                self.input_config_menu.arr_split_controls,
+                            ),
+                        ));
                     } else {
                         self.start_menu.not_enough_controls_flag = true;
                     }

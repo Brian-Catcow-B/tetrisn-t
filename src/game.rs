@@ -1,8 +1,8 @@
-use ggez::Context;
-use ggez::event::{Button, Axis, GamepadId, KeyCode};
-use ggez::graphics::{self, DrawParam, spritebatch};
-use ggez::nalgebra::{Point2, Vector2};
+use ggez::event::{Axis, Button, GamepadId, KeyCode};
+use ggez::graphics::{self, spritebatch, DrawParam};
 use ggez::graphics::{Scale, Text, TextFragment};
+use ggez::nalgebra::{Point2, Vector2};
+use ggez::Context;
 
 use rand::random;
 
@@ -12,19 +12,18 @@ mod player;
 use crate::game::player::{Player, SPAWN_DELAY};
 
 mod tile;
-use crate::game::tile::NUM_PIXEL_ROWS_PER_TILEGRAPHIC;
 use crate::game::tile::TileGraphic;
+use crate::game::tile::NUM_PIXEL_ROWS_PER_TILEGRAPHIC;
 
 mod piece;
-use crate::game::piece::{Shapes, Movement, NextPiece};
+use crate::game::piece::{Movement, NextPiece, Shapes};
 
 mod board;
-use crate::game::board::BOARD_HEIGHT_BUFFER_U;
 use crate::game::board::Board;
+use crate::game::board::BOARD_HEIGHT_BUFFER_U;
 
 use crate::inputs::KeyboardControlScheme;
 use crate::menu::MenuGameOptions;
-
 
 const BOARD_HEIGHT: u8 = 20u8;
 
@@ -107,18 +106,22 @@ pub struct GameOptions {
 
 impl GameOptions {
     pub fn from(menu_game_options: &MenuGameOptions) -> Self {
-        let mut vec_controls: Vec<(Option<KeyboardControlScheme>, bool)> = Vec::with_capacity(menu_game_options.arr_controls.len());
+        let mut vec_controls: Vec<(Option<KeyboardControlScheme>, bool)> =
+            Vec::with_capacity(menu_game_options.arr_controls.len());
         let mut counted_active_controls: u8 = 0;
         for controls in menu_game_options.arr_controls.iter() {
             if let Some(ctrls) = controls.0 {
-                vec_controls.push((Some(KeyboardControlScheme::new(
-                    ctrls.left,
-                    ctrls.right,
-                    ctrls.down,
-                    ctrls.rotate_cw,
-                    ctrls.rotate_ccw,
-                    KeyCode::Escape,
-                )), false));
+                vec_controls.push((
+                    Some(KeyboardControlScheme::new(
+                        ctrls.left,
+                        ctrls.right,
+                        ctrls.down,
+                        ctrls.rotate_cw,
+                        ctrls.rotate_ccw,
+                        KeyCode::Escape,
+                    )),
+                    false,
+                ));
                 counted_active_controls += 1;
             } else if controls.1 {
                 vec_controls.push((None, true));
@@ -170,27 +173,51 @@ impl Game {
         // spawn columns
         // first half, not including middle player if there's an odd number of players
         for player in 0..(game_options.num_players) / 2 {
-            vec_players.push(Player::new(player, game_options.vec_controls[player as usize], (player as f32 * (board_width as f32 / game_options.num_players as f32) + board_width as f32 / (2.0 * game_options.num_players as f32)) as u8 + 1));
+            vec_players.push(Player::new(
+                player,
+                game_options.vec_controls[player as usize],
+                (player as f32 * (board_width as f32 / game_options.num_players as f32)
+                    + board_width as f32 / (2.0 * game_options.num_players as f32))
+                    as u8
+                    + 1,
+            ));
         }
         // middle player, for an odd number of players
         if game_options.num_players % 2 == 1 {
             let player = game_options.num_players / 2;
-            vec_players.push(Player::new(player, game_options.vec_controls[player as usize], board_width / 2));
+            vec_players.push(Player::new(
+                player,
+                game_options.vec_controls[player as usize],
+                board_width / 2,
+            ));
         }
         // second half, not including the middle player if there's an odd number of players
         for player in (game_options.num_players + 1) / 2..game_options.num_players {
-            vec_players.push(Player::new(player, game_options.vec_controls[player as usize], board_width - 1 - ((game_options.num_players - 1 - player) as f32 * (board_width as f32 / game_options.num_players as f32) + board_width as f32 / (2.0 * game_options.num_players as f32)) as u8));
+            vec_players.push(Player::new(
+                player,
+                game_options.vec_controls[player as usize],
+                board_width
+                    - 1
+                    - ((game_options.num_players - 1 - player) as f32
+                        * (board_width as f32 / game_options.num_players as f32)
+                        + board_width as f32 / (2.0 * game_options.num_players as f32))
+                        as u8,
+            ));
         }
         let mut batch_empty_tile = spritebatch::SpriteBatch::new(TileGraphic::new_empty(ctx).image);
         // the emtpy tile batch will be constant once the game starts with the player tile batches drawing on top of it, so just set that up here
         for x in 0..board_width {
             for y in 0..BOARD_HEIGHT as usize {
                 // empty tiles
-                let empty_tile = graphics::DrawParam::new().dest(Point2::new(x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
+                let empty_tile = graphics::DrawParam::new().dest(Point2::new(
+                    x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                    y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                ));
                 batch_empty_tile.add(empty_tile);
             }
         }
-        let mut vec_next_piece: Vec<NextPiece> = Vec::with_capacity(game_options.num_players as usize);
+        let mut vec_next_piece: Vec<NextPiece> =
+            Vec::with_capacity(game_options.num_players as usize);
         let mut vec_gamepad_id_map_to_player: Vec<(Option<GamepadId>, u8)>;
         let mut temp_vec: Vec<(Option<GamepadId>, u8)> = vec![];
         let mut num_gamepads_to_initialize: u8 = 0;
@@ -206,23 +233,64 @@ impl Game {
         } else {
             vec_gamepad_id_map_to_player = Vec::with_capacity(1);
         }
-        let mut vec_batch_player_piece: Vec<spritebatch::SpriteBatch> = Vec::with_capacity(game_options.num_players as usize);
-        let mut vec_batch_next_piece: Vec<spritebatch::SpriteBatch> = Vec::with_capacity(game_options.num_players as usize);
+        let mut vec_batch_player_piece: Vec<spritebatch::SpriteBatch> =
+            Vec::with_capacity(game_options.num_players as usize);
+        let mut vec_batch_next_piece: Vec<spritebatch::SpriteBatch> =
+            Vec::with_capacity(game_options.num_players as usize);
         for player in 0..game_options.num_players {
             vec_next_piece.push(NextPiece::new(Shapes::None));
-            vec_batch_player_piece.push(spritebatch::SpriteBatch::new(TileGraphic::new_player(ctx, player).image));
-            vec_batch_next_piece.push(spritebatch::SpriteBatch::new(TileGraphic::new_player(ctx, player).image));
+            vec_batch_player_piece.push(spritebatch::SpriteBatch::new(
+                TileGraphic::new_player(ctx, player).image,
+            ));
+            vec_batch_next_piece.push(spritebatch::SpriteBatch::new(
+                TileGraphic::new_player(ctx, player).image,
+            ));
         }
-        let mut game_info_text = Text::new(TextFragment::new("Lines: ").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
-        game_info_text.add(TextFragment::new("000").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
-        game_info_text.add(TextFragment::new("   Score: ").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
-        game_info_text.add(TextFragment::new("0000000").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
-        game_info_text.add(TextFragment::new("   Level: ").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
-        game_info_text.add(TextFragment::new(format!("{:02}", game_options.starting_level)).color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
-        let pause_text = Text::new(TextFragment::new("PAUSED\n\nDown + RotateCw + RotateCcw + ESC/Start to quit").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE)));
-        let game_over_text = Text::new(TextFragment::new("Game Over!").color(graphics::WHITE).scale(Scale::uniform(LITTLE_TEXT_SCALE * 2.0)));
+        let mut game_info_text = Text::new(
+            TextFragment::new("Lines: ")
+                .color(graphics::WHITE)
+                .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
+        );
+        game_info_text.add(
+            TextFragment::new("000")
+                .color(graphics::WHITE)
+                .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
+        );
+        game_info_text.add(
+            TextFragment::new("   Score: ")
+                .color(graphics::WHITE)
+                .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
+        );
+        game_info_text.add(
+            TextFragment::new("0000000")
+                .color(graphics::WHITE)
+                .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
+        );
+        game_info_text.add(
+            TextFragment::new("   Level: ")
+                .color(graphics::WHITE)
+                .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
+        );
+        game_info_text.add(
+            TextFragment::new(format!("{:02}", game_options.starting_level))
+                .color(graphics::WHITE)
+                .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
+        );
+        let pause_text = Text::new(
+            TextFragment::new("PAUSED\n\nDown + RotateCw + RotateCcw + ESC/Start to quit")
+                .color(graphics::WHITE)
+                .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
+        );
+        let game_over_text = Text::new(
+            TextFragment::new("Game Over!")
+                .color(graphics::WHITE)
+                .scale(Scale::uniform(LITTLE_TEXT_SCALE * 2.0)),
+        );
 
-        println!("[+] starting game with {} players and at level {}", game_options.num_players, game_options.starting_level);
+        println!(
+            "[+] starting game with {} players and at level {}",
+            game_options.num_players, game_options.starting_level
+        );
         Self {
             board: Board::new(board_width, BOARD_HEIGHT, game_options.num_players),
             num_players: game_options.num_players,
@@ -273,9 +341,9 @@ impl Game {
                 for player in &mut self.vec_players {
                     // should we quit to main menu?
                     if player.input.keydown_down.0
-                    && player.input.keydown_rotate_ccw.0
-                    && player.input.keydown_rotate_cw.0
-                    && player.input.keydown_start.1
+                        && player.input.keydown_rotate_ccw.0
+                        && player.input.keydown_rotate_cw.0
+                        && player.input.keydown_start.1
                     {
                         return ProgramState::Menu;
                     }
@@ -289,7 +357,9 @@ impl Game {
         } else {
             // GAME LOGIC
             for player in &mut self.vec_players {
-                if !player.spawn_piece_flag && self.board.vec_active_piece[player.player_num as usize].shape == Shapes::None {
+                if !player.spawn_piece_flag
+                    && self.board.vec_active_piece[player.player_num as usize].shape == Shapes::None
+                {
                     player.input.was_just_pressed_setfalse();
                     continue;
                 }
@@ -298,7 +368,11 @@ impl Game {
                 if player.spawn_piece_flag {
                     if player.spawn_delay <= 0 {
                         // (blocked, blocked by some !active tile); if .1, game over sequence, if .0 and !.1, only blocked by other players, wait until they move, then carry on
-                        let blocked: (bool, bool) = self.board.attempt_piece_spawn(player.player_num, player.spawn_column, player.next_piece_shape);
+                        let blocked: (bool, bool) = self.board.attempt_piece_spawn(
+                            player.player_num,
+                            player.spawn_column,
+                            player.next_piece_shape,
+                        );
                         if blocked.0 {
                             if blocked.1 {
                                 self.game_over_flag = true;
@@ -321,7 +395,9 @@ impl Game {
                                 }
                             }
                             let random_shape = Shapes::from_u8(rand % 7);
-                            if self.board.vec_active_piece[player.player_num as usize].shape != random_shape {
+                            if self.board.vec_active_piece[player.player_num as usize].shape
+                                != random_shape
+                            {
                                 player.next_piece_shape = random_shape;
                             } else {
                                 let mut rand: u8;
@@ -333,7 +409,8 @@ impl Game {
                                 }
                                 player.next_piece_shape = Shapes::from_u8(rand % 7);
                             }
-                            self.vec_next_piece[player.player_num as usize] = NextPiece::new(player.next_piece_shape);
+                            self.vec_next_piece[player.player_num as usize] =
+                                NextPiece::new(player.next_piece_shape);
                             player.redraw_next_piece_flag = true;
                         }
                     } else {
@@ -346,12 +423,18 @@ impl Game {
                 // LEFT / RIGHT
                 if player.input.keydown_left.1 {
                     // if it didn't move on the initial input, set waiting_to_shift to true
-                    player.waiting_to_shift = !self.board.attempt_piece_movement(Movement::Left, player.player_num).0;
+                    player.waiting_to_shift = !self
+                        .board
+                        .attempt_piece_movement(Movement::Left, player.player_num)
+                        .0;
                     player.das_countdown = DAS_THRESHOLD_BIG;
                 }
                 if player.input.keydown_right.1 {
                     // if it didn't move on the initial input, set waiting_to_shift to true
-                    player.waiting_to_shift = !self.board.attempt_piece_movement(Movement::Right, player.player_num).0;
+                    player.waiting_to_shift = !self
+                        .board
+                        .attempt_piece_movement(Movement::Right, player.player_num)
+                        .0;
                     player.das_countdown = DAS_THRESHOLD_BIG;
                 }
                 if player.input.keydown_left.0 && !player.input.keydown_left.1 {
@@ -359,8 +442,13 @@ impl Game {
                         player.das_countdown -= 1;
                     }
                     if player.das_countdown == 0 || player.waiting_to_shift {
-                        if self.board.attempt_piece_movement(Movement::Left, player.player_num).0 {
-                            player.das_countdown = std::cmp::max(DAS_THRESHOLD_LITTLE, player.das_countdown);
+                        if self
+                            .board
+                            .attempt_piece_movement(Movement::Left, player.player_num)
+                            .0
+                        {
+                            player.das_countdown =
+                                std::cmp::max(DAS_THRESHOLD_LITTLE, player.das_countdown);
                             player.waiting_to_shift = false;
                         } else {
                             player.waiting_to_shift = true;
@@ -372,8 +460,13 @@ impl Game {
                         player.das_countdown -= 1;
                     }
                     if player.das_countdown == 0 || player.waiting_to_shift {
-                        if self.board.attempt_piece_movement(Movement::Right, player.player_num).0 {
-                            player.das_countdown = std::cmp::max(DAS_THRESHOLD_LITTLE, player.das_countdown);
+                        if self
+                            .board
+                            .attempt_piece_movement(Movement::Right, player.player_num)
+                            .0
+                        {
+                            player.das_countdown =
+                                std::cmp::max(DAS_THRESHOLD_LITTLE, player.das_countdown);
                             player.waiting_to_shift = false;
                         } else {
                             player.waiting_to_shift = true;
@@ -382,19 +475,31 @@ impl Game {
                 }
                 // CW / CCW
                 if player.input.keydown_rotate_cw.1 {
-                    self.board.attempt_piece_movement(Movement::RotateCw, player.player_num);
+                    self.board
+                        .attempt_piece_movement(Movement::RotateCw, player.player_num);
                 }
                 if player.input.keydown_rotate_ccw.1 {
-                    self.board.attempt_piece_movement(Movement::RotateCcw, player.player_num);
+                    self.board
+                        .attempt_piece_movement(Movement::RotateCcw, player.player_num);
                 }
                 // DOWN
                 // down is interesting because every time the downwards position is false we have to check if it's running into the bottom or an inactive tile so we know if we should lock it
-                if player.input.keydown_down.1 || (player.input.keydown_down.0 && player.force_fall_countdown == 0) || player.fall_countdown == 0 {
-                    let (moved_flag, caused_full_line_flag): (bool, bool) = self.board.attempt_piece_movement(Movement::Down, player.player_num);
+                if player.input.keydown_down.1
+                    || (player.input.keydown_down.0 && player.force_fall_countdown == 0)
+                    || player.fall_countdown == 0
+                {
+                    let (moved_flag, caused_full_line_flag): (bool, bool) = self
+                        .board
+                        .attempt_piece_movement(Movement::Down, player.player_num);
                     // if the piece got locked, piece.shape gets set to Shapes::None, so set the spawn piece flag
-                    if self.board.vec_active_piece[player.player_num as usize].shape == Shapes::None {
+                    if self.board.vec_active_piece[player.player_num as usize].shape == Shapes::None
+                    {
                         player.spawn_piece_flag = true;
-                        player.fall_countdown = if self.level < 30 {FALL_DELAY_VALUES[self.level as usize]} else {1 - 1};
+                        player.fall_countdown = if self.level < 30 {
+                            FALL_DELAY_VALUES[self.level as usize]
+                        } else {
+                            1 - 1
+                        };
                         player.force_fall_countdown = FORCE_FALL_DELAY;
                         // add more spawn delay if locking the piece caused a line clear
                         if caused_full_line_flag {
@@ -402,7 +507,11 @@ impl Game {
                         }
                     }
                     if moved_flag {
-                        player.fall_countdown = if self.level < 30 {FALL_DELAY_VALUES[self.level as usize]} else {1 - 1};
+                        player.fall_countdown = if self.level < 30 {
+                            FALL_DELAY_VALUES[self.level as usize]
+                        } else {
+                            1 - 1
+                        };
                         player.force_fall_countdown = FORCE_FALL_DELAY;
                     }
                 } else if player.input.keydown_down.0 {
@@ -425,7 +534,8 @@ impl Game {
             let (returned_lines, returned_score) = self.board.attempt_clear_lines(self.level);
             if returned_lines > 0 {
                 self.num_cleared_lines += returned_lines as u16;
-                self.game_info_text.fragments_mut()[1].text = format!("{:03}", self.num_cleared_lines);
+                self.game_info_text.fragments_mut()[1].text =
+                    format!("{:03}", self.num_cleared_lines);
                 self.score += returned_score as u64;
                 self.game_info_text.fragments_mut()[3].text = format!("{:07}", self.score);
                 let first_level_up_lines_amount: u16 = (self.starting_level as u16 + 1) * 10;
@@ -434,22 +544,25 @@ impl Game {
                     if self.num_cleared_lines >= first_level_up_lines_amount {
                         self.level += 1;
                     }
-                } else if self.num_cleared_lines >= first_level_up_lines_amount + (self.level as u16 - self.starting_level as u16) * not_first_level_up_lines_amount {
+                } else if self.num_cleared_lines
+                    >= first_level_up_lines_amount
+                        + (self.level as u16 - self.starting_level as u16)
+                            * not_first_level_up_lines_amount
+                {
                     self.level += 1;
                 }
                 self.game_info_text.fragments_mut()[5].text = format!("{:02}", self.level);
-                println!("[+] lines: {}; score: {}", self.num_cleared_lines, self.score);
+                println!(
+                    "[+] lines: {}; score: {}",
+                    self.num_cleared_lines, self.score
+                );
             }
         }
 
         ProgramState::Game
     }
 
-    pub fn key_down_event(
-        &mut self,
-        keycode: KeyCode,
-        repeat: bool,
-    ) {
+    pub fn key_down_event(&mut self, keycode: KeyCode, repeat: bool) {
         if !repeat {
             for player in &mut self.vec_players {
                 if player.update_input_keydown(keycode) {
@@ -459,10 +572,7 @@ impl Game {
         }
     }
 
-    pub fn key_up_event(
-        &mut self,
-        keycode: KeyCode,
-    ) {
+    pub fn key_up_event(&mut self, keycode: KeyCode) {
         for player in &mut self.vec_players {
             if player.update_input_keyup(keycode) {
                 return;
@@ -482,7 +592,9 @@ impl Game {
                 if None == map.0 {
                     map.0 = Some(id);
                     self.vec_players[map.1 as usize].update_input_buttondown(btn);
-                    if self.vec_gamepad_id_map_to_player.len() == self.vec_gamepad_id_map_to_player.capacity() {
+                    if self.vec_gamepad_id_map_to_player.len()
+                        == self.vec_gamepad_id_map_to_player.capacity()
+                    {
                         self.num_gamepads_to_initialize -= 1;
                     }
                     return;
@@ -503,7 +615,9 @@ impl Game {
                 if None == map.0 {
                     map.0 = Some(id);
                     self.vec_players[map.1 as usize].update_input_buttonup(btn);
-                    if self.vec_gamepad_id_map_to_player.len() == self.vec_gamepad_id_map_to_player.capacity() {
+                    if self.vec_gamepad_id_map_to_player.len()
+                        == self.vec_gamepad_id_map_to_player.capacity()
+                    {
                         self.num_gamepads_to_initialize -= 1;
                     }
                     return;
@@ -519,12 +633,16 @@ impl Game {
                 return;
             }
         }
-        if self.num_gamepads_to_initialize > 0 && (value > DETECT_GAMEPAD_AXIS_THRESHOLD || value < -DETECT_GAMEPAD_AXIS_THRESHOLD) {
+        if self.num_gamepads_to_initialize > 0
+            && (value > DETECT_GAMEPAD_AXIS_THRESHOLD || value < -DETECT_GAMEPAD_AXIS_THRESHOLD)
+        {
             for map in self.vec_gamepad_id_map_to_player.iter_mut() {
                 if None == map.0 {
                     map.0 = Some(id);
                     self.vec_players[map.1 as usize].update_input_axis(axis, value);
-                    if self.vec_gamepad_id_map_to_player.len() == self.vec_gamepad_id_map_to_player.capacity() {
+                    if self.vec_gamepad_id_map_to_player.len()
+                        == self.vec_gamepad_id_map_to_player.capacity()
+                    {
                         self.num_gamepads_to_initialize -= 1;
                     }
                     return;
@@ -540,11 +658,25 @@ impl Game {
     pub fn draw(&mut self, ctx: &mut Context) {
         graphics::clear(ctx, graphics::BLACK);
         let (window_width, window_height) = graphics::size(ctx);
-        self.tile_size = TileGraphic::get_size(ctx, self.board.width, self.board.height + NON_BOARD_SPACE_U + NON_BOARD_SPACE_D);
+        self.tile_size = TileGraphic::get_size(
+            ctx,
+            self.board.width,
+            self.board.height + NON_BOARD_SPACE_U + NON_BOARD_SPACE_D,
+        );
         if self.game_over_flag && self.game_over_delay == 0 {
             // DRAW GAME OVER
-            self.draw_text(ctx, &self.game_over_text, 0.4, &(window_width, window_height));
-            self.draw_text(ctx, &self.game_info_text, 0.55, &(window_width, window_height));
+            self.draw_text(
+                ctx,
+                &self.game_over_text,
+                0.4,
+                &(window_width, window_height),
+            );
+            self.draw_text(
+                ctx,
+                &self.game_info_text,
+                0.55,
+                &(window_width, window_height),
+            );
         } else if self.pause_flag.0 {
             // DRAW PAUSE
             self.draw_text(ctx, &self.pause_text, 0.4, &(window_width, window_height));
@@ -554,8 +686,13 @@ impl Game {
             for x in 0..self.board.width {
                 for y in 0..self.board.height {
                     if !self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].empty {
-                        let player = self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].player;
-                        let player_tile = graphics::DrawParam::new().dest(Point2::new(x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
+                        let player = self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize]
+                            [x as usize]
+                            .player;
+                        let player_tile = graphics::DrawParam::new().dest(Point2::new(
+                            x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                            y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                        ));
                         self.vec_batch_player_piece[player as usize].add(player_tile);
                     }
                 }
@@ -569,8 +706,12 @@ impl Game {
                     for x in 0..4 {
                         for y in 0..2 {
                             if self.vec_next_piece[player.player_num as usize].matrix[y][x] {
-                                let next_tile = graphics::DrawParam::new().dest(Point2::new(x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32));
-                                self.vec_batch_next_piece[player.player_num as usize].add(next_tile);
+                                let next_tile = graphics::DrawParam::new().dest(Point2::new(
+                                    x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                    y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                ));
+                                self.vec_batch_next_piece[player.player_num as usize]
+                                    .add(next_tile);
                             }
                         }
                     }
@@ -580,25 +721,61 @@ impl Game {
             let scaled_tile_size = self.tile_size / TILE_SIZE_DOWN_SCALE;
 
             // draw each SpriteBatch
-            let board_top_left_corner = window_width / 2.0 - (scaled_tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * self.board.width as f32 / 2.0);
+            let board_top_left_corner = window_width / 2.0
+                - (scaled_tile_size
+                    * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32
+                    * self.board.width as f32
+                    / 2.0);
             // empty tiles
-            graphics::draw(ctx, &self.batch_empty_tile, DrawParam::new()
-                .dest(Point2::new(board_top_left_corner, NON_BOARD_SPACE_U as f32 * self.tile_size))
-                .scale(Vector2::new(scaled_tile_size, scaled_tile_size))).unwrap();
+            graphics::draw(
+                ctx,
+                &self.batch_empty_tile,
+                DrawParam::new()
+                    .dest(Point2::new(
+                        board_top_left_corner,
+                        NON_BOARD_SPACE_U as f32 * self.tile_size,
+                    ))
+                    .scale(Vector2::new(scaled_tile_size, scaled_tile_size)),
+            )
+            .unwrap();
             // player tiles
             for player in 0..self.num_players {
-                graphics::draw(ctx, &self.vec_batch_player_piece[player as usize], DrawParam::new()
-                    .dest(Point2::new(board_top_left_corner, NON_BOARD_SPACE_U as f32 * self.tile_size))
-                    .scale(Vector2::new(scaled_tile_size, scaled_tile_size))).unwrap();
+                graphics::draw(
+                    ctx,
+                    &self.vec_batch_player_piece[player as usize],
+                    DrawParam::new()
+                        .dest(Point2::new(
+                            board_top_left_corner,
+                            NON_BOARD_SPACE_U as f32 * self.tile_size,
+                        ))
+                        .scale(Vector2::new(scaled_tile_size, scaled_tile_size)),
+                )
+                .unwrap();
             }
             // next piece tiles
             for player in self.vec_players.iter() {
-                graphics::draw(ctx, &self.vec_batch_next_piece[player.player_num as usize], DrawParam::new()
-                    .dest(Point2::new(board_top_left_corner + (player.spawn_column - 2) as f32 * scaled_tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32, (NON_BOARD_SPACE_U - BOARD_NEXT_PIECE_SPACING) as f32 * self.tile_size))
-                    .scale(Vector2::new(scaled_tile_size, scaled_tile_size))).unwrap();
+                graphics::draw(
+                    ctx,
+                    &self.vec_batch_next_piece[player.player_num as usize],
+                    DrawParam::new()
+                        .dest(Point2::new(
+                            board_top_left_corner
+                                + (player.spawn_column - 2) as f32
+                                    * scaled_tile_size
+                                    * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                            (NON_BOARD_SPACE_U - BOARD_NEXT_PIECE_SPACING) as f32 * self.tile_size,
+                        ))
+                        .scale(Vector2::new(scaled_tile_size, scaled_tile_size)),
+                )
+                .unwrap();
             }
             // score text; TODO: perhaps make a separate function for something based on the bottom, or just figure out how to do this better so we don't divide out by the window_height
-            self.draw_text(ctx, &self.game_info_text, 1.0 - ((NON_BOARD_SPACE_D as f32 * self.tile_size) / window_height), &(window_width, window_height));
+            self.draw_text(
+                ctx,
+                &self.game_info_text,
+                1.0 - ((NON_BOARD_SPACE_D as f32 * self.tile_size) / window_height),
+                &(window_width, window_height),
+            );
 
             // clear player sprite batches
             for player in 0..self.num_players {
@@ -607,11 +784,23 @@ impl Game {
         }
     }
 
-    fn draw_text(&self, ctx: &mut Context, text_var: &Text, vertical_position: f32, window_dimensions: &(f32, f32)) {
+    fn draw_text(
+        &self,
+        ctx: &mut Context,
+        text_var: &Text,
+        vertical_position: f32,
+        window_dimensions: &(f32, f32),
+    ) {
         let (text_width, text_height) = text_var.dimensions(ctx);
-        graphics::draw(ctx, text_var, DrawParam::new()
-        .dest(Point2::new((window_dimensions.0 - text_width as f32) / 2.0, (window_dimensions.1 - text_height as f32) * vertical_position))
-        ).unwrap();
+        graphics::draw(
+            ctx,
+            text_var,
+            DrawParam::new().dest(Point2::new(
+                (window_dimensions.0 - text_width as f32) / 2.0,
+                (window_dimensions.1 - text_height as f32) * vertical_position,
+            )),
+        )
+        .unwrap();
     }
 
     pub fn focus_event(&mut self, gained: bool) {

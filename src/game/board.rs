@@ -1,6 +1,8 @@
+use crate::game::piece::{Movement, Piece, Shapes};
 use crate::game::tile::Tile;
-use crate::game::piece::{Piece, Shapes, Movement};
-use crate::game::{CLEAR_DELAY, SCORE_SINGLE_BASE, SCORE_DOUBLE_BASE, SCORE_TRIPLE_BASE, SCORE_QUADRUPLE_BASE};
+use crate::game::{
+    CLEAR_DELAY, SCORE_DOUBLE_BASE, SCORE_QUADRUPLE_BASE, SCORE_SINGLE_BASE, SCORE_TRIPLE_BASE,
+};
 
 // this constant is for the two unseen columns above the board so that when an I piece is rotated
 // right after spawning, the two tiles that go above the board are kept track of
@@ -27,14 +29,21 @@ impl Board {
         Self {
             width: board_width,
             height: board_height,
-            matrix: vec![vec![Tile::new_empty(); board_width as usize]; (board_height + BOARD_HEIGHT_BUFFER_U) as usize],
+            matrix: vec![
+                vec![Tile::new_empty(); board_width as usize];
+                (board_height + BOARD_HEIGHT_BUFFER_U) as usize
+            ],
             vec_active_piece,
             vec_full_lines: vec![],
         }
     }
 
     fn emptify_piece(&mut self, player: u8) {
-        for position in self.vec_active_piece[player as usize].positions.iter().take(4) {
+        for position in self.vec_active_piece[player as usize]
+            .positions
+            .iter()
+            .take(4)
+        {
             if position != &(0xffu8, 0xffu8) {
                 self.matrix[position.0 as usize][position.1 as usize] = Tile::new_empty();
             } else {
@@ -44,9 +53,14 @@ impl Board {
     }
 
     pub fn playerify_piece(&mut self, player: u8) {
-        for position in self.vec_active_piece[player as usize].positions.iter().take(4) {
+        for position in self.vec_active_piece[player as usize]
+            .positions
+            .iter()
+            .take(4)
+        {
             if position != &(0xffu8, 0xffu8) {
-                self.matrix[position.0 as usize][position.1 as usize] = Tile::new(false, true, player);
+                self.matrix[position.0 as usize][position.1 as usize] =
+                    Tile::new(false, true, player);
             } else {
                 println!("[!] tried to playerify piece that contained position (0xffu8, 0xffu8)");
             }
@@ -54,7 +68,12 @@ impl Board {
     }
 
     // returns (bool, bool) based on (blocked, blocked by some !active tile)
-    pub fn attempt_piece_spawn(&mut self, player: u8, spawn_col: u8, spawn_piece_shape: Shapes) -> (bool, bool) {
+    pub fn attempt_piece_spawn(
+        &mut self,
+        player: u8,
+        spawn_col: u8,
+        spawn_piece_shape: Shapes,
+    ) -> (bool, bool) {
         let new_piece = Piece::new(spawn_piece_shape);
         let spawn_positions = new_piece.spawn_pos(spawn_col);
         let mut blocked_flag: bool = false;
@@ -93,7 +112,8 @@ impl Board {
             // make sure the position is empty or is part of the piece being moved
             if !self.matrix[position.0 as usize][position.1 as usize].empty
                 && !(self.matrix[position.0 as usize][position.1 as usize].active
-                && self.matrix[position.0 as usize][position.1 as usize].player == player) {
+                    && self.matrix[position.0 as usize][position.1 as usize].player == player)
+            {
                 cant_move_flag = true;
                 break;
             }
@@ -127,22 +147,34 @@ impl Board {
 
         // update self.piece.rotation if it was a rotate
         if movement == Movement::RotateCw {
-            self.vec_active_piece[player as usize].rotation = (self.vec_active_piece[player as usize].rotation + 1) % self.vec_active_piece[player as usize].num_rotations;
+            self.vec_active_piece[player as usize].rotation =
+                (self.vec_active_piece[player as usize].rotation + 1)
+                    % self.vec_active_piece[player as usize].num_rotations;
         }
         if movement == Movement::RotateCcw {
-            self.vec_active_piece[player as usize].rotation = (self.vec_active_piece[player as usize].rotation + self.vec_active_piece[player as usize].num_rotations - 1) % self.vec_active_piece[player as usize].num_rotations;
+            self.vec_active_piece[player as usize].rotation =
+                (self.vec_active_piece[player as usize].rotation
+                    + self.vec_active_piece[player as usize].num_rotations
+                    - 1)
+                    % self.vec_active_piece[player as usize].num_rotations;
         }
 
         (true, false)
     }
 
     fn should_lock(&self, player: u8) -> bool {
-        for position in self.vec_active_piece[player as usize].positions.iter().take(4) {
+        for position in self.vec_active_piece[player as usize]
+            .positions
+            .iter()
+            .take(4)
+        {
             // we just want to know if moving down by 1 will run the piece into the bottom of the board or an inactive tile
             if position.0 as usize + 1 >= (self.height + BOARD_HEIGHT_BUFFER_U) as usize {
                 return true;
             }
-            if !self.matrix[position.0 as usize + 1][position.1 as usize].active && !self.matrix[position.0 as usize + 1][position.1 as usize].empty {
+            if !self.matrix[position.0 as usize + 1][position.1 as usize].active
+                && !self.matrix[position.0 as usize + 1][position.1 as usize].empty
+            {
                 return true;
             }
         }
@@ -152,18 +184,34 @@ impl Board {
 
     // returns y position(s) of the locked piece to test if it filled a line
     fn lock_piece(&mut self, player: u8) -> Vec<u8> {
-        for position in self.vec_active_piece[player as usize].positions.iter().take(4) {
+        for position in self.vec_active_piece[player as usize]
+            .positions
+            .iter()
+            .take(4)
+        {
             self.matrix[position.0 as usize][position.1 as usize] = Tile::new(false, false, player);
         }
 
         let mut y_vals: Vec<u8> = vec![self.vec_active_piece[player as usize].positions[0].0];
-        if self.vec_active_piece[player as usize].positions[1].0 != self.vec_active_piece[player as usize].positions[0].0 {
+        if self.vec_active_piece[player as usize].positions[1].0
+            != self.vec_active_piece[player as usize].positions[0].0
+        {
             y_vals.push(self.vec_active_piece[player as usize].positions[1].0);
         }
-        if self.vec_active_piece[player as usize].positions[2].0 != self.vec_active_piece[player as usize].positions[1].0 && self.vec_active_piece[player as usize].positions[2].0 != self.vec_active_piece[player as usize].positions[0].0 {
+        if self.vec_active_piece[player as usize].positions[2].0
+            != self.vec_active_piece[player as usize].positions[1].0
+            && self.vec_active_piece[player as usize].positions[2].0
+                != self.vec_active_piece[player as usize].positions[0].0
+        {
             y_vals.push(self.vec_active_piece[player as usize].positions[2].0);
         }
-        if self.vec_active_piece[player as usize].positions[3].0 != self.vec_active_piece[player as usize].positions[2].0 && self.vec_active_piece[player as usize].positions[3].0 != self.vec_active_piece[player as usize].positions[1].0 && self.vec_active_piece[player as usize].positions[3].0 != self.vec_active_piece[player as usize].positions[0].0 {
+        if self.vec_active_piece[player as usize].positions[3].0
+            != self.vec_active_piece[player as usize].positions[2].0
+            && self.vec_active_piece[player as usize].positions[3].0
+                != self.vec_active_piece[player as usize].positions[1].0
+            && self.vec_active_piece[player as usize].positions[3].0
+                != self.vec_active_piece[player as usize].positions[0].0
+        {
             y_vals.push(self.vec_active_piece[player as usize].positions[3].0);
         }
 
@@ -220,11 +268,16 @@ impl Board {
         let mut checked_lines_for_scoring = 0;
         while checked_lines_for_scoring < lines_cleared {
             // find player number in question
-            let player_num = self.vec_full_lines[vec_clearing_now_indices[checked_lines_for_scoring]].player;
+            let player_num =
+                self.vec_full_lines[vec_clearing_now_indices[checked_lines_for_scoring]].player;
             let mut lines_player_cleared = 1;
             // go through and determine how many lines this player cleared this time
             while checked_lines_for_scoring + lines_player_cleared < lines_cleared {
-                if self.vec_full_lines[vec_clearing_now_indices[checked_lines_for_scoring + lines_player_cleared]].player == player_num {
+                if self.vec_full_lines
+                    [vec_clearing_now_indices[checked_lines_for_scoring + lines_player_cleared]]
+                    .player
+                    == player_num
+                {
                     lines_player_cleared += 1;
                 } else {
                     break;
@@ -239,7 +292,7 @@ impl Board {
                 _ => {
                     println!("[!] player was attributed a number of lines too large maybe, what the heck? lines_player_cleared: {}", lines_player_cleared);
                     0u32
-                },
+                }
             };
         }
 
@@ -258,15 +311,20 @@ impl Board {
         // from whatever index we are trying to access, since each index beyond what we removed will be incremented
         let mut indices_destroyed = 0;
         for index in &vec_clearing_now_indices {
-            self.matrix.remove(self.vec_full_lines[index - indices_destroyed].row as usize);
-            self.matrix.insert(0, vec![Tile::new_empty(); self.width as usize]);
+            self.matrix
+                .remove(self.vec_full_lines[index - indices_destroyed].row as usize);
+            self.matrix
+                .insert(0, vec![Tile::new_empty(); self.width as usize]);
             self.vec_full_lines.remove(index - indices_destroyed);
             indices_destroyed += 1;
             // now is when we step backwards through the self.vec_full_lines vector,
             // incrementing the row value of each element so when it gets cleared it lines up correctly
             let mut inc_row_backwards_index = 0;
             // help this feels like magic
-            while *index as isize - indices_destroyed as isize >= 0 && *index as isize - indices_destroyed as isize - inc_row_backwards_index as isize >= 0 {
+            while *index as isize - indices_destroyed as isize >= 0
+                && *index as isize - indices_destroyed as isize - inc_row_backwards_index as isize
+                    >= 0
+            {
                 self.vec_full_lines[*index - indices_destroyed - inc_row_backwards_index].row += 1;
                 inc_row_backwards_index += 1;
             }
@@ -279,7 +337,10 @@ impl Board {
             }
         }
 
-        println!("[+] cleared {} lines, scored {} points", lines_cleared, score);
+        println!(
+            "[+] cleared {} lines, scored {} points",
+            lines_cleared, score
+        );
         (lines_cleared as u8, score)
     }
 }
@@ -323,7 +384,9 @@ mod tests {
         let mut board = Board::new(board_width, board_height, num_players);
 
         for x in 0..4 {
-            for y in (board_height + BOARD_HEIGHT_BUFFER_U - 8)..board_height + BOARD_HEIGHT_BUFFER_U {
+            for y in
+                (board_height + BOARD_HEIGHT_BUFFER_U - 8)..board_height + BOARD_HEIGHT_BUFFER_U
+            {
                 board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8);
             }
         }
@@ -353,7 +416,10 @@ mod tests {
             }
         }
 
-        assert_eq!((num_cleared_lines, score), (8, (2 * SCORE_QUADRUPLE_BASE as u32 * (1)) as u64));
+        assert_eq!(
+            (num_cleared_lines, score),
+            (8, (2 * SCORE_QUADRUPLE_BASE as u32 * (1)) as u64)
+        );
         println!("Passed scoring 2 tetrises on the same frame");
 
         // now try with some L's because that can break it
@@ -361,7 +427,9 @@ mod tests {
         let mut num_cleared_lines: u16 = 0;
 
         for x in 0..board_width - 2 {
-            for y in (board_height + BOARD_HEIGHT_BUFFER_U - 4)..board_height + BOARD_HEIGHT_BUFFER_U {
+            for y in
+                (board_height + BOARD_HEIGHT_BUFFER_U - 4)..board_height + BOARD_HEIGHT_BUFFER_U
+            {
                 board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8);
             }
         }
@@ -397,7 +465,13 @@ mod tests {
             }
         }
 
-        assert_eq!((num_cleared_lines, score), (4, (1 * SCORE_SINGLE_BASE as u32 * (1) + 1 * SCORE_TRIPLE_BASE as u32 * (1)) as u64));
+        assert_eq!(
+            (num_cleared_lines, score),
+            (
+                4,
+                (1 * SCORE_SINGLE_BASE as u32 * (1) + 1 * SCORE_TRIPLE_BASE as u32 * (1)) as u64
+            )
+        );
         println!("Passed scoring a single as one player and then a triple as another player one frame after");
 
         // now clear 2 tetrises, the second one 1 frame after the other, which can also break things
@@ -405,7 +479,9 @@ mod tests {
         let mut num_cleared_lines: u16 = 0;
 
         for x in 0..board_width - 1 {
-            for y in (board_height + BOARD_HEIGHT_BUFFER_U - 8)..board_height + BOARD_HEIGHT_BUFFER_U {
+            for y in
+                (board_height + BOARD_HEIGHT_BUFFER_U - 8)..board_height + BOARD_HEIGHT_BUFFER_U
+            {
                 board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8);
             }
         }
@@ -442,7 +518,10 @@ mod tests {
             }
         }
 
-        assert_eq!((num_cleared_lines, score), (8, (2 * SCORE_QUADRUPLE_BASE as u32 * (1)) as u64));
+        assert_eq!(
+            (num_cleared_lines, score),
+            (8, (2 * SCORE_QUADRUPLE_BASE as u32 * (1)) as u64)
+        );
         println!("Passed scoring 2 tetrises one frame apart");
     }
 }
