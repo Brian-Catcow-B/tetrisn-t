@@ -46,12 +46,24 @@ impl Input {
 
     pub fn _print_inputs(&self) {
         println!("Left:  ({}, {})", self.keydown_left.0, self.keydown_left.1);
-        println!("Right: ({}, {})", self.keydown_right.0, self.keydown_right.1);
+        println!(
+            "Right: ({}, {})",
+            self.keydown_right.0, self.keydown_right.1
+        );
         println!("Down:  ({}, {})", self.keydown_down.0, self.keydown_down.1);
         println!("Up:    ({}, {})", self.keydown_up.0, self.keydown_up.1);
-        println!("Cw:    ({}, {})", self.keydown_rotate_cw.0, self.keydown_rotate_cw.1);
-        println!("Ccw:   ({}, {})", self.keydown_rotate_ccw.0, self.keydown_rotate_ccw.1);
-        println!("Start: ({}, {})", self.keydown_start.0, self.keydown_start.1);
+        println!(
+            "Cw:    ({}, {})",
+            self.keydown_rotate_cw.0, self.keydown_rotate_cw.1
+        );
+        println!(
+            "Ccw:   ({}, {})",
+            self.keydown_rotate_ccw.0, self.keydown_rotate_ccw.1
+        );
+        println!(
+            "Start: ({}, {})",
+            self.keydown_start.0, self.keydown_start.1
+        );
     }
 }
 
@@ -84,7 +96,15 @@ impl KeyboardControlScheme {
         }
     }
 
-    pub fn split(&self) -> (Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>) {
+    pub fn split(
+        &self,
+    ) -> (
+        Option<KeyCode>,
+        Option<KeyCode>,
+        Option<KeyCode>,
+        Option<KeyCode>,
+        Option<KeyCode>,
+    ) {
         (
             Some(self.left),
             Some(self.right),

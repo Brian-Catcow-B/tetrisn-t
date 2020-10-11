@@ -1,18 +1,18 @@
-use ggez::Context;
 use ggez::graphics::{self, DrawParam};
 use ggez::graphics::{Scale, Text, TextFragment};
 use ggez::nalgebra::Point2;
+use ggez::Context;
 
 use crate::inputs::Input;
 
-use crate::menu::MAX_STARTING_LEVEL;
 use crate::menu::MAX_NUM_PLAYERS;
+use crate::menu::MAX_STARTING_LEVEL;
 
-use crate::menu::TEXT_SCALE_DOWN;
 use crate::menu::SUB_TEXT_SCALE_DOWN;
+use crate::menu::TEXT_SCALE_DOWN;
 
-use crate::menu::SELECT_GREEN;
 use crate::menu::HELP_RED;
+use crate::menu::SELECT_GREEN;
 
 const NUM_STARTMENUOPTION_TEXT_ENTRIES: u8 = 4;
 #[repr(u8)]
@@ -39,20 +39,48 @@ pub struct StartMenu {
 
 impl StartMenu {
     pub fn new(window_dimensions: (f32, f32), num_players: u8, starting_level: u8) -> Self {
-        let mut num_players_text = Text::new(TextFragment::new("Number of Players: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
-        num_players_text.add(TextFragment::new(format!("{}", num_players)).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
-        let mut starting_level_text = Text::new(TextFragment::new("Starting Level: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
-        starting_level_text.add(TextFragment::new(format!("{}", starting_level)).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
+        let mut num_players_text = Text::new(
+            TextFragment::new("Number of Players: ")
+                .color(graphics::BLACK)
+                .scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
+        );
+        num_players_text.add(
+            TextFragment::new(format!("{}", num_players))
+                .color(graphics::BLACK)
+                .scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
+        );
+        let mut starting_level_text = Text::new(
+            TextFragment::new("Starting Level: ")
+                .color(graphics::BLACK)
+                .scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
+        );
+        starting_level_text.add(
+            TextFragment::new(format!("{}", starting_level))
+                .color(graphics::BLACK)
+                .scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
+        );
         Self {
             selection: StartMenuOption::Start as u8,
             num_players,
             starting_level,
             not_enough_controls_flag: false,
-            start_text: Text::new(TextFragment::new("Start").color(SELECT_GREEN).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN))),
-            not_enough_controls_text: Text::new(TextFragment::new("[!] Not enough controls setup to start").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
+            start_text: Text::new(
+                TextFragment::new("Start")
+                    .color(SELECT_GREEN)
+                    .scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
+            ),
+            not_enough_controls_text: Text::new(
+                TextFragment::new("[!] Not enough controls setup to start")
+                    .color(HELP_RED)
+                    .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+            ),
             num_players_text,
             starting_level_text,
-            controls_text: Text::new(TextFragment::new("Controls").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN))),
+            controls_text: Text::new(
+                TextFragment::new("Controls")
+                    .color(graphics::BLACK)
+                    .scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
+            ),
         }
     }
 
@@ -73,7 +101,11 @@ impl StartMenu {
 
         if input.keydown_up.1 {
             self.set_select(false);
-            self.selection = if self.selection == 0 {NUM_STARTMENUOPTION_TEXT_ENTRIES - 1} else {self.selection - 1};
+            self.selection = if self.selection == 0 {
+                NUM_STARTMENUOPTION_TEXT_ENTRIES - 1
+            } else {
+                self.selection - 1
+            };
             self.set_select(true);
         }
 
@@ -96,36 +128,40 @@ impl StartMenu {
                 } else {
                     self.start_text.fragments_mut()[0].color = Some(graphics::BLACK);
                 }
-            },
+            }
             x if x == StartMenuOption::NumPlayers as u8 => {
                 if select_flag {
                     self.num_players_text.fragments_mut()[0].color = Some(SELECT_GREEN);
                     self.num_players_text.fragments_mut()[1].color = Some(SELECT_GREEN);
-                    self.num_players_text.fragments_mut()[1].text = format!("<{}>", self.num_players);
+                    self.num_players_text.fragments_mut()[1].text =
+                        format!("<{}>", self.num_players);
                 } else {
                     self.num_players_text.fragments_mut()[0].color = Some(graphics::BLACK);
                     self.num_players_text.fragments_mut()[1].color = Some(graphics::BLACK);
-                    self.num_players_text.fragments_mut()[1].text = format!(" {}", self.num_players);
+                    self.num_players_text.fragments_mut()[1].text =
+                        format!(" {}", self.num_players);
                 }
-            },
+            }
             x if x == StartMenuOption::StartingLevel as u8 => {
                 if select_flag {
                     self.starting_level_text.fragments_mut()[0].color = Some(SELECT_GREEN);
                     self.starting_level_text.fragments_mut()[1].color = Some(SELECT_GREEN);
-                    self.starting_level_text.fragments_mut()[1].text = format!("<{}>", self.starting_level);
+                    self.starting_level_text.fragments_mut()[1].text =
+                        format!("<{}>", self.starting_level);
                 } else {
                     self.starting_level_text.fragments_mut()[0].color = Some(graphics::BLACK);
                     self.starting_level_text.fragments_mut()[1].color = Some(graphics::BLACK);
-                    self.starting_level_text.fragments_mut()[1].text = format!(" {}", self.starting_level);
+                    self.starting_level_text.fragments_mut()[1].text =
+                        format!(" {}", self.starting_level);
                 }
-            },
+            }
             x if x == StartMenuOption::Controls as u8 => {
                 if select_flag {
                     self.controls_text.fragments_mut()[0].color = Some(SELECT_GREEN);
                 } else {
                     self.controls_text.fragments_mut()[0].color = Some(graphics::BLACK);
                 }
-            },
+            }
             _ => println!("[!] main_menu_option didn't find match"),
         }
     }
@@ -137,14 +173,22 @@ impl StartMenu {
             if inc_flag {
                 self.num_players = self.num_players % MAX_NUM_PLAYERS + 1;
             } else {
-                self.num_players = if self.num_players == 1 {MAX_NUM_PLAYERS} else {self.num_players - 1};
+                self.num_players = if self.num_players == 1 {
+                    MAX_NUM_PLAYERS
+                } else {
+                    self.num_players - 1
+                };
             }
             self.num_players_text.fragments_mut()[1].text = format!("<{}>", self.num_players);
         } else if self.selection == StartMenuOption::StartingLevel as u8 {
             if inc_flag {
                 self.starting_level = (self.starting_level + 1) % (MAX_STARTING_LEVEL + 1);
             } else {
-                self.starting_level = if self.starting_level == 0 {MAX_STARTING_LEVEL} else {self.starting_level - 1};
+                self.starting_level = if self.starting_level == 0 {
+                    MAX_STARTING_LEVEL
+                } else {
+                    self.starting_level - 1
+                };
             }
             self.starting_level_text.fragments_mut()[1].text = format!("<{}>", self.starting_level);
         }
@@ -162,10 +206,22 @@ impl StartMenu {
         self.draw_text(ctx, &self.controls_text, 0.8, &window_dimensions);
     }
 
-    fn draw_text(&self, ctx: &mut Context, text_var: &Text, vertical_position: f32, window_dimensions: &(f32, f32)) {
+    fn draw_text(
+        &self,
+        ctx: &mut Context,
+        text_var: &Text,
+        vertical_position: f32,
+        window_dimensions: &(f32, f32),
+    ) {
         let (text_width, text_height) = text_var.dimensions(ctx);
-        graphics::draw(ctx, text_var, DrawParam::new()
-        .dest(Point2::new((window_dimensions.0 - text_width as f32) / 2.0, (window_dimensions.1 - text_height as f32) * vertical_position))
-        ).unwrap();
+        graphics::draw(
+            ctx,
+            text_var,
+            DrawParam::new().dest(Point2::new(
+                (window_dimensions.0 - text_width as f32) / 2.0,
+                (window_dimensions.1 - text_height as f32) * vertical_position,
+            )),
+        )
+        .unwrap();
     }
 }

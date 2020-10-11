@@ -1,24 +1,24 @@
-use ggez::ContextBuilder;
 use ggez::event;
 use ggez::graphics;
+use ggez::ContextBuilder;
 
 // file systems stuff
-use std::path;
+use ggez::filesystem::resources_dir;
 use std::env;
 use std::fs::File;
-use ggez::filesystem::resources_dir;
+use std::path;
 
 // rustrisnt files
 mod control;
 use control::Control;
 
-mod menu;
 mod game;
+mod menu;
 
 mod inputs;
 
-use gilrs;
 use ggez::input::gamepad::GilrsGamepadContext;
+use gilrs;
 
 fn main() {
     let mut context = ContextBuilder::new("Rustrisn-t", "Catcow")
@@ -68,6 +68,6 @@ fn main() {
     // loop that controls the ProgramState
     match event::run(ctx, event_loop, &mut control) {
         Ok(_) => println!("Exited cleanly."),
-        Err(e) => println!("[!] Error occured: {}", e)
+        Err(e) => println!("[!] Error occured: {}", e),
     }
 }

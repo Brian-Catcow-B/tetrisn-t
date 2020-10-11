@@ -1,20 +1,20 @@
-use ggez::Context;
-use ggez::graphics::{self, DrawParam};
 use ggez::event::KeyCode;
+use ggez::graphics::{self, DrawParam};
 use ggez::graphics::{Scale, Text, TextFragment};
 use ggez::nalgebra::Point2;
+use ggez::Context;
 
 use crate::inputs::{Input, KeyboardControlScheme};
 
 use crate::menu::MAX_NUM_PLAYERS;
 
-use crate::menu::TEXT_SCALE_DOWN;
 use crate::menu::SUB_TEXT_SCALE_DOWN;
+use crate::menu::TEXT_SCALE_DOWN;
 
 use crate::menu::DARK_GRAY;
+use crate::menu::HELP_RED;
 use crate::menu::LIGHT_GRAY;
 use crate::menu::SELECT_GREEN;
-use crate::menu::HELP_RED;
 
 const NUM_INPUTCONFIGMENUOPTION_TEXT_ENTRIES: u8 = 2;
 #[repr(u8)]
@@ -43,7 +43,16 @@ pub struct InputConfigMenu {
     pub most_recently_pressed_key: Option<KeyCode>,
     vec_used_keycode: Vec<KeyCode>,
     keycode_conflict_flag: bool,
-    pub arr_split_controls: [(Option<(Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>, bool); MAX_NUM_PLAYERS as usize],
+    pub arr_split_controls: [(
+        Option<(
+            Option<KeyCode>,
+            Option<KeyCode>,
+            Option<KeyCode>,
+            Option<KeyCode>,
+            Option<KeyCode>,
+        )>,
+        bool,
+    ); MAX_NUM_PLAYERS as usize],
     // text
     back_text: Text,
     player_num_text: Text,
@@ -65,7 +74,16 @@ impl InputConfigMenu {
         last_used_arr_controls: [(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize],
     ) -> Self {
         let mut vec_used_keycode: Vec<KeyCode> = vec![];
-        let mut arr_split_controls: [(Option<(Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)>, bool); MAX_NUM_PLAYERS as usize] = [(None, false); MAX_NUM_PLAYERS as usize];
+        let mut arr_split_controls: [(
+            Option<(
+                Option<KeyCode>,
+                Option<KeyCode>,
+                Option<KeyCode>,
+                Option<KeyCode>,
+                Option<KeyCode>,
+            )>,
+            bool,
+        ); MAX_NUM_PLAYERS as usize] = [(None, false); MAX_NUM_PLAYERS as usize];
         for (idx, ctrls) in last_used_arr_controls.iter().enumerate() {
             if let Some(k_ctrls) = ctrls.0 {
                 arr_split_controls[idx].0 = Some(k_ctrls.split());
@@ -77,26 +95,98 @@ impl InputConfigMenu {
             }
             arr_split_controls[idx].1 = ctrls.1;
         }
-        let mut player_num_text = Text::new(TextFragment::new("Player Number: ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
-        player_num_text.add(TextFragment::new(" 1").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)));
-        let mut k_left_text = Text::new(TextFragment::new("Left:     ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        let mut k_right_text = Text::new(TextFragment::new("Right:    ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        let mut k_down_text = Text::new(TextFragment::new("Down:     ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        let mut k_rotate_cw_text = Text::new(TextFragment::new("RotateCw:  ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        let mut k_rotate_ccw_text = Text::new(TextFragment::new("RotateCcw:  ").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-        let k_start_text = Text::new(TextFragment::new("Start/Pause: Esc").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+        let mut player_num_text = Text::new(
+            TextFragment::new("Player Number: ")
+                .color(graphics::BLACK)
+                .scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
+        );
+        player_num_text.add(
+            TextFragment::new(" 1")
+                .color(graphics::BLACK)
+                .scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
+        );
+        let mut k_left_text = Text::new(
+            TextFragment::new("Left:     ")
+                .color(graphics::BLACK)
+                .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+        );
+        let mut k_right_text = Text::new(
+            TextFragment::new("Right:    ")
+                .color(graphics::BLACK)
+                .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+        );
+        let mut k_down_text = Text::new(
+            TextFragment::new("Down:     ")
+                .color(graphics::BLACK)
+                .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+        );
+        let mut k_rotate_cw_text = Text::new(
+            TextFragment::new("RotateCw:  ")
+                .color(graphics::BLACK)
+                .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+        );
+        let mut k_rotate_ccw_text = Text::new(
+            TextFragment::new("RotateCcw:  ")
+                .color(graphics::BLACK)
+                .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+        );
+        let k_start_text = Text::new(
+            TextFragment::new("Start/Pause: Esc")
+                .color(graphics::BLACK)
+                .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+        );
         if let Some(ctrls) = last_used_arr_controls[0].0 {
-            k_left_text.add(TextFragment::new(format!("{:?}", ctrls.left)).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            k_right_text.add(TextFragment::new(format!("{:?}", ctrls.right)).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            k_down_text.add(TextFragment::new(format!("{:?}", ctrls.down)).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            k_rotate_cw_text.add(TextFragment::new(format!("{:?}", ctrls.rotate_cw)).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            k_rotate_ccw_text.add(TextFragment::new(format!("{:?}", ctrls.rotate_ccw)).color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_left_text.add(
+                TextFragment::new(format!("{:?}", ctrls.left))
+                    .color(graphics::BLACK)
+                    .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+            );
+            k_right_text.add(
+                TextFragment::new(format!("{:?}", ctrls.right))
+                    .color(graphics::BLACK)
+                    .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+            );
+            k_down_text.add(
+                TextFragment::new(format!("{:?}", ctrls.down))
+                    .color(graphics::BLACK)
+                    .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+            );
+            k_rotate_cw_text.add(
+                TextFragment::new(format!("{:?}", ctrls.rotate_cw))
+                    .color(graphics::BLACK)
+                    .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+            );
+            k_rotate_ccw_text.add(
+                TextFragment::new(format!("{:?}", ctrls.rotate_ccw))
+                    .color(graphics::BLACK)
+                    .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+            );
         } else {
-            k_left_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            k_right_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            k_down_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            k_rotate_cw_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
-            k_rotate_ccw_text.add(TextFragment::new("None").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)));
+            k_left_text.add(
+                TextFragment::new("None")
+                    .color(graphics::BLACK)
+                    .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+            );
+            k_right_text.add(
+                TextFragment::new("None")
+                    .color(graphics::BLACK)
+                    .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+            );
+            k_down_text.add(
+                TextFragment::new("None")
+                    .color(graphics::BLACK)
+                    .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+            );
+            k_rotate_cw_text.add(
+                TextFragment::new("None")
+                    .color(graphics::BLACK)
+                    .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+            );
+            k_rotate_ccw_text.add(
+                TextFragment::new("None")
+                    .color(graphics::BLACK)
+                    .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+            );
         }
         Self {
             selection: 0,
@@ -108,12 +198,28 @@ impl InputConfigMenu {
             keycode_conflict_flag: false,
             arr_split_controls,
             // text
-            back_text: Text::new(TextFragment::new("Back").color(SELECT_GREEN).scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN))),
+            back_text: Text::new(
+                TextFragment::new("Back")
+                    .color(SELECT_GREEN)
+                    .scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
+            ),
             player_num_text,
             // subtext
-            input_uninitialized_text: Text::new(TextFragment::new("No Controls\nKeyboard: Space/Enter\nGamepad: 'G'").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
-            keycode_conflict_text: Text::new(TextFragment::new("[!] Redundant KeyCode; ignoring").color(HELP_RED).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
-            is_gamepad_text: Text::new(TextFragment::new("Set to Gamepad\n\n\nSee README for help").color(graphics::BLACK).scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN))),
+            input_uninitialized_text: Text::new(
+                TextFragment::new("No Controls\nKeyboard: Space/Enter\nGamepad: 'G'")
+                    .color(HELP_RED)
+                    .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+            ),
+            keycode_conflict_text: Text::new(
+                TextFragment::new("[!] Redundant KeyCode; ignoring")
+                    .color(HELP_RED)
+                    .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+            ),
+            is_gamepad_text: Text::new(
+                TextFragment::new("Set to Gamepad\n\n\nSee README for help")
+                    .color(graphics::BLACK)
+                    .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+            ),
             k_left_text,
             k_right_text,
             k_down_text,
@@ -142,12 +248,18 @@ impl InputConfigMenu {
 
             if input.keydown_up.1 {
                 self.set_select(false);
-                self.selection = if self.selection == 0 {NUM_INPUTCONFIGMENUOPTION_TEXT_ENTRIES - 1} else {self.selection - 1};
+                self.selection = if self.selection == 0 {
+                    NUM_INPUTCONFIGMENUOPTION_TEXT_ENTRIES - 1
+                } else {
+                    self.selection - 1
+                };
                 self.set_select(true);
                 self.most_recently_pressed_key = None;
             }
 
-            if input.keydown_rotate_cw.1 && self.selection == InputConfigMenuOption::PlayerInput as u8 {
+            if input.keydown_rotate_cw.1
+                && self.selection == InputConfigMenuOption::PlayerInput as u8
+            {
                 self.arr_split_controls[self.player_num as usize].1 = true;
                 if let Some(ctrls) = self.arr_split_controls[self.player_num as usize].0 {
                     self.remove_from_used_keycodes(&ctrls);
@@ -166,7 +278,8 @@ impl InputConfigMenu {
                     }
                     self.arr_split_controls[self.player_num as usize].0 = None;
 
-                    self.arr_split_controls[self.player_num as usize].0 = Some((None, None, None, None, None));
+                    self.arr_split_controls[self.player_num as usize].0 =
+                        Some((None, None, None, None, None));
                     self.update_sub_text_strings();
                     self.sub_selection_keyboard_flag = true;
                     self.set_select(true);
@@ -174,7 +287,9 @@ impl InputConfigMenu {
             }
 
             // remove input stuff from selection if we are on PlayerInput and Escape is pressed
-            if self.selection == InputConfigMenuOption::PlayerInput as u8 && self.most_recently_pressed_key == Some(KeyCode::Escape) {
+            if self.selection == InputConfigMenuOption::PlayerInput as u8
+                && self.most_recently_pressed_key == Some(KeyCode::Escape)
+            {
                 if let Some(ctrls) = self.arr_split_controls[self.player_num as usize].0 {
                     self.remove_from_used_keycodes(&ctrls);
                     self.arr_split_controls[self.player_num as usize].0 = None;
@@ -209,7 +324,11 @@ impl InputConfigMenu {
                         }
                     }
                     self.arr_split_controls[self.player_num as usize].0 = None;
-                } else if self.vec_used_keycode.contains(&self.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None")) {
+                } else if self.vec_used_keycode.contains(
+                    &self
+                        .most_recently_pressed_key
+                        .expect("[!] KeyCode of most recently pressed key is unexpectedly None"),
+                ) {
                     self.keycode_conflict_flag = true;
                 } else {
                     self.keycode_conflict_flag = false;
@@ -244,7 +363,9 @@ impl InputConfigMenu {
                         }
                     }
                     self.set_select(false);
-                    if self.sub_selection_keyboard < NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_TEXT_ENTRIES as u8 - 1 {
+                    if self.sub_selection_keyboard
+                        < NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_TEXT_ENTRIES as u8 - 1
+                    {
                         self.sub_selection_keyboard += 1;
                         self.set_select(true);
                     } else {
@@ -257,14 +378,24 @@ impl InputConfigMenu {
         false
     }
 
-    fn remove_from_used_keycodes(&mut self, ctrls: &(Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>)) {
+    fn remove_from_used_keycodes(
+        &mut self,
+        ctrls: &(
+            Option<KeyCode>,
+            Option<KeyCode>,
+            Option<KeyCode>,
+            Option<KeyCode>,
+            Option<KeyCode>,
+        ),
+    ) {
         let mut items_removed = 0;
         for used_key_idx in 0..self.vec_used_keycode.len() {
             if Some(self.vec_used_keycode[used_key_idx - items_removed]) == ctrls.0
-            || Some(self.vec_used_keycode[used_key_idx - items_removed]) == ctrls.1
-            || Some(self.vec_used_keycode[used_key_idx - items_removed]) == ctrls.2
-            || Some(self.vec_used_keycode[used_key_idx - items_removed]) == ctrls.3
-            || Some(self.vec_used_keycode[used_key_idx - items_removed]) == ctrls.4 {
+                || Some(self.vec_used_keycode[used_key_idx - items_removed]) == ctrls.1
+                || Some(self.vec_used_keycode[used_key_idx - items_removed]) == ctrls.2
+                || Some(self.vec_used_keycode[used_key_idx - items_removed]) == ctrls.3
+                || Some(self.vec_used_keycode[used_key_idx - items_removed]) == ctrls.4
+            {
                 self.vec_used_keycode.remove(used_key_idx - items_removed);
                 items_removed += 1;
                 // we only need to get rid of NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_TEXT_ENTRIES
@@ -284,18 +415,20 @@ impl InputConfigMenu {
                     } else {
                         self.back_text.fragments_mut()[0].color = Some(graphics::BLACK);
                     }
-                },
+                }
                 x if x == InputConfigMenuOption::PlayerInput as u8 => {
                     if select_flag {
                         self.player_num_text.fragments_mut()[0].color = Some(SELECT_GREEN);
                         self.player_num_text.fragments_mut()[1].color = Some(SELECT_GREEN);
-                        self.player_num_text.fragments_mut()[1].text = format!("<{}>", self.player_num + 1);
+                        self.player_num_text.fragments_mut()[1].text =
+                            format!("<{}>", self.player_num + 1);
                     } else {
                         self.player_num_text.fragments_mut()[0].color = Some(graphics::BLACK);
                         self.player_num_text.fragments_mut()[1].color = Some(graphics::BLACK);
-                        self.player_num_text.fragments_mut()[1].text = format!(" {}", self.player_num + 1);
+                        self.player_num_text.fragments_mut()[1].text =
+                            format!(" {}", self.player_num + 1);
                     }
-                },
+                }
                 _ => println!("[!] input_config_menu_option didn't find match"),
             }
         } else if self.sub_selection_keyboard_flag {
@@ -310,7 +443,7 @@ impl InputConfigMenu {
                         self.k_left_text.fragments_mut()[1].text = format!(" {:?}", self.most_recently_pressed_key.expect("[!] was setting keycode text, but most_recently_pressed_key == None"));
                         self.most_recently_pressed_key = None;
                     }
-                },
+                }
                 x if x == InputConfigMenuSubOptionKeyboard::Right as u8 => {
                     if select_flag {
                         self.k_right_text.fragments_mut()[0].color = Some(SELECT_GREEN);
@@ -321,7 +454,7 @@ impl InputConfigMenu {
                         self.k_right_text.fragments_mut()[1].text = format!(" {:?}", self.most_recently_pressed_key.expect("[!] was setting keycode text, but most_recently_pressed_key == None"));
                         self.most_recently_pressed_key = None;
                     }
-                },
+                }
                 x if x == InputConfigMenuSubOptionKeyboard::Down as u8 => {
                     if select_flag {
                         self.k_down_text.fragments_mut()[0].color = Some(SELECT_GREEN);
@@ -332,7 +465,7 @@ impl InputConfigMenu {
                         self.k_down_text.fragments_mut()[1].text = format!(" {:?}", self.most_recently_pressed_key.expect("[!] was setting keycode text, but most_recently_pressed_key == None"));
                         self.most_recently_pressed_key = None;
                     }
-                },
+                }
                 x if x == InputConfigMenuSubOptionKeyboard::RotateCw as u8 => {
                     if select_flag {
                         self.k_rotate_cw_text.fragments_mut()[0].color = Some(SELECT_GREEN);
@@ -343,7 +476,7 @@ impl InputConfigMenu {
                         self.k_rotate_cw_text.fragments_mut()[1].text = format!(" {:?}", self.most_recently_pressed_key.expect("[!] was setting keycode text, but most_recently_pressed_key == None"));
                         self.most_recently_pressed_key = None;
                     }
-                },
+                }
                 x if x == InputConfigMenuSubOptionKeyboard::RotateCcw as u8 => {
                     if select_flag {
                         self.k_rotate_ccw_text.fragments_mut()[0].color = Some(SELECT_GREEN);
@@ -354,9 +487,9 @@ impl InputConfigMenu {
                         self.k_rotate_ccw_text.fragments_mut()[1].text = format!(" {:?}", self.most_recently_pressed_key.expect("[!] was setting keycode text, but most_recently_pressed_key == None"));
                         self.most_recently_pressed_key = None;
                     }
-                },
+                }
                 _ => println!("[!] input_config_menu_option didn't find match"),
-            } 
+            }
         }
     }
 
@@ -366,7 +499,11 @@ impl InputConfigMenu {
                 if inc_flag {
                     self.player_num = (self.player_num + 1) % MAX_NUM_PLAYERS;
                 } else {
-                    self.player_num = if self.player_num == 0 {MAX_NUM_PLAYERS - 1} else {self.player_num - 1};
+                    self.player_num = if self.player_num == 0 {
+                        MAX_NUM_PLAYERS - 1
+                    } else {
+                        self.player_num - 1
+                    };
                 }
                 // display player_num + 1 because index by 1 to users
                 self.player_num_text.fragments_mut()[1].text = format!("<{}>", self.player_num + 1);
@@ -380,7 +517,7 @@ impl InputConfigMenu {
             match ctrls.0 {
                 Some(keycode) => {
                     self.k_left_text.fragments_mut()[1].text = format!("{:?}", keycode);
-                },
+                }
                 None => {
                     self.k_left_text.fragments_mut()[1].text = "None".to_string();
                 }
@@ -388,7 +525,7 @@ impl InputConfigMenu {
             match ctrls.1 {
                 Some(keycode) => {
                     self.k_right_text.fragments_mut()[1].text = format!("{:?}", keycode);
-                },
+                }
                 None => {
                     self.k_right_text.fragments_mut()[1].text = "None".to_string();
                 }
@@ -396,7 +533,7 @@ impl InputConfigMenu {
             match ctrls.2 {
                 Some(keycode) => {
                     self.k_down_text.fragments_mut()[1].text = format!("{:?}", keycode);
-                },
+                }
                 None => {
                     self.k_down_text.fragments_mut()[1].text = "None".to_string();
                 }
@@ -404,7 +541,7 @@ impl InputConfigMenu {
             match ctrls.3 {
                 Some(keycode) => {
                     self.k_rotate_cw_text.fragments_mut()[1].text = format!("{:?}", keycode);
-                },
+                }
                 None => {
                     self.k_rotate_cw_text.fragments_mut()[1].text = "None".to_string();
                 }
@@ -412,7 +549,7 @@ impl InputConfigMenu {
             match ctrls.4 {
                 Some(keycode) => {
                     self.k_rotate_ccw_text.fragments_mut()[1].text = format!("{:?}", keycode);
-                },
+                }
                 None => {
                     self.k_rotate_ccw_text.fragments_mut()[1].text = "None".to_string();
                 }
@@ -447,7 +584,8 @@ impl InputConfigMenu {
                         h: rect_h,
                     },
                     DARK_GRAY,
-                ).unwrap();
+                )
+                .unwrap();
             } else {
                 editing_indicator_rectangle = graphics::Mesh::new_rectangle(
                     ctx,
@@ -459,7 +597,8 @@ impl InputConfigMenu {
                         h: rect_h,
                     },
                     LIGHT_GRAY,
-                ).unwrap();
+                )
+                .unwrap();
             }
             graphics::draw(ctx, &editing_indicator_rectangle, (Point2::new(0.0, 0.0),)).unwrap();
 
@@ -484,10 +623,22 @@ impl InputConfigMenu {
         }
     }
 
-    fn draw_text(&self, ctx: &mut Context, text_var: &Text, vertical_position: f32, window_dimensions: &(f32, f32)) {
+    fn draw_text(
+        &self,
+        ctx: &mut Context,
+        text_var: &Text,
+        vertical_position: f32,
+        window_dimensions: &(f32, f32),
+    ) {
         let (text_width, text_height) = text_var.dimensions(ctx);
-        graphics::draw(ctx, text_var, DrawParam::new()
-        .dest(Point2::new((window_dimensions.0 - text_width as f32) / 2.0, (window_dimensions.1 - text_height as f32) * vertical_position))
-        ).unwrap();
+        graphics::draw(
+            ctx,
+            text_var,
+            DrawParam::new().dest(Point2::new(
+                (window_dimensions.0 - text_width as f32) / 2.0,
+                (window_dimensions.1 - text_height as f32) * vertical_position,
+            )),
+        )
+        .unwrap();
     }
 }
