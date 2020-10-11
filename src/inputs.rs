@@ -56,7 +56,7 @@ impl Input {
 }
 
 #[derive(Copy, Clone)]
-pub struct ControlScheme {
+pub struct KeyboardControlScheme {
     pub left: KeyCode,
     pub right: KeyCode,
     pub down: KeyCode,
@@ -65,8 +65,15 @@ pub struct ControlScheme {
     pub start: KeyCode,
 }
 
-impl ControlScheme {
-    pub fn new(left: KeyCode, right: KeyCode, down: KeyCode, rotate_cw: KeyCode, rotate_ccw: KeyCode, start: KeyCode) -> Self {
+impl KeyboardControlScheme {
+    pub fn new(
+        left: KeyCode,
+        right: KeyCode,
+        down: KeyCode,
+        rotate_cw: KeyCode,
+        rotate_ccw: KeyCode,
+        start: KeyCode,
+    ) -> Self {
         Self {
             left,
             right,
@@ -75,5 +82,15 @@ impl ControlScheme {
             rotate_ccw,
             start,
         }
+    }
+
+    pub fn split(&self) -> (Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>, Option<KeyCode>) {
+        (
+            Some(self.left),
+            Some(self.right),
+            Some(self.down),
+            Some(self.rotate_cw),
+            Some(self.rotate_ccw),
+        )
     }
 }

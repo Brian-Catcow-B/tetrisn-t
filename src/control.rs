@@ -1,9 +1,9 @@
 use ggez::{Context, GameResult};
 use ggez::event::EventHandler;
-use ggez::event::{KeyCode, KeyMods};
+use ggez::event::{Axis, Button, GamepadId, KeyCode, KeyMods};
 use ggez::graphics;
 
-use crate::menu::Menu;
+use crate::menu::{Menu, MenuGameOptions};
 use crate::game::{Game, GameOptions};
 
 #[repr(u8)]
@@ -17,7 +17,7 @@ pub struct Control {
     state: ProgramState,
     menu: Option<Menu>,
     game: Option<Game>,
-    game_options: Option<GameOptions>,
+    game_options: Option<MenuGameOptions>,
 }
 
 impl Control {
@@ -38,7 +38,7 @@ impl Control {
             },
             ProgramState::Game => {
                 self.game = Some(Game::new(ctx,
-                    self.game_options.as_ref().expect("[!] attempted to start Game with no GameOptions"),
+                    &GameOptions::from(self.game_options.as_ref().expect("[!] attempted to start Game with no GameOptions")),
                 ));
                 ProgramState::Game
             },
@@ -108,6 +108,33 @@ impl EventHandler for Control {
                 .expect("[!] control.state == ProgramState::Game but control.game == None")
                 .key_up_event(keycode),
         };
+    }
+
+    fn gamepad_button_down_event(&mut self, _ctx: &mut Context, btn: Button, id: GamepadId) {
+        match self.state {
+            ProgramState::Menu => (),
+            ProgramState::Game => self.game.as_mut()
+                .expect("[!] control.state == ProgramState::Game but control.game == None")
+                .gamepad_button_down_event(btn, id),
+        };
+    }
+
+    fn gamepad_button_up_event(&mut self, _ctx: &mut Context, btn: Button, id: GamepadId) {
+        match self.state {
+            ProgramState::Menu => (),
+            ProgramState::Game => self.game.as_mut()
+                .expect("[!] control.state == ProgramState::Game but control.game == None")
+                .gamepad_button_up_event(btn, id),
+        };
+    }
+
+    fn gamepad_axis_event(&mut self, _ctx: &mut Context, axis: Axis, value: f32, id: GamepadId) {
+        match self.state {
+            ProgramState::Menu => (),
+            ProgramState::Game => self.game.as_mut()
+                .expect("[!] control.state == ProgramState::Game but control.game == None")
+                .gamepad_axis_event(axis, value, id),
+        }
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {

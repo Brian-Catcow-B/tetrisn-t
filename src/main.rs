@@ -5,6 +5,8 @@ use ggez::graphics;
 // file systems stuff
 use std::path;
 use std::env;
+use std::fs::File;
+use ggez::filesystem::resources_dir;
 
 // rustrisnt files
 mod control;
@@ -14,6 +16,9 @@ mod menu;
 mod game;
 
 mod inputs;
+
+use gilrs;
+use ggez::input::gamepad::GilrsGamepadContext;
 
 fn main() {
     let mut context = ContextBuilder::new("Rustrisn-t", "Catcow")
@@ -28,6 +33,27 @@ fn main() {
     }
 
     let (ctx, event_loop) = &mut context.build().expect("[!] Failed to build context");
+
+    // custom controller setup stuffs
+    let mut gilrs_builder = gilrs::GilrsBuilder::new().add_included_mappings(false);
+
+    match resources_dir(&ctx).join("gamecontrollerdb.txt").as_path().to_str() {
+        Some(path) => {
+            match std::fs::read_to_string(path) {
+                Ok(string) => {
+                    gilrs_builder = gilrs_builder.add_mappings(&string);
+                },
+                Err(_) => {
+                    println!("[!] couldn't read contents of {} to string; creating file; no custom controller layouts will function", path);
+                    if let Err(e) = File::create(resources_dir(&ctx).join("gamecontrollerdb.txt")) {
+                        println!("[!] failed to create file {}: {}", resources_dir(&ctx).join("gamecontrollerdb.txt").display(), e);
+                    }
+                },
+            }
+        },
+        None => println!("[!] couldn't obtain path for gamecontrollerdb.txt; no custom controller layouts will function"),
+    }
+    ctx.gamepad_context = Box::new(GilrsGamepadContext::from(gilrs_builder.build().unwrap()));
 
     // set window size
     graphics::set_resizable(ctx, true).expect("[!] Failed to set window to resizable");
