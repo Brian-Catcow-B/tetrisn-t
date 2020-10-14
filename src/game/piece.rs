@@ -13,8 +13,8 @@ pub enum Shapes {
     None,
 }
 
-impl Shapes {
-    pub fn from_u8(value: u8) -> Shapes {
+impl From<u8> for Shapes {
+    fn from(value: u8) -> Shapes {
         match value {
             0 => Shapes::I,
             1 => Shapes::O,

@@ -104,8 +104,8 @@ pub struct GameOptions {
     pub vec_controls: Vec<(Option<KeyboardControlScheme>, bool)>,
 }
 
-impl GameOptions {
-    pub fn from(menu_game_options: &MenuGameOptions) -> Self {
+impl From<&MenuGameOptions> for GameOptions {
+    fn from(menu_game_options: &MenuGameOptions) -> Self {
         let mut vec_controls: Vec<(Option<KeyboardControlScheme>, bool)> =
             Vec::with_capacity(menu_game_options.arr_controls.len());
         let mut counted_active_controls: u8 = 0;
@@ -394,7 +394,7 @@ impl Game {
                                     break;
                                 }
                             }
-                            let random_shape = Shapes::from_u8(rand % 7);
+                            let random_shape = Shapes::from(rand % 7);
                             if self.board.vec_active_piece[player.player_num as usize].shape
                                 != random_shape
                             {
@@ -407,7 +407,7 @@ impl Game {
                                         break;
                                     }
                                 }
-                                player.next_piece_shape = Shapes::from_u8(rand % 7);
+                                player.next_piece_shape = Shapes::from(rand % 7);
                             }
                             self.vec_next_piece[player.player_num as usize] =
                                 NextPiece::new(player.next_piece_shape);
