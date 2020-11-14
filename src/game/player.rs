@@ -47,7 +47,7 @@ impl Player {
                         break;
                     }
                 }
-                Shapes::from_u8(rand % 7)
+                Shapes::from(rand % 7)
             },
             redraw_next_piece_flag: true,
             fall_countdown: INITIAL_HANG_FRAMES,
