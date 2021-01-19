@@ -267,6 +267,10 @@ impl InputConfigMenu {
                 }
             }
 
+            if input.keydown_rotate_ccw.1 {
+                return true;
+            }
+
             if input.keydown_start.1 {
                 if self.selection == InputConfigMenuOption::Back as u8 {
                     self.sub_selection_keyboard = 0;
@@ -288,19 +292,20 @@ impl InputConfigMenu {
 
             // remove input stuff from selection if we are on PlayerInput and Escape is pressed
             if self.selection == InputConfigMenuOption::PlayerInput as u8
-                && self.most_recently_pressed_key == Some(KeyCode::Escape)
+                && input.keydown_rotate_ccw.1
             {
                 if let Some(ctrls) = self.arr_split_controls[self.player_num as usize].0 {
                     self.remove_from_used_keycodes(&ctrls);
                     self.arr_split_controls[self.player_num as usize].0 = None;
                 }
                 self.arr_split_controls[self.player_num as usize].1 = false;
+                self.most_recently_pressed_key = None;
             }
         } else if self.sub_selection_keyboard_flag {
             if self.most_recently_pressed_key.is_some() {
                 // first check if the KeyCode is Escape, and if it is, just delete the layout entry and go out of the subselection section
                 // second check if the KeyCode was already used. If it was, set the error message flag to true
-                if self.most_recently_pressed_key == Some(KeyCode::Escape) {
+                if input.keydown_rotate_ccw.1 {
                     self.set_select(false);
                     self.keycode_conflict_flag = false;
                     self.sub_selection_keyboard = 0;
@@ -324,6 +329,7 @@ impl InputConfigMenu {
                         }
                     }
                     self.arr_split_controls[self.player_num as usize].0 = None;
+                    self.most_recently_pressed_key = None;
                 } else if self.vec_used_keycode.contains(
                     &self
                         .most_recently_pressed_key

@@ -11,7 +11,7 @@ pub const MAX_NUM_PLAYERS: u8 = 62; // currently held back by board width being 
 pub const TEXT_SCALE_DOWN: f32 = 15.0;
 pub const SUB_TEXT_SCALE_DOWN: f32 = 25.0;
 
-const GRAY: Color = Color::new(0.5, 0.5, 0.5, 1.0);
+const GRAY: Color = Color::new(0.4, 0.4, 0.4, 1.0);
 pub const DARK_GRAY: Color = Color::new(0.3, 0.3, 0.3, 1.0);
 pub const LIGHT_GRAY: Color = Color::new(0.6, 0.6, 0.6, 1.0);
 pub const SELECT_GREEN: Color = Color::new(0.153, 0.839, 0.075, 1.0);
@@ -194,11 +194,14 @@ impl Menu {
             if !self.input.keydown_rotate_cw.0 {
                 self.input.keydown_rotate_cw = (true, true);
             }
-        // } else if keycode == KeyCode:: {
-        //     if !self.input.keydown_rotate_ccw.0 {
-        //         self.input.keydown_rotate_ccw = (true, true);
-        //     }
-        } else if keycode == KeyCode::Space || keycode == KeyCode::Return {
+        } else if keycode == KeyCode::Escape {
+            if !self.input.keydown_rotate_ccw.0 {
+                self.input.keydown_rotate_ccw = (true, true);
+            }
+        } else if keycode == KeyCode::Space
+            || keycode == KeyCode::Return
+            || keycode == KeyCode::NumpadEnter
+        {
             if !self.input.keydown_start.0 {
                 self.input.keydown_start = (true, true);
             }
@@ -216,9 +219,12 @@ impl Menu {
             self.input.keydown_up = (false, false);
         } else if keycode == KeyCode::G {
             self.input.keydown_rotate_cw = (false, false);
-        // } else if keycode == KeyCode:: {
-        //     self.input.keydown_rotate_ccw = (false, false);
-        } else if keycode == KeyCode::Space || keycode == KeyCode::Return {
+        } else if keycode == KeyCode::Escape {
+            self.input.keydown_rotate_ccw = (false, false);
+        } else if keycode == KeyCode::Space
+            || keycode == KeyCode::Return
+            || keycode == KeyCode::NumpadEnter
+        {
             self.input.keydown_start = (false, false);
         }
     }
