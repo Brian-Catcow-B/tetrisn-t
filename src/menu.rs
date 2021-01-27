@@ -198,10 +198,10 @@ impl Menu {
         //     if !self.input.keydown_rotate_ccw.0 {
         //         self.input.keydown_rotate_ccw = (true, true);
         //     }
-        } else if keycode == KeyCode::Space || keycode == KeyCode::Return {
-            if !self.input.keydown_start.0 {
-                self.input.keydown_start = (true, true);
-            }
+        } else if (keycode == KeyCode::Space || keycode == KeyCode::Return)
+            && !self.input.keydown_start.0
+        {
+            self.input.keydown_start = (true, true);
         }
     }
 

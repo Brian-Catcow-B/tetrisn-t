@@ -18,7 +18,6 @@ mod menu;
 mod inputs;
 
 use ggez::input::gamepad::GilrsGamepadContext;
-use gilrs;
 
 fn main() {
     let mut context = ContextBuilder::new("Rustrisn-t", "Catcow")
@@ -37,7 +36,7 @@ fn main() {
     // custom controller setup stuffs
     let mut gilrs_builder = gilrs::GilrsBuilder::new().add_included_mappings(false);
 
-    match resources_dir(&ctx).join("gamecontrollerdb.txt").as_path().to_str() {
+    match resources_dir(ctx).join("gamecontrollerdb.txt").as_path().to_str() {
         Some(path) => {
             match std::fs::read_to_string(path) {
                 Ok(string) => {
@@ -45,8 +44,8 @@ fn main() {
                 },
                 Err(_) => {
                     println!("[!] couldn't read contents of {} to string; creating file; no custom controller layouts will function", path);
-                    if let Err(e) = File::create(resources_dir(&ctx).join("gamecontrollerdb.txt")) {
-                        println!("[!] failed to create file {}: {}", resources_dir(&ctx).join("gamecontrollerdb.txt").display(), e);
+                    if let Err(e) = File::create(resources_dir(ctx).join("gamecontrollerdb.txt")) {
+                        println!("[!] failed to create file {}: {}", resources_dir(ctx).join("gamecontrollerdb.txt").display(), e);
                     }
                 },
             }

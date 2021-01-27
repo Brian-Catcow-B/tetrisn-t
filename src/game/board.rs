@@ -44,7 +44,7 @@ impl Board {
             .iter()
             .take(4)
         {
-            if position != &(0xffu8, 0xffu8) {
+            if position != &(0xff_u8, 0xff_u8) {
                 self.matrix[position.0 as usize][position.1 as usize] = Tile::new_empty();
             } else {
                 println!("[!] tried to emptify piece that contained position (0xffu8, 0xffu8)");
@@ -58,7 +58,7 @@ impl Board {
             .iter()
             .take(4)
         {
-            if position != &(0xffu8, 0xffu8) {
+            if position != &(0xff_u8, 0xff_u8) {
                 self.matrix[position.0 as usize][position.1 as usize] =
                     Tile::new(false, true, player);
             } else {
@@ -230,7 +230,7 @@ impl Board {
 
     // returns (num_lines_cleared, score_from_cleared_lines)
     pub fn attempt_clear_lines(&mut self, level: u8) -> (u8, u32) {
-        if self.vec_full_lines.len() == 0 {
+        if self.vec_full_lines.is_empty() {
             // nothing to see here
             return (0, 0);
         }
@@ -247,7 +247,7 @@ impl Board {
             }
         }
 
-        if vec_clearing_now_indices.len() == 0 {
+        if vec_clearing_now_indices.is_empty() {
             // not much to see here
             return (0, 0);
         }
@@ -285,13 +285,13 @@ impl Board {
             }
             checked_lines_for_scoring += lines_player_cleared;
             score += match lines_player_cleared {
-                1 => SCORE_SINGLE_BASE as u32 * (level as u32 + 1),
-                2 => SCORE_DOUBLE_BASE as u32 * (level as u32 + 1),
-                3 => SCORE_TRIPLE_BASE as u32 * (level as u32 + 1),
-                4 => SCORE_QUADRUPLE_BASE as u32 * (level as u32 + 1),
+                1 => u32::from(SCORE_SINGLE_BASE) * (u32::from(level) + 1),
+                2 => u32::from(SCORE_DOUBLE_BASE) * (u32::from(level) + 1),
+                3 => u32::from(SCORE_TRIPLE_BASE) * (u32::from(level) + 1),
+                4 => u32::from(SCORE_QUADRUPLE_BASE) * (u32::from(level) + 1),
                 _ => {
                     println!("[!] player was attributed a number of lines too large maybe, what the heck? lines_player_cleared: {}", lines_player_cleared);
-                    0u32
+                    0_u32
                 }
             };
         }
@@ -387,7 +387,7 @@ mod tests {
             for y in
                 (board_height + BOARD_HEIGHT_BUFFER_U - 8)..board_height + BOARD_HEIGHT_BUFFER_U
             {
-                board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8);
+                board.matrix[y as usize][x as usize] = Tile::new(false, false, 0_u8);
             }
         }
 
@@ -411,14 +411,14 @@ mod tests {
         for _ in 0..=CLEAR_DELAY {
             let (returned_lines, returned_score) = board.attempt_clear_lines(0);
             if returned_lines > 0 {
-                num_cleared_lines += returned_lines as u16;
-                score += returned_score as u64;
+                num_cleared_lines += u16::from(returned_lines);
+                score += u64::from(returned_score);
             }
         }
 
         assert_eq!(
             (num_cleared_lines, score),
-            (8, (2 * SCORE_QUADRUPLE_BASE as u32 * (1)) as u64)
+            (8, u64::from(2 * u32::from(SCORE_QUADRUPLE_BASE) * (1)))
         );
         println!("Passed scoring 2 tetrises on the same frame");
 
@@ -430,7 +430,7 @@ mod tests {
             for y in
                 (board_height + BOARD_HEIGHT_BUFFER_U - 4)..board_height + BOARD_HEIGHT_BUFFER_U
             {
-                board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8);
+                board.matrix[y as usize][x as usize] = Tile::new(false, false, 0_u8);
             }
         }
 
@@ -444,8 +444,8 @@ mod tests {
         // run 1 frame of clear lines between creating the FullLines
         let (returned_lines, returned_score) = board.attempt_clear_lines(0);
         if returned_lines > 0 {
-            num_cleared_lines += returned_lines as u16;
-            score += returned_score as u64;
+            num_cleared_lines += u16::from(returned_lines);
+            score += u64::from(returned_score);
         }
 
         board.attempt_piece_spawn(2, 2, Shapes::L);
@@ -460,8 +460,8 @@ mod tests {
         for _ in 0..=CLEAR_DELAY {
             let (returned_lines, returned_score) = board.attempt_clear_lines(0);
             if returned_lines > 0 {
-                num_cleared_lines += returned_lines as u16;
-                score += returned_score as u64;
+                num_cleared_lines += u16::from(returned_lines);
+                score += u64::from(returned_score);
             }
         }
 
@@ -469,7 +469,9 @@ mod tests {
             (num_cleared_lines, score),
             (
                 4,
-                (1 * SCORE_SINGLE_BASE as u32 * (1) + 1 * SCORE_TRIPLE_BASE as u32 * (1)) as u64
+                u64::from(
+                    1 * u32::from(SCORE_SINGLE_BASE) * (1) + 1 * u32::from(SCORE_TRIPLE_BASE) * (1)
+                )
             )
         );
         println!("Passed scoring a single as one player and then a triple as another player one frame after");
@@ -482,7 +484,7 @@ mod tests {
             for y in
                 (board_height + BOARD_HEIGHT_BUFFER_U - 8)..board_height + BOARD_HEIGHT_BUFFER_U
             {
-                board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8);
+                board.matrix[y as usize][x as usize] = Tile::new(false, false, 0_u8);
             }
         }
 
@@ -497,8 +499,8 @@ mod tests {
         // run 1 frame of clear lines between creating the FullLines
         let (returned_lines, returned_score) = board.attempt_clear_lines(0);
         if returned_lines > 0 {
-            num_cleared_lines += returned_lines as u16;
-            score += returned_score as u64;
+            num_cleared_lines += u16::from(returned_lines);
+            score += u64::from(returned_score);
         }
 
         board.attempt_piece_spawn(2, 2, Shapes::I);
@@ -513,14 +515,14 @@ mod tests {
         for _ in 0..=CLEAR_DELAY {
             let (returned_lines, returned_score) = board.attempt_clear_lines(0);
             if returned_lines > 0 {
-                num_cleared_lines += returned_lines as u16;
-                score += returned_score as u64;
+                num_cleared_lines += u16::from(returned_lines);
+                score += u64::from(returned_score);
             }
         }
 
         assert_eq!(
             (num_cleared_lines, score),
-            (8, (2 * SCORE_QUADRUPLE_BASE as u32 * (1)) as u64)
+            (8, u64::from(2 * u32::from(SCORE_QUADRUPLE_BASE) * (1)))
         );
         println!("Passed scoring 2 tetrises one frame apart");
     }

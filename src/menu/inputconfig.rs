@@ -296,82 +296,98 @@ impl InputConfigMenu {
                 }
                 self.arr_split_controls[self.player_num as usize].1 = false;
             }
-        } else if self.sub_selection_keyboard_flag {
-            if self.most_recently_pressed_key.is_some() {
-                // first check if the KeyCode is Escape, and if it is, just delete the layout entry and go out of the subselection section
-                // second check if the KeyCode was already used. If it was, set the error message flag to true
-                if self.most_recently_pressed_key == Some(KeyCode::Escape) {
-                    self.set_select(false);
-                    self.keycode_conflict_flag = false;
-                    self.sub_selection_keyboard = 0;
-                    self.sub_selection_keyboard_flag = false;
-                    // the user was in the middle of creating keyboard controls when they hit Escape, so pop however many KeyCode's off vec_used_keycode as the user set up
-                    if let Some(ctrls) = self.arr_split_controls[self.player_num as usize].0 {
-                        if (ctrls.3).is_some() {
-                            for _ in 1..=4 {
-                                self.vec_used_keycode.pop();
-                            }
-                        } else if (ctrls.2).is_some() {
-                            for _ in 1..=3 {
-                                self.vec_used_keycode.pop();
-                            }
-                        } else if (ctrls.1).is_some() {
-                            for _ in 1..=2 {
-                                self.vec_used_keycode.pop();
-                            }
-                        } else if (ctrls.0).is_some() {
+        } else if self.sub_selection_keyboard_flag && self.most_recently_pressed_key.is_some() {
+            // first check if the KeyCode is Escape, and if it is, just delete the layout entry and go out of the subselection section
+            // second check if the KeyCode was already used. If it was, set the error message flag to true
+            if self.most_recently_pressed_key == Some(KeyCode::Escape) {
+                self.set_select(false);
+                self.keycode_conflict_flag = false;
+                self.sub_selection_keyboard = 0;
+                self.sub_selection_keyboard_flag = false;
+                // the user was in the middle of creating keyboard controls when they hit Escape, so pop however many KeyCode's off vec_used_keycode as the user set up
+                if let Some(ctrls) = self.arr_split_controls[self.player_num as usize].0 {
+                    if (ctrls.3).is_some() {
+                        for _ in 1..=4 {
                             self.vec_used_keycode.pop();
                         }
-                    }
-                    self.arr_split_controls[self.player_num as usize].0 = None;
-                } else if self.vec_used_keycode.contains(
-                    &self
-                        .most_recently_pressed_key
-                        .expect("[!] KeyCode of most recently pressed key is unexpectedly None"),
-                ) {
-                    self.keycode_conflict_flag = true;
-                } else {
-                    self.keycode_conflict_flag = false;
-                    match (self.arr_split_controls[self.player_num as usize].0).as_mut() {
-                        Some(mut ctrls) => {
-                            match self.sub_selection_keyboard {
-                                x if x == InputConfigMenuSubOptionKeyboard::Left as u8 => {
-                                    ctrls.0 = self.most_recently_pressed_key;
-                                    self.vec_used_keycode.push(self.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None"));
-                                },
-                                x if x == InputConfigMenuSubOptionKeyboard::Right as u8 => {
-                                    ctrls.1 = self.most_recently_pressed_key;
-                                    self.vec_used_keycode.push(self.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None"));
-                                },
-                                x if x == InputConfigMenuSubOptionKeyboard::Down as u8 => {
-                                    ctrls.2 = self.most_recently_pressed_key;
-                                    self.vec_used_keycode.push(self.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None"));
-                                },
-                                x if x == InputConfigMenuSubOptionKeyboard::RotateCw as u8 => {
-                                    ctrls.3 = self.most_recently_pressed_key;
-                                    self.vec_used_keycode.push(self.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None"));
-                                },
-                                x if x == InputConfigMenuSubOptionKeyboard::RotateCcw as u8 => {
-                                    ctrls.4 = self.most_recently_pressed_key;
-                                    self.vec_used_keycode.push(self.most_recently_pressed_key.expect("[!] KeyCode of most recently pressed key is unexpectedly None"));
-                                },
-                                _ => println!("[!] couldn't get correct tuple index to set most recently pressed key"),
-                            }
-                        },
-                        None => {
-                            println!("[!] arr_split_controls[{}].0 was unexpectedly None", self.player_num);
+                    } else if (ctrls.2).is_some() {
+                        for _ in 1..=3 {
+                            self.vec_used_keycode.pop();
                         }
+                    } else if (ctrls.1).is_some() {
+                        for _ in 1..=2 {
+                            self.vec_used_keycode.pop();
+                        }
+                    } else if (ctrls.0).is_some() {
+                        self.vec_used_keycode.pop();
                     }
-                    self.set_select(false);
-                    if self.sub_selection_keyboard
-                        < NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_TEXT_ENTRIES as u8 - 1
-                    {
-                        self.sub_selection_keyboard += 1;
-                        self.set_select(true);
-                    } else {
-                        self.sub_selection_keyboard = 0;
-                        self.sub_selection_keyboard_flag = false;
+                }
+                self.arr_split_controls[self.player_num as usize].0 = None;
+            } else if self.vec_used_keycode.contains(
+                &self
+                    .most_recently_pressed_key
+                    .expect("[!] KeyCode of most recently pressed key is unexpectedly None"),
+            ) {
+                self.keycode_conflict_flag = true;
+            } else {
+                self.keycode_conflict_flag = false;
+                match (self.arr_split_controls[self.player_num as usize].0).as_mut() {
+                    Some(mut ctrls) => match self.sub_selection_keyboard {
+                        x if x == InputConfigMenuSubOptionKeyboard::Left as u8 => {
+                            ctrls.0 = self.most_recently_pressed_key;
+                            self.vec_used_keycode
+                                .push(self.most_recently_pressed_key.expect(
+                                    "[!] KeyCode of most recently pressed key is unexpectedly None",
+                                ));
+                        }
+                        x if x == InputConfigMenuSubOptionKeyboard::Right as u8 => {
+                            ctrls.1 = self.most_recently_pressed_key;
+                            self.vec_used_keycode
+                                .push(self.most_recently_pressed_key.expect(
+                                    "[!] KeyCode of most recently pressed key is unexpectedly None",
+                                ));
+                        }
+                        x if x == InputConfigMenuSubOptionKeyboard::Down as u8 => {
+                            ctrls.2 = self.most_recently_pressed_key;
+                            self.vec_used_keycode
+                                .push(self.most_recently_pressed_key.expect(
+                                    "[!] KeyCode of most recently pressed key is unexpectedly None",
+                                ));
+                        }
+                        x if x == InputConfigMenuSubOptionKeyboard::RotateCw as u8 => {
+                            ctrls.3 = self.most_recently_pressed_key;
+                            self.vec_used_keycode
+                                .push(self.most_recently_pressed_key.expect(
+                                    "[!] KeyCode of most recently pressed key is unexpectedly None",
+                                ));
+                        }
+                        x if x == InputConfigMenuSubOptionKeyboard::RotateCcw as u8 => {
+                            ctrls.4 = self.most_recently_pressed_key;
+                            self.vec_used_keycode
+                                .push(self.most_recently_pressed_key.expect(
+                                    "[!] KeyCode of most recently pressed key is unexpectedly None",
+                                ));
+                        }
+                        _ => println!(
+                            "[!] couldn't get correct tuple index to set most recently pressed key"
+                        ),
+                    },
+                    None => {
+                        println!(
+                            "[!] arr_split_controls[{}].0 was unexpectedly None",
+                            self.player_num
+                        );
                     }
+                }
+                self.set_select(false);
+                if self.sub_selection_keyboard
+                    < NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_TEXT_ENTRIES as u8 - 1
+                {
+                    self.sub_selection_keyboard += 1;
+                    self.set_select(true);
+                } else {
+                    self.sub_selection_keyboard = 0;
+                    self.sub_selection_keyboard_flag = false;
                 }
             }
         }
@@ -494,21 +510,21 @@ impl InputConfigMenu {
     }
 
     fn inc_or_dec_selection(&mut self, inc_flag: bool) {
-        if !self.sub_selection_keyboard_flag {
-            if self.selection == InputConfigMenuOption::PlayerInput as u8 {
-                if inc_flag {
-                    self.player_num = (self.player_num + 1) % MAX_NUM_PLAYERS;
+        if !self.sub_selection_keyboard_flag
+            && self.selection == InputConfigMenuOption::PlayerInput as u8
+        {
+            if inc_flag {
+                self.player_num = (self.player_num + 1) % MAX_NUM_PLAYERS;
+            } else {
+                self.player_num = if self.player_num == 0 {
+                    MAX_NUM_PLAYERS - 1
                 } else {
-                    self.player_num = if self.player_num == 0 {
-                        MAX_NUM_PLAYERS - 1
-                    } else {
-                        self.player_num - 1
-                    };
-                }
-                // display player_num + 1 because index by 1 to users
-                self.player_num_text.fragments_mut()[1].text = format!("<{}>", self.player_num + 1);
-                self.update_sub_text_strings();
+                    self.player_num - 1
+                };
             }
+            // display player_num + 1 because index by 1 to users
+            self.player_num_text.fragments_mut()[1].text = format!("<{}>", self.player_num + 1);
+            self.update_sub_text_strings();
         }
     }
 

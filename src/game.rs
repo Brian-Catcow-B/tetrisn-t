@@ -25,23 +25,23 @@ use crate::game::board::BOARD_HEIGHT_BUFFER_U;
 use crate::inputs::KeyboardControlScheme;
 use crate::menu::MenuGameOptions;
 
-const BOARD_HEIGHT: u8 = 20u8;
+const BOARD_HEIGHT: u8 = 20_u8;
 
-pub const CLEAR_DELAY: i8 = 30i8;
+pub const CLEAR_DELAY: i8 = 30_i8;
 
-pub const SCORE_SINGLE_BASE: u8 = 40u8;
-pub const SCORE_DOUBLE_BASE: u8 = 100u8;
-pub const SCORE_TRIPLE_BASE: u16 = 300u16;
-pub const SCORE_QUADRUPLE_BASE: u16 = 1200u16;
+pub const SCORE_SINGLE_BASE: u8 = 40_u8;
+pub const SCORE_DOUBLE_BASE: u8 = 100_u8;
+pub const SCORE_TRIPLE_BASE: u16 = 300_u16;
+pub const SCORE_QUADRUPLE_BASE: u16 = 1200_u16;
 
-const GAME_OVER_DELAY: i8 = 60i8;
+const GAME_OVER_DELAY: i8 = 60_i8;
 
 // space up of the board that is not the board in tiles
-const NON_BOARD_SPACE_U: u8 = 4u8;
+const NON_BOARD_SPACE_U: u8 = 4_u8;
 // space between the top of the board and the next piece in tiles
 const BOARD_NEXT_PIECE_SPACING: u8 = 3;
 // space down of the board that is not the board in tiles
-const NON_BOARD_SPACE_D: u8 = 3u8;
+const NON_BOARD_SPACE_D: u8 = 3_u8;
 // each tile is actually 8x8 pixels, so we scale down by 8 and then some because with 8.0, window resizing can clip off the bottom of the board
 const TILE_SIZE_DOWN_SCALE: f32 = 8.5;
 
@@ -167,7 +167,7 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new(ctx: &mut Context, game_options: &GameOptions) -> Game {
+    pub fn new(ctx: &mut Context, game_options: &GameOptions) -> Self {
         let board_width = 6 + 4 * game_options.num_players;
         let mut vec_players: Vec<Player> = Vec::with_capacity(game_options.num_players as usize);
         // spawn columns
@@ -176,9 +176,10 @@ impl Game {
             vec_players.push(Player::new(
                 player,
                 game_options.vec_controls[player as usize],
-                (player as f32 * (board_width as f32 / game_options.num_players as f32)
-                    + board_width as f32 / (2.0 * game_options.num_players as f32))
-                    as u8
+                f32::from(player).mul_add(
+                    f32::from(board_width) / f32::from(game_options.num_players),
+                    f32::from(board_width) / (2.0 * f32::from(game_options.num_players)),
+                ) as u8
                     + 1,
             ));
         }
@@ -198,10 +199,10 @@ impl Game {
                 game_options.vec_controls[player as usize],
                 board_width
                     - 1
-                    - ((game_options.num_players - 1 - player) as f32
-                        * (board_width as f32 / game_options.num_players as f32)
-                        + board_width as f32 / (2.0 * game_options.num_players as f32))
-                        as u8,
+                    - f32::from(game_options.num_players - 1 - player).mul_add(
+                        f32::from(board_width) / f32::from(game_options.num_players),
+                        f32::from(board_width) / (2.0 * f32::from(game_options.num_players)),
+                    ) as u8,
             ));
         }
         let mut batch_empty_tile = spritebatch::SpriteBatch::new(TileGraphic::new_empty(ctx).image);
@@ -210,8 +211,8 @@ impl Game {
             for y in 0..BOARD_HEIGHT as usize {
                 // empty tiles
                 let empty_tile = graphics::DrawParam::new().dest(Point2::new(
-                    x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                    y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                    f32::from(x) * f32::from(NUM_PIXEL_ROWS_PER_TILEGRAPHIC),
+                    y as f32 * f32::from(NUM_PIXEL_ROWS_PER_TILEGRAPHIC),
                 ));
                 batch_empty_tile.add(empty_tile);
             }
@@ -300,12 +301,12 @@ impl Game {
             num_gamepads_to_initialize,
             level: game_options.starting_level,
             starting_level: game_options.starting_level,
-            num_cleared_lines: 0u16,
-            score: 0u64,
+            num_cleared_lines: 0_u16,
+            score: 0_u64,
             pause_flag: (false, false),
             game_over_flag: false,
             game_over_delay: GAME_OVER_DELAY,
-            tile_size: 0f32,
+            tile_size: 0_f32,
             batch_empty_tile,
             vec_batch_player_piece,
             vec_batch_next_piece,
@@ -503,7 +504,7 @@ impl Game {
                         player.force_fall_countdown = FORCE_FALL_DELAY;
                         // add more spawn delay if locking the piece caused a line clear
                         if caused_full_line_flag {
-                            player.spawn_delay += CLEAR_DELAY as i16;
+                            player.spawn_delay += i16::from(CLEAR_DELAY);
                         }
                     }
                     if moved_flag {
@@ -533,12 +534,12 @@ impl Game {
             // attempt to line clear (go through the vector of FullLine's and decrement clear_delay if > 0, clear and return (lines_cleared, score) for <= 0)
             let (returned_lines, returned_score) = self.board.attempt_clear_lines(self.level);
             if returned_lines > 0 {
-                self.num_cleared_lines += returned_lines as u16;
+                self.num_cleared_lines += u16::from(returned_lines);
                 self.game_info_text.fragments_mut()[1].text =
                     format!("{:03}", self.num_cleared_lines);
-                self.score += returned_score as u64;
+                self.score += u64::from(returned_score);
                 self.game_info_text.fragments_mut()[3].text = format!("{:07}", self.score);
-                let first_level_up_lines_amount: u16 = (self.starting_level as u16 + 1) * 10;
+                let first_level_up_lines_amount: u16 = (u16::from(self.starting_level) + 1) * 10;
                 let not_first_level_up_lines_amount: u16 = 10;
                 if self.level == self.starting_level {
                     if self.num_cleared_lines >= first_level_up_lines_amount {
@@ -546,7 +547,7 @@ impl Game {
                     }
                 } else if self.num_cleared_lines
                     >= first_level_up_lines_amount
-                        + (self.level as u16 - self.starting_level as u16)
+                        + (u16::from(self.level) - u16::from(self.starting_level))
                             * not_first_level_up_lines_amount
                 {
                     self.level += 1;
@@ -581,14 +582,14 @@ impl Game {
     }
 
     pub fn gamepad_button_down_event(&mut self, btn: Button, id: GamepadId) {
-        for map in self.vec_gamepad_id_map_to_player.iter() {
+        for map in &self.vec_gamepad_id_map_to_player {
             if Some(id) == map.0 {
                 self.vec_players[map.1 as usize].update_input_buttondown(btn);
                 return;
             }
         }
         if self.num_gamepads_to_initialize > 0 {
-            for map in self.vec_gamepad_id_map_to_player.iter_mut() {
+            for map in &mut self.vec_gamepad_id_map_to_player {
                 if None == map.0 {
                     map.0 = Some(id);
                     self.vec_players[map.1 as usize].update_input_buttondown(btn);
@@ -604,14 +605,14 @@ impl Game {
     }
 
     pub fn gamepad_button_up_event(&mut self, btn: Button, id: GamepadId) {
-        for map in self.vec_gamepad_id_map_to_player.iter() {
+        for map in &self.vec_gamepad_id_map_to_player {
             if Some(id) == map.0 {
                 self.vec_players[map.1 as usize].update_input_buttonup(btn);
                 return;
             }
         }
         if self.num_gamepads_to_initialize > 0 {
-            for map in self.vec_gamepad_id_map_to_player.iter_mut() {
+            for map in &mut self.vec_gamepad_id_map_to_player {
                 if None == map.0 {
                     map.0 = Some(id);
                     self.vec_players[map.1 as usize].update_input_buttonup(btn);
@@ -627,16 +628,16 @@ impl Game {
     }
 
     pub fn gamepad_axis_event(&mut self, axis: Axis, value: f32, id: GamepadId) {
-        for map in self.vec_gamepad_id_map_to_player.iter() {
+        for map in &self.vec_gamepad_id_map_to_player {
             if Some(id) == map.0 {
                 self.vec_players[map.1 as usize].update_input_axis(axis, value);
                 return;
             }
         }
         if self.num_gamepads_to_initialize > 0
-            && (value > DETECT_GAMEPAD_AXIS_THRESHOLD || value < -DETECT_GAMEPAD_AXIS_THRESHOLD)
+            && !(-DETECT_GAMEPAD_AXIS_THRESHOLD..=DETECT_GAMEPAD_AXIS_THRESHOLD).contains(&value)
         {
-            for map in self.vec_gamepad_id_map_to_player.iter_mut() {
+            for map in &mut self.vec_gamepad_id_map_to_player {
                 if None == map.0 {
                     map.0 = Some(id);
                     self.vec_players[map.1 as usize].update_input_axis(axis, value);
@@ -690,8 +691,8 @@ impl Game {
                             [x as usize]
                             .player;
                         let player_tile = graphics::DrawParam::new().dest(Point2::new(
-                            x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                            y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                            f32::from(x) * f32::from(NUM_PIXEL_ROWS_PER_TILEGRAPHIC),
+                            f32::from(y) * f32::from(NUM_PIXEL_ROWS_PER_TILEGRAPHIC),
                         ));
                         self.vec_batch_player_piece[player as usize].add(player_tile);
                     }
@@ -707,8 +708,8 @@ impl Game {
                         for y in 0..2 {
                             if self.vec_next_piece[player.player_num as usize].matrix[y][x] {
                                 let next_tile = graphics::DrawParam::new().dest(Point2::new(
-                                    x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                                    y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                    x as f32 * f32::from(NUM_PIXEL_ROWS_PER_TILEGRAPHIC),
+                                    y as f32 * f32::from(NUM_PIXEL_ROWS_PER_TILEGRAPHIC),
                                 ));
                                 self.vec_batch_next_piece[player.player_num as usize]
                                     .add(next_tile);
@@ -723,8 +724,8 @@ impl Game {
             // draw each SpriteBatch
             let board_top_left_corner = window_width / 2.0
                 - (scaled_tile_size
-                    * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32
-                    * self.board.width as f32
+                    * f32::from(NUM_PIXEL_ROWS_PER_TILEGRAPHIC)
+                    * f32::from(self.board.width)
                     / 2.0);
             // empty tiles
             graphics::draw(
@@ -733,7 +734,7 @@ impl Game {
                 DrawParam::new()
                     .dest(Point2::new(
                         board_top_left_corner,
-                        NON_BOARD_SPACE_U as f32 * self.tile_size,
+                        f32::from(NON_BOARD_SPACE_U) * self.tile_size,
                     ))
                     .scale(Vector2::new(scaled_tile_size, scaled_tile_size)),
             )
@@ -746,24 +747,25 @@ impl Game {
                     DrawParam::new()
                         .dest(Point2::new(
                             board_top_left_corner,
-                            NON_BOARD_SPACE_U as f32 * self.tile_size,
+                            f32::from(NON_BOARD_SPACE_U) * self.tile_size,
                         ))
                         .scale(Vector2::new(scaled_tile_size, scaled_tile_size)),
                 )
                 .unwrap();
             }
             // next piece tiles
-            for player in self.vec_players.iter() {
+            for player in &self.vec_players {
                 graphics::draw(
                     ctx,
                     &self.vec_batch_next_piece[player.player_num as usize],
                     DrawParam::new()
                         .dest(Point2::new(
-                            board_top_left_corner
-                                + (player.spawn_column - 2) as f32
-                                    * scaled_tile_size
-                                    * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                            (NON_BOARD_SPACE_U - BOARD_NEXT_PIECE_SPACING) as f32 * self.tile_size,
+                            (f32::from(player.spawn_column - 2) * scaled_tile_size).mul_add(
+                                f32::from(NUM_PIXEL_ROWS_PER_TILEGRAPHIC),
+                                board_top_left_corner,
+                            ),
+                            f32::from(NON_BOARD_SPACE_U - BOARD_NEXT_PIECE_SPACING)
+                                * self.tile_size,
                         ))
                         .scale(Vector2::new(scaled_tile_size, scaled_tile_size)),
                 )
@@ -773,7 +775,7 @@ impl Game {
             self.draw_text(
                 ctx,
                 &self.game_info_text,
-                1.0 - ((NON_BOARD_SPACE_D as f32 * self.tile_size) / window_height),
+                1.0 - ((f32::from(NON_BOARD_SPACE_D) * self.tile_size) / window_height),
                 &(window_width, window_height),
             );
 

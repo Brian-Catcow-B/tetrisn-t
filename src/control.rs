@@ -22,7 +22,7 @@ pub struct Control {
 }
 
 impl Control {
-    pub fn new(ctx: &mut Context) -> Control {
+    pub fn new(ctx: &mut Context) -> Self {
         Self {
             state: ProgramState::Menu,
             menu: Some(Menu::new(ctx, &None)),
