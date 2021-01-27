@@ -198,13 +198,12 @@ impl Menu {
             if !self.input.keydown_rotate_ccw.0 {
                 self.input.keydown_rotate_ccw = (true, true);
             }
-        } else if keycode == KeyCode::Space
+        } else if (keycode == KeyCode::Space
             || keycode == KeyCode::Return
-            || keycode == KeyCode::NumpadEnter
+            || keycode == KeyCode::NumpadEnter)
+            && !self.input.keydown_start.0
         {
-            if !self.input.keydown_start.0 {
-                self.input.keydown_start = (true, true);
-            }
+            self.input.keydown_start = (true, true);
         }
     }
 

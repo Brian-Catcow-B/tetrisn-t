@@ -88,11 +88,9 @@ impl Player {
                     self.input.keydown_rotate_ccw = (true, true);
                     return true;
                 }
-            } else if input == k_ctrls.start {
-                if !self.input.keydown_start.0 {
-                    self.input.keydown_start = (true, true);
-                    return true;
-                }
+            } else if input == k_ctrls.start && !self.input.keydown_start.0 {
+                self.input.keydown_start = (true, true);
+                return true;
             }
         }
 

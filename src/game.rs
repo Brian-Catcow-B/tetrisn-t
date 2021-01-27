@@ -50,35 +50,7 @@ const LITTLE_TEXT_SCALE: f32 = 20.0;
 // for each level (as the index), the number of frames it takes for a piece to move down one row (everything after 29 is also 0)
 // it's actually 1 less than the number of frames it takes the piece to fall because the game logic works out better that way
 const FALL_DELAY_VALUES: [u8; 30] = [
-    47,
-    42,
-    37,
-    32,
-    27,
-    22,
-    17,
-    12,
-    7,
-    5,
-    4,
-    4,
-    4,
-    3,
-    3,
-    3,
-    2,
-    2,
-    2,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
-    1,
+    47, 42, 37, 32, 27, 22, 17, 12, 7, 5, 4, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     0,
 ];
 
@@ -626,7 +598,7 @@ impl Game {
             }
         }
         if self.num_gamepads_to_initialize > 0
-            && (value > DETECT_GAMEPAD_AXIS_THRESHOLD || value < -DETECT_GAMEPAD_AXIS_THRESHOLD)
+            && !(-DETECT_GAMEPAD_AXIS_THRESHOLD..=DETECT_GAMEPAD_AXIS_THRESHOLD).contains(&value)
         {
             for map in self.vec_gamepad_id_map_to_player.iter_mut() {
                 if None == map.0 {

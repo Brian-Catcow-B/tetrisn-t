@@ -230,7 +230,7 @@ impl Board {
 
     // returns (num_lines_cleared, score_from_cleared_lines)
     pub fn attempt_clear_lines(&mut self, level: u8) -> (u8, u32) {
-        if self.vec_full_lines.len() == 0 {
+        if self.vec_full_lines.is_empty() {
             // nothing to see here
             return (0, 0);
         }
@@ -247,7 +247,7 @@ impl Board {
             }
         }
 
-        if vec_clearing_now_indices.len() == 0 {
+        if vec_clearing_now_indices.is_empty() {
             // not much to see here
             return (0, 0);
         }

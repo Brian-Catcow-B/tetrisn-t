@@ -18,7 +18,6 @@ mod menu;
 mod inputs;
 
 use ggez::input::gamepad::GilrsGamepadContext;
-use gilrs;
 
 fn main() {
     let mut context = ContextBuilder::new("Tetrisn-t", "Catcow")
