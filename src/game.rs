@@ -50,36 +50,8 @@ const LITTLE_TEXT_SCALE: f32 = 20.0;
 // for each level (as the index), the number of frames it takes for a piece to move down one row (everything after 29 is also 0)
 // it's actually 1 less than the number of frames it takes the piece to fall because the game logic works out better that way
 const FALL_DELAY_VALUES: [u8; 30] = [
-    48 - 1,
-    43 - 1,
-    38 - 1,
-    33 - 1,
-    28 - 1,
-    23 - 1,
-    18 - 1,
-    13 - 1,
-    8 - 1,
-    6 - 1,
-    5 - 1,
-    5 - 1,
-    5 - 1,
-    4 - 1,
-    4 - 1,
-    4 - 1,
-    3 - 1,
-    3 - 1,
-    3 - 1,
-    2 - 1,
-    2 - 1,
-    2 - 1,
-    2 - 1,
-    2 - 1,
-    2 - 1,
-    2 - 1,
-    2 - 1,
-    2 - 1,
-    2 - 1,
-    1 - 1,
+    47, 42, 37, 32, 27, 22, 17, 12, 7, 5, 4, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    0,
 ];
 
 // number of frames between downward movements when holding down
@@ -287,10 +259,6 @@ impl Game {
                 .scale(Scale::uniform(LITTLE_TEXT_SCALE * 2.0)),
         );
 
-        println!(
-            "[+] starting game with {} players and at level {}",
-            game_options.num_players, game_options.starting_level
-        );
         Self {
             board: Board::new(board_width, BOARD_HEIGHT, game_options.num_players),
             num_players: game_options.num_players,
@@ -498,7 +466,7 @@ impl Game {
                         player.fall_countdown = if self.level < 30 {
                             FALL_DELAY_VALUES[self.level as usize]
                         } else {
-                            1 - 1
+                            0
                         };
                         player.force_fall_countdown = FORCE_FALL_DELAY;
                         // add more spawn delay if locking the piece caused a line clear
@@ -510,7 +478,7 @@ impl Game {
                         player.fall_countdown = if self.level < 30 {
                             FALL_DELAY_VALUES[self.level as usize]
                         } else {
-                            1 - 1
+                            0
                         };
                         player.force_fall_countdown = FORCE_FALL_DELAY;
                     }
@@ -552,10 +520,6 @@ impl Game {
                     self.level += 1;
                 }
                 self.game_info_text.fragments_mut()[5].text = format!("{:02}", self.level);
-                println!(
-                    "[+] lines: {}; score: {}",
-                    self.num_cleared_lines, self.score
-                );
             }
         }
 
@@ -634,7 +598,7 @@ impl Game {
             }
         }
         if self.num_gamepads_to_initialize > 0
-            && (value > DETECT_GAMEPAD_AXIS_THRESHOLD || value < -DETECT_GAMEPAD_AXIS_THRESHOLD)
+            && !(-DETECT_GAMEPAD_AXIS_THRESHOLD..=DETECT_GAMEPAD_AXIS_THRESHOLD).contains(&value)
         {
             for map in self.vec_gamepad_id_map_to_player.iter_mut() {
                 if None == map.0 {
