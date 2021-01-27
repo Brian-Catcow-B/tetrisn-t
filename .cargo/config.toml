@@ -1,0 +1,2 @@
+[alias]
+optwin = "build -Z unstable-options --profile opt --target x86_64-pc-windows-gnu"
