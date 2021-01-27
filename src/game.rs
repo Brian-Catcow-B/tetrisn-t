@@ -50,36 +50,36 @@ const LITTLE_TEXT_SCALE: f32 = 20.0;
 // for each level (as the index), the number of frames it takes for a piece to move down one row (everything after 29 is also 0)
 // it's actually 1 less than the number of frames it takes the piece to fall because the game logic works out better that way
 const FALL_DELAY_VALUES: [u8; 30] = [
-    48 - 1,
-    43 - 1,
-    38 - 1,
-    33 - 1,
-    28 - 1,
-    23 - 1,
-    18 - 1,
-    13 - 1,
-    8 - 1,
-    6 - 1,
-    5 - 1,
-    5 - 1,
-    5 - 1,
-    4 - 1,
-    4 - 1,
-    4 - 1,
-    3 - 1,
-    3 - 1,
-    3 - 1,
-    2 - 1,
-    2 - 1,
-    2 - 1,
-    2 - 1,
-    2 - 1,
-    2 - 1,
-    2 - 1,
-    2 - 1,
-    2 - 1,
-    2 - 1,
-    1 - 1,
+    47,
+    42,
+    37,
+    32,
+    27,
+    22,
+    17,
+    12,
+    7,
+    5,
+    4,
+    4,
+    4,
+    3,
+    3,
+    3,
+    2,
+    2,
+    2,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
 ];
 
 // number of frames between downward movements when holding down
@@ -494,7 +494,7 @@ impl Game {
                         player.fall_countdown = if self.level < 30 {
                             FALL_DELAY_VALUES[self.level as usize]
                         } else {
-                            1 - 1
+                            0
                         };
                         player.force_fall_countdown = FORCE_FALL_DELAY;
                         // add more spawn delay if locking the piece caused a line clear
@@ -506,7 +506,7 @@ impl Game {
                         player.fall_countdown = if self.level < 30 {
                             FALL_DELAY_VALUES[self.level as usize]
                         } else {
-                            1 - 1
+                            0
                         };
                         player.force_fall_countdown = FORCE_FALL_DELAY;
                     }
