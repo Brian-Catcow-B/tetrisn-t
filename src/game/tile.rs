@@ -128,10 +128,11 @@ impl TileGraphic {
         let player_color: (u8, u8, u8, u8) = if player < NUM_PLAYERCOLORS {
             PLAYER_RGBA[player as usize]
         } else {
+            // procedurally generate colors beyond NUM_PLAYERCOLORS via multiplication by the player number, then avoid u8 overflow
             (
-                (player - NUM_PLAYERCOLORS + 1) * BASE_PLAYER_COLOR.0,
-                (player - NUM_PLAYERCOLORS + 1) * BASE_PLAYER_COLOR.1,
-                (player - NUM_PLAYERCOLORS + 1) * BASE_PLAYER_COLOR.2,
+                (((player - NUM_PLAYERCOLORS + 1) as usize * BASE_PLAYER_COLOR.0 as usize) % 0xff) as u8,
+                (((player - NUM_PLAYERCOLORS + 1) as usize * BASE_PLAYER_COLOR.1 as usize) % 0xff) as u8,
+                (((player - NUM_PLAYERCOLORS + 1) as usize * BASE_PLAYER_COLOR.2 as usize) % 0xff) as u8,
                 BASE_PLAYER_COLOR.3,
             )
         };

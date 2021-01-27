@@ -9,11 +9,10 @@ edition = "2018"
 
 [profile.dev]
 opt-level = 0
-overflow-checks = false  # it's a feature, not a bug; overflow is used for player colors in tile.rs
+overflow-checks = false  # used in ./src/game/piece.rs when rotating and moving pieces left
 
 [profile.release]
 opt-level = 3
-overflow-checks = false
 
 # [profile.opt]
 # inherits = "release"
