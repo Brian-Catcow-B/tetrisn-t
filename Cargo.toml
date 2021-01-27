@@ -1,9 +1,9 @@
 cargo-features = ["named-profiles"]
 
 [package]
-name = "rustrisn-t"
-version = "0.0.2"
-authors = ["Brian Billman"]
+name = "tetrisn-t"
+version = "0.1.0"
+authors = ["Brian \"Catcow\" B"]
 edition = "2018"
 
 
