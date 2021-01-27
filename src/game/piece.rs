@@ -117,7 +117,6 @@ impl Piece {
                 }
             }
             _ => {
-                // println!("[+] creating new None shaped piece");
                 return Self {
                     shape,
                     positions: [(0xff, 0xff); 4],
@@ -132,7 +131,6 @@ impl Piece {
     pub fn new_next(shape: Shapes) -> Self {
         match shape {
             Shapes::None => {
-                // println!("[+] creating new next piece with Shapes::None");
                 return Self {
                     shape,
                     positions: [(0xff, 0xff); 4],

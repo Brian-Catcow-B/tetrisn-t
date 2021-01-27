@@ -1,4 +1,4 @@
-cargo-features = ["named-profiles"]
+# cargo-features = ["named-profiles"]
 
 [package]
 name = "tetrisn-t"
@@ -15,18 +15,18 @@ overflow-checks = false  # it's a feature, not a bug; overflow is used for playe
 opt-level = 3
 overflow-checks = false
 
-[profile.opt]
-inherits = "release"
-
-opt-level = 3
-overflow-checks = false
-debug = false
-debug-assertions = false
-lto = false
-panic = 'unwind'
-incremental = true
-codegen-units = 16
-rpath = false
+# [profile.opt]
+# inherits = "release"
+# 
+# opt-level = 3
+# overflow-checks = false
+# debug = false
+# debug-assertions = false
+# lto = false
+# panic = 'unwind'
+# incremental = true
+# codegen-units = 16
+# rpath = false
 
 
 [dependencies]

@@ -28,7 +28,7 @@ fn main() {
     if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
         let mut path = path::PathBuf::from(manifest_dir);
         path.push("resources");
-        println!("Adding path {:?}", path);
+        println!("[+] Adding path {:?}", path);
         context = context.add_resource_path(path);
     }
 
@@ -66,8 +66,7 @@ fn main() {
     let mut control = Control::new(ctx);
 
     // loop that controls the ProgramState
-    match event::run(ctx, event_loop, &mut control) {
-        Ok(_) => println!("Exited cleanly."),
-        Err(e) => println!("[!] Error occured: {}", e),
+    if let Err(e) = event::run(ctx, event_loop, &mut control) {
+        println!("[!] Error occured: {}", e);
     }
 }

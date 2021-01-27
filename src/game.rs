@@ -287,10 +287,6 @@ impl Game {
                 .scale(Scale::uniform(LITTLE_TEXT_SCALE * 2.0)),
         );
 
-        println!(
-            "[+] starting game with {} players and at level {}",
-            game_options.num_players, game_options.starting_level
-        );
         Self {
             board: Board::new(board_width, BOARD_HEIGHT, game_options.num_players),
             num_players: game_options.num_players,
@@ -552,10 +548,6 @@ impl Game {
                     self.level += 1;
                 }
                 self.game_info_text.fragments_mut()[5].text = format!("{:02}", self.level);
-                println!(
-                    "[+] lines: {}; score: {}",
-                    self.num_cleared_lines, self.score
-                );
             }
         }
 

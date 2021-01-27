@@ -4,10 +4,16 @@ Tetrisn-t (python version) rewritten in Rust, better.
 Binaries for Windows and Linux are included in each tagged release.
 
 # Build
-Download and install cargo, then
+Download and install cargo, then set rustup default to 1.47.0 to avoid an error in the ggez library introduced with rust 1.48.0 by running
+```
+rustup default 1.47.0
+```
+then build with
 ```
 cargo build --release
 ```
+and find the resulting binary in `./target/release/`
+
 Google any errors that occur, if they do.
 
 # Gamepads
