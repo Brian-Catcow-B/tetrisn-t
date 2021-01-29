@@ -15,3 +15,10 @@ Escape clears selected input layout.
 G sets a player to be controlled by a gamepad.
 Users can setup their own gamepad layouts by adding their SDL2 Gamepad string to /resources/gamecontrollerdb.txt.
 Gamepads auto-map to the first player that doesn't have a GamepadId mapping to it for easy setup.
+
+#########
+# 0.1.0 #
+#########
+Renamed project: Rustrisn-t -> Tetrisn-t.
+Improved menu slightly.
+Various quality-of-life changes.
