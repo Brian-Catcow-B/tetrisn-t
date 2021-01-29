@@ -8,7 +8,7 @@ use std::env;
 use std::fs::File;
 use std::path;
 
-// rustrisnt files
+// tetrisn-t files
 mod control;
 use control::Control;
 
@@ -18,17 +18,16 @@ mod menu;
 mod inputs;
 
 use ggez::input::gamepad::GilrsGamepadContext;
-use gilrs;
 
 fn main() {
-    let mut context = ContextBuilder::new("Rustrisn-t", "Catcow")
-        .window_setup(ggez::conf::WindowSetup::default().title("Rustrisn-t"));
+    let mut context = ContextBuilder::new("Tetrisn-t", "Catcow")
+        .window_setup(ggez::conf::WindowSetup::default().title("Tetrisn't"));
 
     // file systems stuff
     if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
         let mut path = path::PathBuf::from(manifest_dir);
         path.push("resources");
-        println!("Adding path {:?}", path);
+        println!("[+] Adding path {:?}", path);
         context = context.add_resource_path(path);
     }
 
@@ -66,8 +65,7 @@ fn main() {
     let mut control = Control::new(ctx);
 
     // loop that controls the ProgramState
-    match event::run(ctx, event_loop, &mut control) {
-        Ok(_) => println!("Exited cleanly."),
-        Err(e) => println!("[!] Error occured: {}", e),
+    if let Err(e) = event::run(ctx, event_loop, &mut control) {
+        println!("[!] Error occured: {}", e);
     }
 }

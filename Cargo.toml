@@ -1,15 +1,32 @@
+# cargo-features = ["named-profiles"]
+
 [package]
-name = "rustrisn-t"
-version = "0.0.2"
-authors = ["Brian Billman"]
+name = "tetrisn-t"
+version = "0.1.0"
+authors = ["Brian \"Catcow\" B"]
 edition = "2018"
+
 
 [profile.dev]
 opt-level = 0
-overflow-checks = false  # it's a feature, not a bug; overflow is used for player colors in tile.rs
+overflow-checks = false  # used in ./src/game/piece.rs when rotating and moving pieces left
 
 [profile.release]
 opt-level = 3
+
+# [profile.opt]
+# inherits = "release"
+# 
+# opt-level = 3
+# overflow-checks = false
+# debug = false
+# debug-assertions = false
+# lto = false
+# panic = 'unwind'
+# incremental = true
+# codegen-units = 16
+# rpath = false
+
 
 [dependencies]
 # ggez = "0.5"

@@ -230,7 +230,7 @@ impl Board {
 
     // returns (num_lines_cleared, score_from_cleared_lines)
     pub fn attempt_clear_lines(&mut self, level: u8) -> (u8, u32) {
-        if self.vec_full_lines.len() == 0 {
+        if self.vec_full_lines.is_empty() {
             // nothing to see here
             return (0, 0);
         }
@@ -247,7 +247,7 @@ impl Board {
             }
         }
 
-        if vec_clearing_now_indices.len() == 0 {
+        if vec_clearing_now_indices.is_empty() {
             // not much to see here
             return (0, 0);
         }
@@ -337,10 +337,6 @@ impl Board {
             }
         }
 
-        println!(
-            "[+] cleared {} lines, scored {} points",
-            lines_cleared, score
-        );
         (lines_cleared as u8, score)
     }
 }
@@ -420,7 +416,7 @@ mod tests {
             (num_cleared_lines, score),
             (8, (2 * SCORE_QUADRUPLE_BASE as u32 * (1)) as u64)
         );
-        println!("Passed scoring 2 tetrises on the same frame");
+        println!("[~] Passed scoring 2 tetrises on the same frame");
 
         // now try with some L's because that can break it
         let mut score: u64 = 0;
@@ -472,7 +468,7 @@ mod tests {
                 (1 * SCORE_SINGLE_BASE as u32 * (1) + 1 * SCORE_TRIPLE_BASE as u32 * (1)) as u64
             )
         );
-        println!("Passed scoring a single as one player and then a triple as another player one frame after");
+        println!("[~] Passed scoring a single as one player and then a triple as another player one frame after");
 
         // now clear 2 tetrises, the second one 1 frame after the other, which can also break things
         let mut score: u64 = 0;
@@ -522,6 +518,6 @@ mod tests {
             (num_cleared_lines, score),
             (8, (2 * SCORE_QUADRUPLE_BASE as u32 * (1)) as u64)
         );
-        println!("Passed scoring 2 tetrises one frame apart");
+        println!("[~] Passed scoring 2 tetrises one frame apart");
     }
 }
