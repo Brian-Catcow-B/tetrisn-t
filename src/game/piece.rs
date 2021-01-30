@@ -186,7 +186,12 @@ impl Piece {
         }
     }
 
-    pub fn spawn_pos(&self, spawn_column: u8, spawn_row: u8, board_height_buffer: u8) -> [(u8, u8); 4] {
+    pub fn spawn_pos(
+        &self,
+        spawn_column: u8,
+        spawn_row: u8,
+        board_height_buffer: u8,
+    ) -> [(u8, u8); 4] {
         match self.shape {
             Shapes::None => {
                 println!("[!] tried to spawn a piece with shape type Shapes::None");
@@ -196,7 +201,7 @@ impl Piece {
                 [
                     (spawn_row + board_height_buffer, spawn_column - 2), // [-][-][-][-] | [-][-][0][-]
                     (spawn_row + board_height_buffer, spawn_column - 1), // [-][-][-][-] | [-][-][1][-]
-                    (spawn_row + board_height_buffer, spawn_column),     // [0][1][2][3] | [-][-][2][-]
+                    (spawn_row + board_height_buffer, spawn_column), // [0][1][2][3] | [-][-][2][-]
                     (spawn_row + board_height_buffer, spawn_column + 1), // [-][-][-][-] | [-][-][3][-]
                 ]
             }

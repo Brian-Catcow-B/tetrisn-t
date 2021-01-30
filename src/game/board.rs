@@ -1,9 +1,9 @@
 use crate::game::piece::{Movement, Piece, Shapes};
 use crate::game::tile::Tile;
+use crate::game::Modes;
 use crate::game::{
     CLEAR_DELAY, SCORE_DOUBLE_BASE, SCORE_QUADRUPLE_BASE, SCORE_SINGLE_BASE, SCORE_TRIPLE_BASE,
 };
-use crate::game::Modes;
 
 // abstract the board and the possible gamemodes into one struct
 pub struct BoardHandler {
@@ -20,7 +20,13 @@ impl BoardHandler {
         };
         Self {
             mode,
-            board: Board::new(board_width, board_height, board_height_buffer, piece_spawn_row, num_players),
+            board: Board::new(
+                board_width,
+                board_height,
+                board_height_buffer,
+                piece_spawn_row,
+                num_players,
+            ),
             rotatris,
         }
     }
@@ -32,15 +38,25 @@ impl BoardHandler {
         let mut new_positions: [(u8, u8); 4] = [(0u8, 0u8); 4];
         match rotate_direction {
             Movement::RotateCw => {
-                for (index, position) in self.board.vec_active_piece[0].positions.iter().take(4).enumerate() {
+                for (index, position) in self.board.vec_active_piece[0]
+                    .positions
+                    .iter()
+                    .take(4)
+                    .enumerate()
+                {
                     new_positions[index] = (position.1, center * 2 - position.0 - is_center_even);
                 }
-            },
+            }
             Movement::RotateCcw => {
-                for (index, position) in self.board.vec_active_piece[0].positions.iter().take(4).enumerate() {
+                for (index, position) in self.board.vec_active_piece[0]
+                    .positions
+                    .iter()
+                    .take(4)
+                    .enumerate()
+                {
                     new_positions[index] = (center * 2 - position.1 - is_center_even, position.0);
                 }
-            },
+            }
             _ => {
                 println!("[!] Sent some non-rotation Movement to `rotatris_attempt_rotate_board()`, a method of `BoardHandler`");
                 return false;
@@ -49,7 +65,9 @@ impl BoardHandler {
 
         // check validity of new positions
         for position in new_positions.iter().take(4) {
-            if !self.board.matrix[position.0 as usize][position.1 as usize].empty && !self.board.matrix[position.0 as usize][position.1 as usize].active {
+            if !self.board.matrix[position.0 as usize][position.1 as usize].empty
+                && !self.board.matrix[position.0 as usize][position.1 as usize].active
+            {
                 return false;
             }
         }
@@ -92,7 +110,11 @@ impl BoardHandler {
         for a in [z, board_side_length - z - 1].into_iter() {
             for b in z..(board_side_length - z) {
                 if b >= z && b <= board_side_length - z {
-                    if self.board.matrix[*a as usize][b as usize].empty || self.board.matrix[*a as usize][b as usize].active || self.board.matrix[b as usize][*a as usize].empty || self.board.matrix[b as usize][*a as usize].active {
+                    if self.board.matrix[*a as usize][b as usize].empty
+                        || self.board.matrix[*a as usize][b as usize].active
+                        || self.board.matrix[b as usize][*a as usize].empty
+                        || self.board.matrix[b as usize][*a as usize].active
+                    {
                         return false;
                     }
                 }
@@ -140,7 +162,13 @@ pub struct Board {
 }
 
 impl Board {
-    pub fn new(board_width: u8, board_height: u8, board_height_buffer: u8, spawn_row: u8, num_players: u8) -> Self {
+    pub fn new(
+        board_width: u8,
+        board_height: u8,
+        board_height_buffer: u8,
+        spawn_row: u8,
+        num_players: u8,
+    ) -> Self {
         let mut vec_active_piece: Vec<Piece> = Vec::with_capacity(num_players as usize);
         for _ in 0..num_players {
             vec_active_piece.push(Piece::new(Shapes::None));
@@ -181,7 +209,12 @@ impl Board {
             .take(4)
         {
             if position != &(0xffu8, 0xffu8) {
-                self.matrix[position.0 as usize][position.1 as usize] = Tile::new(false, true, player, self.vec_active_piece[player as usize].shape);
+                self.matrix[position.0 as usize][position.1 as usize] = Tile::new(
+                    false,
+                    true,
+                    player,
+                    self.vec_active_piece[player as usize].shape,
+                );
             } else {
                 println!("[!] tried to playerify piece that contained position (0xffu8, 0xffu8)");
             }
@@ -213,7 +246,8 @@ impl Board {
         self.vec_active_piece[player as usize].positions = spawn_positions;
         // initialize the tile logic for the newly spawned piece
         for position in spawn_positions.iter().take(4) {
-            self.matrix[position.0 as usize][position.1 as usize] = Tile::new(false, true, player, spawn_piece_shape);
+            self.matrix[position.0 as usize][position.1 as usize] =
+                Tile::new(false, true, player, spawn_piece_shape);
         }
 
         (false, false)
@@ -221,7 +255,12 @@ impl Board {
 
     // returns (bool, bool) based on (if piece moved successfully, if (piece is locked && filled some line))
     // sets the shape of the piece to Shapes::None if it locks
-    pub fn attempt_piece_movement(&mut self, movement: Movement, player: u8, current_gravity: Movement) -> (bool, bool) {
+    pub fn attempt_piece_movement(
+        &mut self,
+        movement: Movement,
+        player: u8,
+        current_gravity: Movement,
+    ) -> (bool, bool) {
         let mut cant_move_flag = false;
         // determine if it can move
         let new_positions = self.vec_active_piece[player as usize].piece_pos(movement);
@@ -305,7 +344,7 @@ impl Board {
                     {
                         return true;
                     }
-                },
+                }
                 Movement::Left => {
                     if position.1 <= 0 {
                         return true;
@@ -315,7 +354,7 @@ impl Board {
                     {
                         return true;
                     }
-                },
+                }
                 Movement::Up => {
                     if position.0 <= 0 {
                         return true;
@@ -325,7 +364,7 @@ impl Board {
                     {
                         return true;
                     }
-                },
+                }
                 Movement::Right => {
                     if position.1 >= self.width - 1 {
                         return true;
@@ -335,7 +374,7 @@ impl Board {
                     {
                         return true;
                     }
-                },
+                }
                 _ => panic!("[!] Error: current gravity is {}", current_gravity as u8),
             }
         }
@@ -529,12 +568,9 @@ pub struct Rotatris {
 
 impl Rotatris {
     fn new() -> Self {
-        Self {
-            board_rotation: 0,
-        }
+        Self { board_rotation: 0 }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -555,9 +591,7 @@ mod tests {
         let mut board = Board::new(board_width, board_height, num_players);
 
         for x in 0..4 {
-            for y in
-                (board_height + self.height_buffer - 8)..board_height + self.height_buffer
-            {
+            for y in (board_height + self.height_buffer - 8)..board_height + self.height_buffer {
                 board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8, Shapes::I);
             }
         }
@@ -598,9 +632,7 @@ mod tests {
         let mut num_cleared_lines: u16 = 0;
 
         for x in 0..board_width - 2 {
-            for y in
-                (board_height + self.height_buffer - 4)..board_height + self.height_buffer
-            {
+            for y in (board_height + self.height_buffer - 4)..board_height + self.height_buffer {
                 board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8, Shapes::I);
             }
         }
@@ -650,9 +682,7 @@ mod tests {
         let mut num_cleared_lines: u16 = 0;
 
         for x in 0..board_width - 1 {
-            for y in
-                (board_height + self.height_buffer - 8)..board_height + self.height_buffer
-            {
+            for y in (board_height + self.height_buffer - 8)..board_height + self.height_buffer {
                 board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8, Shapes::I);
             }
         }
