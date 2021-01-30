@@ -749,12 +749,23 @@ impl Game {
             // add each non-empty tile to the correct SpriteBatch
             for x in 0..self.bh.board.width {
                 for y in 0..self.bh.board.height {
-                    if !self.bh.board.matrix[(y + self.bh.board.height_buffer) as usize][x as usize]
-                        .empty
+                    // actually go through and add tiles to a spritebatch
+                    if !self.bh.board.matrix[(y + self.bh.board.height_buffer) as usize][x as usize].empty
                     {
+                        // account for the gravity direction in how to draw it (rotatris)
+                        let center = self.bh.board.width / 2;
+                        let is_center_even: u8 = (center + 1) % 2;
+                        let (y_draw_pos, x_draw_pos) = match self.gravity_direction {
+                            Movement::Down => (y, x),
+                            Movement::Left => (center * 2 - x - is_center_even, y),
+                            Movement::Up => (center * 2 - y - is_center_even, center * 2 - x - is_center_even),
+                            Movement::Right => (x, center * 2 - y - is_center_even),
+                            _ => panic!("[!] Error: self.gravity_direction is {}", self.gravity_direction as u8),
+                        };
+                        // create the proper DrawParam and add to the spritebatch
                         let player_tile = graphics::DrawParam::new().dest(Point2::new(
-                            x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                            y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                            x_draw_pos as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                            y_draw_pos as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                         ));
                         if self.num_players > 1 {
                             let player = self.bh.board.matrix
