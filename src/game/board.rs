@@ -32,12 +32,12 @@ impl BoardHandler {
         match rotate_direction {
             Movement::RotateCw => {
                 for (index, position) in self.board.vec_active_piece[0].positions.iter().take(4).enumerate() {
-                    new_positions[index] = (center + (position.1 - center), position.0);
+                    new_positions[index] = (position.1, center * 2 - position.0);
                 }
             },
             Movement::RotateCcw => {
                 for (index, position) in self.board.vec_active_piece[0].positions.iter().take(4).enumerate() {
-                    new_positions[index] = (position.1, center + (position.0 - center));
+                    new_positions[index] = (center * 2 - position.1, position.0);
                 }
             },
             _ => {
