@@ -25,19 +25,18 @@ impl BoardHandler {
 
     // return bool is if rotate was successful
     pub fn rotatris_attempt_rotate_board(&mut self, rotate_direction: Movement) -> bool {
-        // subtract 1 for easier math in the case of an even board side length
         let center: u8 = self.board.width / 2;
-        let rem_more_one: u8 = (self.board.width + 1) % 2;
+        let is_center_even: u8 = (self.board.width + 1) % 2;
         let mut new_positions: [(u8, u8); 4] = [(0u8, 0u8); 4];
         match rotate_direction {
             Movement::RotateCw => {
                 for (index, position) in self.board.vec_active_piece[0].positions.iter().take(4).enumerate() {
-                    new_positions[index] = (position.1, center * 2 - position.0);
+                    new_positions[index] = (position.1, center * 2 - position.0 - is_center_even);
                 }
             },
             Movement::RotateCcw => {
                 for (index, position) in self.board.vec_active_piece[0].positions.iter().take(4).enumerate() {
-                    new_positions[index] = (center * 2 - position.1, position.0);
+                    new_positions[index] = (center * 2 - position.1 - is_center_even, position.0);
                 }
             },
             _ => {
@@ -157,7 +156,7 @@ impl Board {
 
     // returns (bool, bool) based on (if piece moved successfully, if (piece is locked && filled some line))
     // sets the shape of the piece to Shapes::None if it locks
-    pub fn attempt_piece_movement(&mut self, movement: Movement, player: u8) -> (bool, bool) {
+    pub fn attempt_piece_movement(&mut self, movement: Movement, player: u8, current_gravity: Movement) -> (bool, bool) {
         let mut cant_move_flag = false;
         // determine if it can move
         let new_positions = self.vec_active_piece[player as usize].piece_pos(movement);
@@ -182,7 +181,7 @@ impl Board {
         }
 
         if cant_move_flag {
-            if movement == Movement::Down && self.should_lock(player) {
+            if movement == current_gravity && self.should_lock(player, current_gravity) {
                 // lock piece and push any full lines to vec_full_lines
                 self.vec_active_piece[player as usize].shape = Shapes::None;
                 let mut is_full_line = false;
@@ -224,20 +223,55 @@ impl Board {
         (true, false)
     }
 
-    fn should_lock(&self, player: u8) -> bool {
+    fn should_lock(&self, player: u8, current_gravity: Movement) -> bool {
         for position in self.vec_active_piece[player as usize]
             .positions
             .iter()
             .take(4)
         {
             // we just want to know if moving down by 1 will run the piece into the bottom of the board or an inactive tile
-            if position.0 as usize + 1 >= (self.height + self.height_buffer) as usize {
-                return true;
-            }
-            if !self.matrix[position.0 as usize + 1][position.1 as usize].active
-                && !self.matrix[position.0 as usize + 1][position.1 as usize].empty
-            {
-                return true;
+            match current_gravity {
+                Movement::Down => {
+                    if position.0 as usize + 1 >= (self.height + self.height_buffer) as usize {
+                        return true;
+                    }
+                    if !self.matrix[position.0 as usize + 1][position.1 as usize].active
+                        && !self.matrix[position.0 as usize + 1][position.1 as usize].empty
+                    {
+                        return true;
+                    }
+                },
+                Movement::Left => {
+                    if position.1 <= 0 {
+                        return true;
+                    }
+                    if !self.matrix[position.0 as usize][position.1 as usize - 1].active
+                        && !self.matrix[position.0 as usize][position.1 as usize - 1].empty
+                    {
+                        return true;
+                    }
+                },
+                Movement::Up => {
+                    if position.0 <= 0 {
+                        return true;
+                    }
+                    if !self.matrix[position.0 as usize - 1][position.1 as usize].active
+                        && !self.matrix[position.0 as usize - 1][position.1 as usize].empty
+                    {
+                        return true;
+                    }
+                },
+                Movement::Right => {
+                    if position.1 >= self.width - 1 {
+                        return true;
+                    }
+                    if !self.matrix[position.0 as usize][position.1 as usize + 1].active
+                        && !self.matrix[position.0 as usize][position.1 as usize + 1].empty
+                    {
+                        return true;
+                    }
+                },
+                _ => panic!("[!] Error: current gravity is {}", current_gravity as u8),
             }
         }
 

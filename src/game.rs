@@ -26,7 +26,7 @@ use crate::menu::MenuGameOptions;
 
 const BOARD_HEIGHT: u8 = 20u8;
 
-const ROTATRIS_BOARD_SIDE_LENGTH: u8 = 13u8;
+const ROTATRIS_BOARD_SIDE_LENGTH: u8 = 16u8;
 
 pub const CLEAR_DELAY: i8 = 30i8;
 
@@ -140,6 +140,7 @@ pub struct Game {
     pause_flag: (bool, bool),
     rotate_board_cw: (bool, bool),
     rotate_board_ccw: (bool, bool),
+    gravity_direction: Movement,
     game_over_flag: bool,
     game_over_delay: i8,
     // drawing
@@ -296,6 +297,7 @@ impl Game {
             pause_flag: (false, false),
             rotate_board_cw: (false, false),
             rotate_board_ccw: (false, false),
+            gravity_direction: Movement::Down,
             game_over_flag: false,
             game_over_delay: GAME_OVER_DELAY,
             tile_size: 0f32,
@@ -418,13 +420,20 @@ impl Game {
                     continue;
                 }
 
+                // rotatris
+                // BOARD ROTATION
                 if self.rotate_board_cw.1 {
-                    self.bh.rotatris_attempt_rotate_board(Movement::RotateCw);
+                    if self.bh.rotatris_attempt_rotate_board(Movement::RotateCw) {
+                        self.gravity_direction = Movement::from(((self.gravity_direction as u8) + 1) % 4);
+                    }
                 }
 
                 if self.rotate_board_ccw.1 {
-                    self.bh.rotatris_attempt_rotate_board(Movement::RotateCw);
+                    if self.bh.rotatris_attempt_rotate_board(Movement::RotateCcw) {
+                        self.gravity_direction = Movement::from(((self.gravity_direction as u8) + 3) % 4);
+                    }
                 }
+                // rotatris end
 
                 // piece movement
                 // LEFT / RIGHT
@@ -433,7 +442,7 @@ impl Game {
                     player.waiting_to_shift = !self
                         .bh
                         .board
-                        .attempt_piece_movement(Movement::Left, player.player_num)
+                        .attempt_piece_movement(Movement::from((Movement::Left as u8 + self.gravity_direction as u8) % 4), player.player_num, self.gravity_direction)
                         .0;
                     player.das_countdown = DAS_THRESHOLD_BIG;
                 }
@@ -442,7 +451,7 @@ impl Game {
                     player.waiting_to_shift = !self
                         .bh
                         .board
-                        .attempt_piece_movement(Movement::Right, player.player_num)
+                        .attempt_piece_movement(Movement::from((Movement::Right as u8 + self.gravity_direction as u8) % 4), player.player_num, self.gravity_direction)
                         .0;
                     player.das_countdown = DAS_THRESHOLD_BIG;
                 }
@@ -454,7 +463,7 @@ impl Game {
                         if self
                             .bh
                             .board
-                            .attempt_piece_movement(Movement::Left, player.player_num)
+                            .attempt_piece_movement(Movement::from((Movement::Left as u8 + self.gravity_direction as u8) % 4), player.player_num, self.gravity_direction)
                             .0
                         {
                             player.das_countdown =
@@ -473,7 +482,7 @@ impl Game {
                         if self
                             .bh
                             .board
-                            .attempt_piece_movement(Movement::Right, player.player_num)
+                            .attempt_piece_movement(Movement::from((Movement::Right as u8 + self.gravity_direction as u8) % 4), player.player_num, self.gravity_direction)
                             .0
                         {
                             player.das_countdown =
@@ -487,11 +496,11 @@ impl Game {
                 // CW / CCW
                 if player.input.keydown_rotate_cw.1 {
                     self.bh.board
-                        .attempt_piece_movement(Movement::RotateCw, player.player_num);
+                        .attempt_piece_movement(Movement::RotateCw, player.player_num, self.gravity_direction);
                 }
                 if player.input.keydown_rotate_ccw.1 {
                     self.bh.board
-                        .attempt_piece_movement(Movement::RotateCcw, player.player_num);
+                        .attempt_piece_movement(Movement::RotateCcw, player.player_num, self.gravity_direction);
                 }
                 // DOWN
                 // down is interesting because every time the downwards position is false we have to check if it's running into the bottom or an inactive tile so we know if we should lock it
@@ -502,7 +511,7 @@ impl Game {
                     let (moved_flag, caused_full_line_flag): (bool, bool) = self
                         .bh
                         .board
-                        .attempt_piece_movement(Movement::Down, player.player_num);
+                        .attempt_piece_movement(Movement::from((Movement::Down as u8 + self.gravity_direction as u8) % 4), player.player_num, self.gravity_direction);
                     // if the piece got locked, piece.shape gets set to Shapes::None, so set the spawn piece flag
                     if self.bh.board.vec_active_piece[player.player_num as usize].shape == Shapes::None
                     {

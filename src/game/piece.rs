@@ -29,13 +29,28 @@ impl From<u8> for Shapes {
 #[repr(u8)]
 #[derive(PartialEq, Eq, Copy, Clone)]
 pub enum Movement {
-    None,
-    Left,
-    Right,
     Down,
+    Left,
+    Up,
+    Right,
     RotateCw,
     RotateCcw,
-    // Up,
+    None,
+}
+
+impl From<u8> for Movement {
+    fn from(value: u8) -> Movement {
+        match value {
+            0 => Movement::Down,
+            1 => Movement::Left,
+            2 => Movement::Up,
+            3 => Movement::Right,
+            4 => Movement::RotateCw,
+            5 => Movement::RotateCcw,
+            6 => Movement::None,
+            _ => panic!("[!] Unknown Movement value: {}", value),
+        }
+    }
 }
 
 pub struct Piece {
@@ -262,13 +277,13 @@ impl Piece {
                 (self.positions[2].0 + 1, self.positions[2].1),
                 (self.positions[3].0 + 1, self.positions[3].1),
             ]
-        // } else if r#move == Movement::Up {
-        //     return [
-        //         (self.positions[0].0 - 1, self.positions[0].1),
-        //         (self.positions[1].0 - 1, self.positions[1].1),
-        //         (self.positions[2].0 - 1, self.positions[2].1),
-        //         (self.positions[3].0 - 1, self.positions[3].1),
-        //     ];
+        } else if r#move == Movement::Up {
+            return [
+                (self.positions[0].0 - 1, self.positions[0].1),
+                (self.positions[1].0 - 1, self.positions[1].1),
+                (self.positions[2].0 - 1, self.positions[2].1),
+                (self.positions[3].0 - 1, self.positions[3].1),
+            ];
         } else {
             // T, L, J
             if self.num_rotations == 4 {
