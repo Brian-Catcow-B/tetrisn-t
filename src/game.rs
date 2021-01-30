@@ -28,7 +28,7 @@ const BOARD_HEIGHT: u8 = 20u8;
 
 const ROTATRIS_BOARD_SIDE_LENGTH: u8 = 16u8;
 
-pub const CLEAR_DELAY: i8 = 30i8;
+pub const CLEAR_DELAY: i8 = 0i8;
 
 pub const SCORE_SINGLE_BASE: u8 = 40u8;
 pub const SCORE_DOUBLE_BASE: u8 = 100u8;
@@ -556,7 +556,7 @@ impl Game {
             }
 
             // attempt to line clear (go through the vector of FullLine's and decrement clear_delay if > 0, clear and return (lines_cleared, score) for <= 0)
-            let (returned_lines, returned_score) = self.bh.board.attempt_clear_lines(self.level);
+            let (returned_lines, returned_score) = self.bh.attempt_clear_lines(self.level);
             if returned_lines > 0 {
                 self.num_cleared_lines += returned_lines as u16;
                 self.game_info_text.fragments_mut()[1].text =

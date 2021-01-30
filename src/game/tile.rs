@@ -48,7 +48,7 @@ const PLAYER_RGBA: [(u8, u8, u8, u8); NUM_PLAYERCOLORS as usize] = [
 
 const BASE_PLAYER_COLOR: (u8, u8, u8, u8) = (20u8, 80u8, 150u8, 0xffu8);
 
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 pub struct Tile {
     pub empty: bool,
     pub active: bool,

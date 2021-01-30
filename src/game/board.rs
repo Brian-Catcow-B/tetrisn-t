@@ -7,6 +7,7 @@ use crate::game::Modes;
 
 // abstract the board and the possible gamemodes into one struct
 pub struct BoardHandler {
+    pub mode: Modes,
     pub board: Board,
     pub rotatris: Option<Rotatris>,
 }
@@ -18,6 +19,7 @@ impl BoardHandler {
             Modes::Classic => (2, 0, None),
         };
         Self {
+            mode,
             board: Board::new(board_width, board_height, board_height_buffer, piece_spawn_row, num_players),
             rotatris,
         }
@@ -57,6 +59,69 @@ impl BoardHandler {
         self.board.playerify_piece(0);
 
         true
+    }
+
+    pub fn attempt_clear_lines(&mut self, level: u8) -> (u8, u32) {
+        match self.mode {
+            Modes::Classic => self.board.attempt_clear_lines(level),
+            Modes::Rotatris => self.rotatris_attempt_clear_rings(level),
+        }
+    }
+
+    pub fn rotatris_attempt_clear_rings(&mut self, level: u8) -> (u8, u32) {
+        let mut num_cleared_rings = 0;
+        let mut score_from_cleared_rings = 0;
+        let num_rings_to_check = self.board.width / 2 - 4;
+
+        // go from inner rings to outer rings checking if any ring is full, avoiding the middle 4 rings
+        for z in (0..num_rings_to_check).rev() {
+            if self.rotatris_check_single_ring(z) {
+                num_cleared_rings += 1;
+                // clear and pull inner stuff out
+                for j in (z + 1)..num_rings_to_check {
+                    self.rotatris_pull_single_ring_out(j);
+                }
+            }
+        }
+
+        (num_cleared_rings, score_from_cleared_rings)
+    }
+
+    fn rotatris_check_single_ring(&mut self, z: u8) -> bool {
+        let board_side_length = self.board.width;
+        for a in [z, board_side_length - z - 1].into_iter() {
+            for b in z..(board_side_length - z) {
+                if b >= z && b <= board_side_length - z {
+                    if self.board.matrix[*a as usize][b as usize].empty || self.board.matrix[*a as usize][b as usize].active || self.board.matrix[b as usize][*a as usize].empty || self.board.matrix[b as usize][*a as usize].active {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        true
+    }
+
+    fn rotatris_pull_single_ring_out(&mut self, j: u8) {
+        let j = j as usize;
+        let k = self.board.width as usize - j - 1;
+
+        // sides
+        for a in j..=k {
+            // top
+            self.board.matrix[j - 1][a] = self.board.matrix[j][a];
+            // left
+            self.board.matrix[a][j - 1] = self.board.matrix[a][j];
+            // down
+            self.board.matrix[k + 1][a] = self.board.matrix[k][a];
+            // right
+            self.board.matrix[a][k + 1] = self.board.matrix[a][k];
+        }
+        // corners
+        self.board.matrix[j - 1][j - 1] = self.board.matrix[j][j];
+        self.board.matrix[j - 1][k + 1] = self.board.matrix[j][k];
+        self.board.matrix[k + 1][j - 1] = self.board.matrix[k][j];
+        self.board.matrix[k + 1][k + 1] = self.board.matrix[k][k];
     }
 }
 
