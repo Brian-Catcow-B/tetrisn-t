@@ -5,10 +5,6 @@ use crate::game::{
 };
 use crate::game::Modes;
 
-// this constant is for the two unseen columns above the board so that when an I piece is rotated
-// right after spawning, the two tiles that go above the board are kept track of
-pub const BOARD_HEIGHT_BUFFER_U: u8 = 2;
-
 // abstract the board and the possible gamemodes into one struct
 pub struct BoardHandler {
     pub board: Board,
@@ -17,14 +13,51 @@ pub struct BoardHandler {
 
 impl BoardHandler {
     pub fn new(board_width: u8, board_height: u8, num_players: u8, mode: Modes) -> Self {
-        let rotatris = match mode {
-            Modes::Rotatris => Some(Rotatris::new()),
-            _ => None,
+        let (board_height_buffer, piece_spawn_row, rotatris) = match mode {
+            Modes::Rotatris => (0, (board_height - 1) / 2, Some(Rotatris::new())),
+            Modes::Classic => (2, 0, None),
         };
         Self {
-            board: Board::new(board_width, board_height, num_players),
+            board: Board::new(board_width, board_height, board_height_buffer, piece_spawn_row, num_players),
             rotatris,
         }
+    }
+
+    // return bool is if rotate was successful
+    pub fn rotatris_attempt_rotate_board(&mut self, rotate_direction: Movement) -> bool {
+        // subtract 1 for easier math in the case of an even board side length
+        let center: u8 = self.board.width / 2;
+        let rem_more_one: u8 = (self.board.width + 1) % 2;
+        let mut new_positions: [(u8, u8); 4] = [(0u8, 0u8); 4];
+        match rotate_direction {
+            Movement::RotateCw => {
+                for (index, position) in self.board.vec_active_piece[0].positions.iter().take(4).enumerate() {
+                    new_positions[index] = (center + (position.1 - center), position.0);
+                }
+            },
+            Movement::RotateCcw => {
+                for (index, position) in self.board.vec_active_piece[0].positions.iter().take(4).enumerate() {
+                    new_positions[index] = (position.1, center + (position.0 - center));
+                }
+            },
+            _ => {
+                println!("[!] Sent some non-rotation Movement to `rotatris_attempt_rotate_board()`, a method of `BoardHandler`");
+                return false;
+            }
+        }
+
+        // check validity of new positions
+        for position in new_positions.iter().take(4) {
+            if !self.board.matrix[position.0 as usize][position.1 as usize].empty && !self.board.matrix[position.0 as usize][position.1 as usize].active {
+                return false;
+            }
+        }
+
+        self.board.emptify_piece(0);
+        self.board.vec_active_piece[0].positions = new_positions;
+        self.board.playerify_piece(0);
+
+        true
     }
 }
 
@@ -35,13 +68,15 @@ impl BoardHandler {
 pub struct Board {
     pub width: u8,
     pub height: u8,
+    pub height_buffer: u8,
+    pub spawn_row: u8,
     pub matrix: Vec<Vec<Tile>>,
     pub vec_active_piece: Vec<Piece>,
     vec_full_lines: Vec<FullLine>,
 }
 
 impl Board {
-    pub fn new(board_width: u8, board_height: u8, num_players: u8) -> Self {
+    pub fn new(board_width: u8, board_height: u8, board_height_buffer: u8, spawn_row: u8, num_players: u8) -> Self {
         let mut vec_active_piece: Vec<Piece> = Vec::with_capacity(num_players as usize);
         for _ in 0..num_players {
             vec_active_piece.push(Piece::new(Shapes::None));
@@ -49,9 +84,11 @@ impl Board {
         Self {
             width: board_width,
             height: board_height,
+            height_buffer: board_height_buffer,
+            spawn_row,
             matrix: vec![
                 vec![Tile::new_empty(); board_width as usize];
-                (board_height + BOARD_HEIGHT_BUFFER_U) as usize
+                (board_height + board_height_buffer) as usize
             ],
             vec_active_piece,
             vec_full_lines: vec![],
@@ -95,7 +132,7 @@ impl Board {
         spawn_piece_shape: Shapes,
     ) -> (bool, bool) {
         let new_piece = Piece::new(spawn_piece_shape);
-        let spawn_positions = new_piece.spawn_pos(spawn_col);
+        let spawn_positions = new_piece.spawn_pos(spawn_col, self.spawn_row, self.height_buffer);
         let mut blocked_flag: bool = false;
         for position in spawn_positions.iter().take(4) {
             if !self.matrix[position.0 as usize][position.1 as usize].empty {
@@ -126,7 +163,7 @@ impl Board {
         let new_positions = self.vec_active_piece[player as usize].piece_pos(movement);
         for position in new_positions.iter().take(4) {
             // due to integer underflow (u8 board width and u8 board height), we must only check the positive side of x and y positions
-            if position.0 >= self.height + BOARD_HEIGHT_BUFFER_U {
+            if position.0 >= self.height + self.height_buffer {
                 cant_move_flag = true;
                 break;
             }
@@ -194,7 +231,7 @@ impl Board {
             .take(4)
         {
             // we just want to know if moving down by 1 will run the piece into the bottom of the board or an inactive tile
-            if position.0 as usize + 1 >= (self.height + BOARD_HEIGHT_BUFFER_U) as usize {
+            if position.0 as usize + 1 >= (self.height + self.height_buffer) as usize {
                 return true;
             }
             if !self.matrix[position.0 as usize + 1][position.1 as usize].active
@@ -388,7 +425,7 @@ impl FullLine {
 
 // other modes
 pub struct Rotatris {
-    pub board_rotation: u8,
+    pub board_rotation: u8, // 0, 1, 2, 3: 0, 90, 180, 270; CW
 }
 
 impl Rotatris {
@@ -396,15 +433,6 @@ impl Rotatris {
         Self {
             board_rotation: 0,
         }
-    }
-
-    pub fn attempt_rotate_board(board: &Board, rotate_direction: Movement) {
-        if rotate_direction != Movement::RotateCcw && rotate_direction != Movement::RotateCw {
-            println!("[!] A non-rotation Movement was passed to function `attempt_rotate_board`");
-            panic!();
-        }
-
-        
     }
 }
 
@@ -429,7 +457,7 @@ mod tests {
 
         for x in 0..4 {
             for y in
-                (board_height + BOARD_HEIGHT_BUFFER_U - 8)..board_height + BOARD_HEIGHT_BUFFER_U
+                (board_height + self.height_buffer - 8)..board_height + self.height_buffer
             {
                 board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8, Shapes::I);
             }
@@ -472,7 +500,7 @@ mod tests {
 
         for x in 0..board_width - 2 {
             for y in
-                (board_height + BOARD_HEIGHT_BUFFER_U - 4)..board_height + BOARD_HEIGHT_BUFFER_U
+                (board_height + self.height_buffer - 4)..board_height + self.height_buffer
             {
                 board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8, Shapes::I);
             }
@@ -524,7 +552,7 @@ mod tests {
 
         for x in 0..board_width - 1 {
             for y in
-                (board_height + BOARD_HEIGHT_BUFFER_U - 8)..board_height + BOARD_HEIGHT_BUFFER_U
+                (board_height + self.height_buffer - 8)..board_height + self.height_buffer
             {
                 board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8, Shapes::I);
             }

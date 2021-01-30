@@ -19,8 +19,7 @@ mod piece;
 use crate::game::piece::{Movement, NextPiece, Shapes};
 
 mod board;
-use crate::game::board::Board;
-use crate::game::board::BOARD_HEIGHT_BUFFER_U;
+use crate::game::board::BoardHandler;
 
 use crate::inputs::KeyboardControlScheme;
 use crate::menu::MenuGameOptions;
@@ -128,7 +127,7 @@ impl From<&MenuGameOptions> for GameOptions {
 pub struct Game {
     // GAME STUFF
     // logic (mostly)
-    board: Board,
+    bh: BoardHandler,
     num_players: u8,
     vec_players: Vec<Player>,
     vec_next_piece: Vec<NextPiece>,
@@ -139,6 +138,8 @@ pub struct Game {
     num_cleared_lines: u16,
     score: u64,
     pause_flag: (bool, bool),
+    rotate_board_cw: (bool, bool),
+    rotate_board_ccw: (bool, bool),
     game_over_flag: bool,
     game_over_delay: i8,
     // drawing
@@ -282,7 +283,7 @@ impl Game {
         );
 
         Self {
-            board: Board::new(board_width, board_height, game_options.num_players),
+            bh: BoardHandler::new(board_width, board_height, game_options.num_players, mode),
             num_players: game_options.num_players,
             vec_players,
             vec_next_piece,
@@ -293,6 +294,8 @@ impl Game {
             num_cleared_lines: 0u16,
             score: 0u64,
             pause_flag: (false, false),
+            rotate_board_cw: (false, false),
+            rotate_board_ccw: (false, false),
             game_over_flag: false,
             game_over_delay: GAME_OVER_DELAY,
             tile_size: 0f32,
@@ -315,6 +318,8 @@ impl Game {
                         return ProgramState::Menu;
                     }
                     player.input.was_just_pressed_setfalse();
+                    self.rotate_board_cw.1 = false;
+                    self.rotate_board_ccw.1 = false;
                 }
             } else {
                 self.game_over_delay -= 1;
@@ -341,6 +346,8 @@ impl Game {
                     if player.input.keydown_start.1 {
                         self.pause_flag = (false, false);
                         player.input.was_just_pressed_setfalse();
+                        self.rotate_board_cw.1 = false;
+                        self.rotate_board_ccw.1 = false;
                     }
                 }
             }
@@ -348,9 +355,11 @@ impl Game {
             // GAME LOGIC
             for player in &mut self.vec_players {
                 if !player.spawn_piece_flag
-                    && self.board.vec_active_piece[player.player_num as usize].shape == Shapes::None
+                    && self.bh.board.vec_active_piece[player.player_num as usize].shape == Shapes::None
                 {
                     player.input.was_just_pressed_setfalse();
+                    self.rotate_board_cw.1 = false;
+                    self.rotate_board_ccw.1 = false;
                     continue;
                 }
 
@@ -358,7 +367,7 @@ impl Game {
                 if player.spawn_piece_flag {
                     if player.spawn_delay <= 0 {
                         // (blocked, blocked by some !active tile); if .1, game over sequence, if .0 and !.1, only blocked by other players, wait until they move, then carry on
-                        let blocked: (bool, bool) = self.board.attempt_piece_spawn(
+                        let blocked: (bool, bool) = self.bh.board.attempt_piece_spawn(
                             player.player_num,
                             player.spawn_column,
                             player.next_piece_shape,
@@ -369,7 +378,7 @@ impl Game {
                             }
                             continue;
                         } else {
-                            self.board.playerify_piece(player.player_num);
+                            self.bh.board.playerify_piece(player.player_num);
                             player.spawn_delay = SPAWN_DELAY;
                             player.spawn_piece_flag = false;
                             // set das_countdown to the smaller das value if input left or right is pressed as the piece spawns in
@@ -385,7 +394,7 @@ impl Game {
                                 }
                             }
                             let random_shape = Shapes::from(rand % 7);
-                            if self.board.vec_active_piece[player.player_num as usize].shape
+                            if self.bh.board.vec_active_piece[player.player_num as usize].shape
                                 != random_shape
                             {
                                 player.next_piece_shape = random_shape;
@@ -409,11 +418,20 @@ impl Game {
                     continue;
                 }
 
+                if self.rotate_board_cw.1 {
+                    self.bh.rotatris_attempt_rotate_board(Movement::RotateCw);
+                }
+
+                if self.rotate_board_ccw.1 {
+                    self.bh.rotatris_attempt_rotate_board(Movement::RotateCw);
+                }
+
                 // piece movement
                 // LEFT / RIGHT
                 if player.input.keydown_left.1 {
                     // if it didn't move on the initial input, set waiting_to_shift to true
                     player.waiting_to_shift = !self
+                        .bh
                         .board
                         .attempt_piece_movement(Movement::Left, player.player_num)
                         .0;
@@ -422,6 +440,7 @@ impl Game {
                 if player.input.keydown_right.1 {
                     // if it didn't move on the initial input, set waiting_to_shift to true
                     player.waiting_to_shift = !self
+                        .bh
                         .board
                         .attempt_piece_movement(Movement::Right, player.player_num)
                         .0;
@@ -433,6 +452,7 @@ impl Game {
                     }
                     if player.das_countdown == 0 || player.waiting_to_shift {
                         if self
+                            .bh
                             .board
                             .attempt_piece_movement(Movement::Left, player.player_num)
                             .0
@@ -451,6 +471,7 @@ impl Game {
                     }
                     if player.das_countdown == 0 || player.waiting_to_shift {
                         if self
+                            .bh
                             .board
                             .attempt_piece_movement(Movement::Right, player.player_num)
                             .0
@@ -465,11 +486,11 @@ impl Game {
                 }
                 // CW / CCW
                 if player.input.keydown_rotate_cw.1 {
-                    self.board
+                    self.bh.board
                         .attempt_piece_movement(Movement::RotateCw, player.player_num);
                 }
                 if player.input.keydown_rotate_ccw.1 {
-                    self.board
+                    self.bh.board
                         .attempt_piece_movement(Movement::RotateCcw, player.player_num);
                 }
                 // DOWN
@@ -479,10 +500,11 @@ impl Game {
                     || player.fall_countdown == 0
                 {
                     let (moved_flag, caused_full_line_flag): (bool, bool) = self
+                        .bh
                         .board
                         .attempt_piece_movement(Movement::Down, player.player_num);
                     // if the piece got locked, piece.shape gets set to Shapes::None, so set the spawn piece flag
-                    if self.board.vec_active_piece[player.player_num as usize].shape == Shapes::None
+                    if self.bh.board.vec_active_piece[player.player_num as usize].shape == Shapes::None
                     {
                         player.spawn_piece_flag = true;
                         player.fall_countdown = if self.level < 30 {
@@ -514,14 +536,18 @@ impl Game {
                 if player.input.keydown_start.1 {
                     self.pause_flag = (true, true);
                     player.input.was_just_pressed_setfalse();
+                    self.rotate_board_cw.1 = false;
+                    self.rotate_board_ccw.1 = false;
                 }
 
                 // update controls (always do after all player player input for each player)
                 player.input.was_just_pressed_setfalse();
+                self.rotate_board_cw.1 = false;
+                self.rotate_board_ccw.1 = false;
             }
 
             // attempt to line clear (go through the vector of FullLine's and decrement clear_delay if > 0, clear and return (lines_cleared, score) for <= 0)
-            let (returned_lines, returned_score) = self.board.attempt_clear_lines(self.level);
+            let (returned_lines, returned_score) = self.bh.board.attempt_clear_lines(self.level);
             if returned_lines > 0 {
                 self.num_cleared_lines += returned_lines as u16;
                 self.game_info_text.fragments_mut()[1].text =
@@ -554,6 +580,11 @@ impl Game {
                 if player.update_input_keydown(keycode) {
                     return;
                 }
+            }
+            if keycode == KeyCode::Z {
+                self.rotate_board_ccw = (true, true);
+            } else if keycode == KeyCode::X {
+                self.rotate_board_cw = (true, true);
             }
         }
     }
@@ -646,8 +677,8 @@ impl Game {
         let (window_width, window_height) = graphics::size(ctx);
         self.tile_size = TileGraphic::get_size(
             ctx,
-            self.board.width,
-            self.board.height + NON_BOARD_SPACE_U + NON_BOARD_SPACE_D,
+            self.bh.board.width,
+            self.bh.board.height + NON_BOARD_SPACE_U + NON_BOARD_SPACE_D,
         );
         if self.game_over_flag && self.game_over_delay == 0 {
             // DRAW GAME OVER
@@ -669,24 +700,24 @@ impl Game {
         } else {
             // DRAW GAME
             // add each non-empty tile to the correct SpriteBatch
-            for x in 0..self.board.width {
-                for y in 0..self.board.height {
-                    if !self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].empty {
+            for x in 0..self.bh.board.width {
+                for y in 0..self.bh.board.height {
+                    if !self.bh.board.matrix[(y + self.bh.board.height_buffer) as usize][x as usize].empty {
                         let player_tile = graphics::DrawParam::new().dest(Point2::new(
                             x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                             y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                         ));
                         if self.num_players > 1 {
-                            let player = self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize]
+                            let player = self.bh.board.matrix[(y + self.bh.board.height_buffer) as usize]
                                 [x as usize]
                                 .player;
                             self.vec_batch_player_piece[player as usize].add(player_tile);
                         } else {
-                            if self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].shape == Shapes::J || self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].shape == Shapes::S {
+                            if self.bh.board.matrix[(y + self.bh.board.height_buffer) as usize][x as usize].shape == Shapes::J || self.bh.board.matrix[(y + self.bh.board.height_buffer) as usize][x as usize].shape == Shapes::S {
                                 self.vec_batch_player_piece[0].add(player_tile);
-                            } else if self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].shape == Shapes::L || self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].shape == Shapes::Z {
+                            } else if self.bh.board.matrix[(y + self.bh.board.height_buffer) as usize][x as usize].shape == Shapes::L || self.bh.board.matrix[(y + self.bh.board.height_buffer) as usize][x as usize].shape == Shapes::Z {
                                 self.vec_batch_player_piece[1].add(player_tile);
-                            } else if self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].shape == Shapes::I || self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].shape == Shapes::O || self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].shape == Shapes::T {
+                            } else if self.bh.board.matrix[(y + self.bh.board.height_buffer) as usize][x as usize].shape == Shapes::I || self.bh.board.matrix[(y + self.bh.board.height_buffer) as usize][x as usize].shape == Shapes::O || self.bh.board.matrix[(y + self.bh.board.height_buffer) as usize][x as usize].shape == Shapes::T {
                                 self.vec_batch_player_piece[2].add(player_tile);
                             }
                         }
@@ -745,7 +776,7 @@ impl Game {
             let board_top_left_corner = window_width / 2.0
                 - (scaled_tile_size
                     * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32
-                    * self.board.width as f32
+                    * self.bh.board.width as f32
                     / 2.0);
             // empty tiles
             graphics::draw(
