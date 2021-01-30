@@ -205,17 +205,18 @@ impl Game {
         } else {
             vec_gamepad_id_map_to_player = Vec::with_capacity(1);
         }
+        // for 1 player we have 3 sprite batches for player pieces because we have different color pieces
         let mut vec_batch_player_piece: Vec<spritebatch::SpriteBatch> =
-            Vec::with_capacity(game_options.num_players as usize);
+            Vec::with_capacity(std::cmp::max(game_options.num_players as usize, 3));
         let mut vec_batch_next_piece: Vec<spritebatch::SpriteBatch> =
-            Vec::with_capacity(game_options.num_players as usize);
-        for player in 0..game_options.num_players {
+            Vec::with_capacity(std::cmp::max(game_options.num_players as usize, 3));
+        for player in 0..std::cmp::max(game_options.num_players as usize, 3) {
             vec_next_piece.push(NextPiece::new(Shapes::None));
             vec_batch_player_piece.push(spritebatch::SpriteBatch::new(
-                TileGraphic::new_player(ctx, player).image,
+                TileGraphic::new_player(ctx, player as u8).image,
             ));
             vec_batch_next_piece.push(spritebatch::SpriteBatch::new(
-                TileGraphic::new_player(ctx, player).image,
+                TileGraphic::new_player(ctx, player as u8).image,
             ));
         }
         let mut game_info_text = Text::new(
@@ -650,32 +651,69 @@ impl Game {
             for x in 0..self.board.width {
                 for y in 0..self.board.height {
                     if !self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].empty {
-                        let player = self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize]
-                            [x as usize]
-                            .player;
                         let player_tile = graphics::DrawParam::new().dest(Point2::new(
                             x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                             y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                         ));
-                        self.vec_batch_player_piece[player as usize].add(player_tile);
+                        if self.num_players > 1 {
+                            let player = self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize]
+                                [x as usize]
+                                .player;
+                            self.vec_batch_player_piece[player as usize].add(player_tile);
+                        } else {
+                            if self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].shape == Shapes::J || self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].shape == Shapes::S {
+                                self.vec_batch_player_piece[0].add(player_tile);
+                            } else if self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].shape == Shapes::L || self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].shape == Shapes::Z {
+                                self.vec_batch_player_piece[1].add(player_tile);
+                            } else if self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].shape == Shapes::I || self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].shape == Shapes::O || self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].shape == Shapes::T {
+                                self.vec_batch_player_piece[2].add(player_tile);
+                            }
+                        }
                     }
                 }
             }
             // next pieces
+            let mut color_number_singleplayer = 2;
+            let next_piece = self.vec_next_piece[0].shape;
+            if next_piece == Shapes::J || next_piece == Shapes::S {
+                color_number_singleplayer = 0;
+            } else if next_piece == Shapes::L || next_piece == Shapes::Z {
+                color_number_singleplayer = 1;
+            }
             for player in &mut self.vec_players {
                 if player.redraw_next_piece_flag {
-                    player.redraw_next_piece_flag = false;
                     // if we need to redraw, clear the next piece sprite batch and rebuild it
-                    self.vec_batch_next_piece[player.player_num as usize].clear();
-                    for x in 0..4 {
-                        for y in 0..2 {
-                            if self.vec_next_piece[player.player_num as usize].matrix[y][x] {
-                                let next_tile = graphics::DrawParam::new().dest(Point2::new(
-                                    x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                                    y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                                ));
-                                self.vec_batch_next_piece[player.player_num as usize]
-                                    .add(next_tile);
+                    player.redraw_next_piece_flag = false;
+                    if self.num_players > 1 {
+                        self.vec_batch_next_piece[player.player_num as usize].clear();
+                        for x in 0u8..4u8 {
+                            for y in 0u8..2u8 {
+                                if self.vec_next_piece[player.player_num as usize].matrix[y as usize][x as usize] {
+                                    let next_tile = graphics::DrawParam::new().dest(Point2::new(
+                                        x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                        y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                    ));
+                                    self.vec_batch_next_piece[player.player_num as usize]
+                                        .add(next_tile);
+                                }
+                            }
+                        }
+                    } else {
+                        println!("clearing next piece spritebatches");
+                        for x in 0..3 {
+                            self.vec_batch_next_piece[x].clear();
+                        }
+                        for x in 0u8..4u8 {
+                            for y in 0u8..2u8 {
+                                if self.vec_next_piece[player.player_num as usize].matrix[y as usize][x as usize] {
+                                    println!("adding next piece tile at position x = {}, y = {}", x, y);
+                                    let next_tile = graphics::DrawParam::new().dest(Point2::new(
+                                        x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                        y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                    ));
+                                    self.vec_batch_next_piece[color_number_singleplayer]
+                                        .add(next_tile);
+                                }
                             }
                         }
                     }
@@ -703,7 +741,7 @@ impl Game {
             )
             .unwrap();
             // player tiles
-            for player in 0..self.num_players {
+            for player in 0..std::cmp::max(self.num_players, 3) {
                 graphics::draw(
                     ctx,
                     &self.vec_batch_player_piece[player as usize],
@@ -718,20 +756,38 @@ impl Game {
             }
             // next piece tiles
             for player in self.vec_players.iter() {
-                graphics::draw(
-                    ctx,
-                    &self.vec_batch_next_piece[player.player_num as usize],
-                    DrawParam::new()
-                        .dest(Point2::new(
-                            board_top_left_corner
-                                + (player.spawn_column - 2) as f32
-                                    * scaled_tile_size
-                                    * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                            (NON_BOARD_SPACE_U - BOARD_NEXT_PIECE_SPACING) as f32 * self.tile_size,
-                        ))
-                        .scale(Vector2::new(scaled_tile_size, scaled_tile_size)),
-                )
-                .unwrap();
+                if self.num_players > 1 {
+                    graphics::draw(
+                        ctx,
+                        &self.vec_batch_next_piece[player.player_num as usize],
+                        DrawParam::new()
+                            .dest(Point2::new(
+                                board_top_left_corner
+                                    + (player.spawn_column - 2) as f32
+                                        * scaled_tile_size
+                                        * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                (NON_BOARD_SPACE_U - BOARD_NEXT_PIECE_SPACING) as f32 * self.tile_size,
+                            ))
+                            .scale(Vector2::new(scaled_tile_size, scaled_tile_size)),
+                    )
+                    .unwrap();
+                } else {
+                    let spawn_column = player.spawn_column;
+                    graphics::draw(
+                        ctx,
+                        &self.vec_batch_next_piece[color_number_singleplayer],
+                        DrawParam::new()
+                            .dest(Point2::new(
+                                board_top_left_corner
+                                    + (spawn_column - 2) as f32
+                                        * scaled_tile_size
+                                        * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                (NON_BOARD_SPACE_U - BOARD_NEXT_PIECE_SPACING) as f32 * self.tile_size,
+                            ))
+                            .scale(Vector2::new(scaled_tile_size, scaled_tile_size)),
+                    )
+                    .unwrap();
+                }
             }
             // score text; TODO: perhaps make a separate function for something based on the bottom, or just figure out how to do this better so we don't divide out by the window_height
             self.draw_text(
@@ -742,7 +798,7 @@ impl Game {
             );
 
             // clear player sprite batches
-            for player in 0..self.num_players {
+            for player in 0..std::cmp::max(self.num_players, 3) {
                 self.vec_batch_player_piece[player as usize].clear();
             }
         }

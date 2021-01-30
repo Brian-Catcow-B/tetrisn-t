@@ -45,7 +45,8 @@ impl Board {
             .take(4)
         {
             if position != &(0xffu8, 0xffu8) {
-                self.matrix[position.0 as usize][position.1 as usize] = Tile::new_empty();
+                self.matrix[position.0 as usize][position.1 as usize].empty = true;
+                self.matrix[position.0 as usize][position.1 as usize].active = false;
             } else {
                 println!("[!] tried to emptify piece that contained position (0xffu8, 0xffu8)");
             }
@@ -59,8 +60,7 @@ impl Board {
             .take(4)
         {
             if position != &(0xffu8, 0xffu8) {
-                self.matrix[position.0 as usize][position.1 as usize] =
-                    Tile::new(false, true, player);
+                self.matrix[position.0 as usize][position.1 as usize] = Tile::new(false, true, player, self.vec_active_piece[player as usize].shape);
             } else {
                 println!("[!] tried to playerify piece that contained position (0xffu8, 0xffu8)");
             }
@@ -90,6 +90,11 @@ impl Board {
         }
         self.vec_active_piece[player as usize] = new_piece;
         self.vec_active_piece[player as usize].positions = spawn_positions;
+        // initialize the tile logic for the newly spawned piece
+        for position in spawn_positions.iter().take(4) {
+            self.matrix[position.0 as usize][position.1 as usize] = Tile::new(false, true, player, spawn_piece_shape);
+        }
+
         (false, false)
     }
 
@@ -189,7 +194,8 @@ impl Board {
             .iter()
             .take(4)
         {
-            self.matrix[position.0 as usize][position.1 as usize] = Tile::new(false, false, player);
+            self.matrix[position.0 as usize][position.1 as usize].empty = false;
+            self.matrix[position.0 as usize][position.1 as usize].active = false;
         }
 
         let mut y_vals: Vec<u8> = vec![self.vec_active_piece[player as usize].positions[0].0];
@@ -383,7 +389,7 @@ mod tests {
             for y in
                 (board_height + BOARD_HEIGHT_BUFFER_U - 8)..board_height + BOARD_HEIGHT_BUFFER_U
             {
-                board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8);
+                board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8, Shapes::I);
             }
         }
 
@@ -426,7 +432,7 @@ mod tests {
             for y in
                 (board_height + BOARD_HEIGHT_BUFFER_U - 4)..board_height + BOARD_HEIGHT_BUFFER_U
             {
-                board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8);
+                board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8, Shapes::I);
             }
         }
 
@@ -478,7 +484,7 @@ mod tests {
             for y in
                 (board_height + BOARD_HEIGHT_BUFFER_U - 8)..board_height + BOARD_HEIGHT_BUFFER_U
             {
-                board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8);
+                board.matrix[y as usize][x as usize] = Tile::new(false, false, 0u8, Shapes::I);
             }
         }
 

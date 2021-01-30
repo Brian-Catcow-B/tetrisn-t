@@ -1,5 +1,7 @@
 use ggez::{graphics, Context};
 
+use crate::game::Shapes;
+
 pub const NUM_PIXEL_ROWS_PER_TILEGRAPHIC: u16 = 8u16;
 
 const DARK_GRAY: (u8, u8, u8, u8) = (20u8, 20u8, 20u8, 0xffu8);
@@ -51,14 +53,16 @@ pub struct Tile {
     pub empty: bool,
     pub active: bool,
     pub player: u8,
+    pub shape: Shapes,
 }
 
 impl Tile {
-    pub fn new(empty: bool, active: bool, player: u8) -> Self {
+    pub fn new(empty: bool, active: bool, player: u8, shape: Shapes) -> Self {
         Self {
             empty,
             active,
             player,
+            shape,
         }
     }
 
@@ -67,6 +71,7 @@ impl Tile {
             empty: true,
             active: false,
             player: 0xffu8,
+            shape: Shapes::None,
         }
     }
 }
