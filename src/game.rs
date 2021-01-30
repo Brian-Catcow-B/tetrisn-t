@@ -27,6 +27,8 @@ use crate::menu::MenuGameOptions;
 
 const BOARD_HEIGHT: u8 = 20u8;
 
+const ROTATRIS_BOARD_SIDE_LENGTH: u8 = 13u8;
+
 pub const CLEAR_DELAY: i8 = 30i8;
 
 pub const SCORE_SINGLE_BASE: u8 = 40u8;
@@ -68,6 +70,17 @@ pub const INITIAL_HANG_FRAMES: u8 = 180;
 // gamepad joystick thresholds
 pub const DETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.5;
 pub const UNDETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.2;
+
+pub enum Modes {
+    Classic,
+    Rotatris,
+}
+
+pub enum InvisibilityLevels {
+    None,
+    Near,
+    All,
+}
 
 // this struct is for the Menu class so that it can return what game options to start the game with
 pub struct GameOptions {
@@ -140,7 +153,15 @@ pub struct Game {
 
 impl Game {
     pub fn new(ctx: &mut Context, game_options: &GameOptions) -> Game {
-        let board_width = 6 + 4 * game_options.num_players;
+        let mode = Modes::Rotatris;
+        let board_width = match mode {
+            Modes::Classic => 6 + 4 * game_options.num_players,
+            Modes::Rotatris => ROTATRIS_BOARD_SIDE_LENGTH,
+        };
+        let board_height = match mode {
+            Modes::Classic => BOARD_HEIGHT,
+            Modes::Rotatris => ROTATRIS_BOARD_SIDE_LENGTH,
+        };
         let mut vec_players: Vec<Player> = Vec::with_capacity(game_options.num_players as usize);
         // spawn columns
         // first half, not including middle player if there's an odd number of players
@@ -179,7 +200,7 @@ impl Game {
         let mut batch_empty_tile = spritebatch::SpriteBatch::new(TileGraphic::new_empty(ctx).image);
         // the emtpy tile batch will be constant once the game starts with the player tile batches drawing on top of it, so just set that up here
         for x in 0..board_width {
-            for y in 0..BOARD_HEIGHT as usize {
+            for y in 0..board_height as usize {
                 // empty tiles
                 let empty_tile = graphics::DrawParam::new().dest(Point2::new(
                     x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
@@ -261,7 +282,7 @@ impl Game {
         );
 
         Self {
-            board: Board::new(board_width, BOARD_HEIGHT, game_options.num_players),
+            board: Board::new(board_width, board_height, game_options.num_players),
             num_players: game_options.num_players,
             vec_players,
             vec_next_piece,
@@ -699,14 +720,12 @@ impl Game {
                             }
                         }
                     } else {
-                        println!("clearing next piece spritebatches");
                         for x in 0..3 {
                             self.vec_batch_next_piece[x].clear();
                         }
                         for x in 0u8..4u8 {
                             for y in 0u8..2u8 {
                                 if self.vec_next_piece[player.player_num as usize].matrix[y as usize][x as usize] {
-                                    println!("adding next piece tile at position x = {}, y = {}", x, y);
                                     let next_tile = graphics::DrawParam::new().dest(Point2::new(
                                         x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                                         y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,

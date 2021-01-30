@@ -3,10 +3,34 @@ use crate::game::tile::Tile;
 use crate::game::{
     CLEAR_DELAY, SCORE_DOUBLE_BASE, SCORE_QUADRUPLE_BASE, SCORE_SINGLE_BASE, SCORE_TRIPLE_BASE,
 };
+use crate::game::Modes;
 
 // this constant is for the two unseen columns above the board so that when an I piece is rotated
 // right after spawning, the two tiles that go above the board are kept track of
 pub const BOARD_HEIGHT_BUFFER_U: u8 = 2;
+
+// abstract the board and the possible gamemodes into one struct
+pub struct BoardHandler {
+    pub board: Board,
+    pub rotatris: Option<Rotatris>,
+}
+
+impl BoardHandler {
+    pub fn new(board_width: u8, board_height: u8, num_players: u8, mode: Modes) -> Self {
+        let rotatris = match mode {
+            Modes::Rotatris => Some(Rotatris::new()),
+            _ => None,
+        };
+        Self {
+            board: Board::new(board_width, board_height, num_players),
+            rotatris,
+        }
+    }
+}
+
+// example Board coordinates system (2 width, 2 height)
+// [(0, 0)][(0, 1)]
+// [(1, 0)][(1, 1)]
 
 pub struct Board {
     pub width: u8,
@@ -15,10 +39,6 @@ pub struct Board {
     pub vec_active_piece: Vec<Piece>,
     vec_full_lines: Vec<FullLine>,
 }
-
-// example Board coordinates system (2 width, 2 height)
-// [(0, 0)][(0, 1)]
-// [(1, 0)][(1, 1)]
 
 impl Board {
     pub fn new(board_width: u8, board_height: u8, num_players: u8) -> Self {
@@ -366,7 +386,29 @@ impl FullLine {
     }
 }
 
-// do `cargo test --release` because Rust doesn't like underflow, but that's how the board width works :(
+// other modes
+pub struct Rotatris {
+    pub board_rotation: u8,
+}
+
+impl Rotatris {
+    fn new() -> Self {
+        Self {
+            board_rotation: 0,
+        }
+    }
+
+    pub fn attempt_rotate_board(board: &Board, rotate_direction: Movement) {
+        if rotate_direction != Movement::RotateCcw && rotate_direction != Movement::RotateCw {
+            println!("[!] A non-rotation Movement was passed to function `attempt_rotate_board`");
+            panic!();
+        }
+
+        
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
