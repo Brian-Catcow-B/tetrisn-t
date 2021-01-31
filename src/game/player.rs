@@ -146,6 +146,10 @@ impl Player {
             self.input.keydown_rotate_cw = (true, true);
         } else if btn == Button::South {
             self.input.keydown_rotate_ccw = (true, true);
+        } else if btn == Button::West {
+            self.input.keydown_rotate_board_cw = (true, true);
+        } else if btn == Button::North {
+            self.input.keydown_rotate_board_ccw = (true, true);
         } else if btn == Button::Start {
             self.input.keydown_start = (true, true);
         }
@@ -172,6 +176,10 @@ impl Player {
             self.input.keydown_rotate_cw = (false, false);
         } else if btn == Button::South {
             self.input.keydown_rotate_ccw = (false, false);
+        } else if btn == Button::West {
+            self.input.keydown_rotate_board_cw = (false, false);
+        } else if btn == Button::North {
+            self.input.keydown_rotate_board_ccw = (false, false);
         } else if btn == Button::Start {
             self.input.keydown_start = (false, false);
         }

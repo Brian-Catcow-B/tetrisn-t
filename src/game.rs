@@ -51,7 +51,7 @@ const LITTLE_TEXT_SCALE: f32 = 20.0;
 // for each level (as the index), the number of frames it takes for a piece to move down one row (everything after 29 is also 0)
 // it's actually 1 less than the number of frames it takes the piece to fall because the game logic works out better that way
 const FALL_DELAY_VALUES: [u8; 30] = [
-    47, 42, 37, 32, 27, 22, 17, 12, 7, 5, 4, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    60, 50, 40, 35, 30, 25, 20, 15, 10, 7, 6, 5, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     0,
 ];
 
@@ -132,8 +132,6 @@ pub struct Game {
     num_cleared_lines: u16,
     score: u64,
     pause_flag: (bool, bool),
-    rotate_board_cw: (bool, bool),
-    rotate_board_ccw: (bool, bool),
     gravity_direction: Movement,
     game_over_flag: bool,
     game_over_delay: i8,
@@ -289,8 +287,6 @@ impl Game {
             num_cleared_lines: 0u16,
             score: 0u64,
             pause_flag: (false, false),
-            rotate_board_cw: (false, false),
-            rotate_board_ccw: (false, false),
             gravity_direction: Movement::Down,
             game_over_flag: false,
             game_over_delay: GAME_OVER_DELAY,
@@ -314,8 +310,6 @@ impl Game {
                         return ProgramState::Menu;
                     }
                     player.input.was_just_pressed_setfalse();
-                    self.rotate_board_cw.1 = false;
-                    self.rotate_board_ccw.1 = false;
                 }
             } else {
                 self.game_over_delay -= 1;
@@ -342,8 +336,6 @@ impl Game {
                     if player.input.keydown_start.1 {
                         self.pause_flag = (false, false);
                         player.input.was_just_pressed_setfalse();
-                        self.rotate_board_cw.1 = false;
-                        self.rotate_board_ccw.1 = false;
                     }
                 }
             }
@@ -355,8 +347,6 @@ impl Game {
                         == Shapes::None
                 {
                     player.input.was_just_pressed_setfalse();
-                    self.rotate_board_cw.1 = false;
-                    self.rotate_board_ccw.1 = false;
                     continue;
                 }
 
@@ -418,14 +408,14 @@ impl Game {
 
                 // rotatris
                 // BOARD ROTATION
-                if self.rotate_board_cw.1 {
+                if player.input.keydown_rotate_board_cw.1 {
                     if self.bh.rotatris_attempt_rotate_board(Movement::RotateCw) {
                         self.gravity_direction =
                             Movement::from(((self.gravity_direction as u8) + 1) % 4);
                     }
                 }
 
-                if self.rotate_board_ccw.1 {
+                if player.input.keydown_rotate_board_ccw.1 {
                     if self.bh.rotatris_attempt_rotate_board(Movement::RotateCcw) {
                         self.gravity_direction =
                             Movement::from(((self.gravity_direction as u8) + 3) % 4);
@@ -578,14 +568,10 @@ impl Game {
                 if player.input.keydown_start.1 {
                     self.pause_flag = (true, true);
                     player.input.was_just_pressed_setfalse();
-                    self.rotate_board_cw.1 = false;
-                    self.rotate_board_ccw.1 = false;
                 }
 
                 // update controls (always do after all player player input for each player)
                 player.input.was_just_pressed_setfalse();
-                self.rotate_board_cw.1 = false;
-                self.rotate_board_ccw.1 = false;
             }
 
             // attempt to line clear (go through the vector of FullLine's and decrement clear_delay if > 0, clear and return (lines_cleared, score) for <= 0)
@@ -623,10 +609,10 @@ impl Game {
                     return;
                 }
             }
-            if keycode == KeyCode::Z {
-                self.rotate_board_ccw = (true, true);
-            } else if keycode == KeyCode::X {
-                self.rotate_board_cw = (true, true);
+            if keycode == KeyCode::X {
+                self.vec_players[0].input.keydown_rotate_board_ccw = (true, true);
+            } else if keycode == KeyCode::Z {
+                self.vec_players[0].input.keydown_rotate_board_cw = (true, true);
             }
         }
     }

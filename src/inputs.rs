@@ -9,6 +9,8 @@ pub struct Input {
     pub keydown_rotate_cw: (bool, bool),
     pub keydown_rotate_ccw: (bool, bool),
     pub keydown_start: (bool, bool),
+    pub keydown_rotate_board_cw: (bool, bool),
+    pub keydown_rotate_board_ccw: (bool, bool),
 }
 
 impl Input {
@@ -21,6 +23,8 @@ impl Input {
             keydown_rotate_cw: (false, false),
             keydown_rotate_ccw: (false, false),
             keydown_start: (false, false),
+            keydown_rotate_board_cw: (false, false),
+            keydown_rotate_board_ccw: (false, false),
         }
     }
 
@@ -32,6 +36,8 @@ impl Input {
         self.keydown_rotate_cw.1 = false;
         self.keydown_rotate_ccw.1 = false;
         self.keydown_start.1 = false;
+        self.keydown_rotate_board_cw.1 = false;
+        self.keydown_rotate_board_ccw.1 = false;
     }
 
     pub fn reset_all(&mut self) {
@@ -42,6 +48,8 @@ impl Input {
         self.keydown_rotate_cw = (false, false);
         self.keydown_rotate_ccw = (false, false);
         self.keydown_start = (false, false);
+        self.keydown_rotate_board_cw = (false, false);
+        self.keydown_rotate_board_ccw = (false, false);
     }
 
     pub fn _print_inputs(&self) {
@@ -59,6 +67,14 @@ impl Input {
         println!(
             "Ccw:   ({}, {})",
             self.keydown_rotate_ccw.0, self.keydown_rotate_ccw.1
+        );
+        println!(
+            "Board Cw:    ({}, {})",
+            self.keydown_rotate_board_cw.0, self.keydown_rotate_board_cw.1
+        );
+        println!(
+            "Board Ccw:   ({}, {})",
+            self.keydown_rotate_board_ccw.0, self.keydown_rotate_board_ccw.1
         );
         println!(
             "Start: ({}, {})",

@@ -60,6 +60,7 @@ pub struct InputConfigMenu {
     input_uninitialized_text: Text,
     keycode_conflict_text: Text,
     is_gamepad_text: Text,
+    rotatris_keycode_notice: Text,
     k_left_text: Text,
     k_right_text: Text,
     k_down_text: Text,
@@ -73,7 +74,7 @@ impl InputConfigMenu {
         window_dimensions: (f32, f32),
         last_used_arr_controls: [(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize],
     ) -> Self {
-        let mut vec_used_keycode: Vec<KeyCode> = vec![];
+        let mut vec_used_keycode: Vec<KeyCode> = vec![KeyCode::Z, KeyCode::X];
         let mut arr_split_controls: [(
             Option<(
                 Option<KeyCode>,
@@ -96,12 +97,12 @@ impl InputConfigMenu {
             arr_split_controls[idx].1 = ctrls.1;
         }
         let mut player_num_text = Text::new(
-            TextFragment::new("Player Number: ")
+            TextFragment::new("Edit Controls")
                 .color(graphics::BLACK)
                 .scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
         );
         player_num_text.add(
-            TextFragment::new(" 1")
+            TextFragment::new("")
                 .color(graphics::BLACK)
                 .scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
         );
@@ -217,6 +218,11 @@ impl InputConfigMenu {
             ),
             is_gamepad_text: Text::new(
                 TextFragment::new("Set to Gamepad\n\n\nSee README for help")
+                    .color(graphics::BLACK)
+                    .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+            ),
+            rotatris_keycode_notice: Text::new(
+                TextFragment::new("Board rotate: Z, X\nGamepad: West, North")
                     .color(graphics::BLACK)
                     .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
             ),
@@ -442,13 +448,13 @@ impl InputConfigMenu {
                     if select_flag {
                         self.player_num_text.fragments_mut()[0].color = Some(SELECT_GREEN);
                         self.player_num_text.fragments_mut()[1].color = Some(SELECT_GREEN);
-                        self.player_num_text.fragments_mut()[1].text =
-                            format!("<{}>", self.player_num + 1);
+                    // self.player_num_text.fragments_mut()[1].text =
+                    //     format!("<{}>", self.player_num + 1);
                     } else {
                         self.player_num_text.fragments_mut()[0].color = Some(graphics::BLACK);
                         self.player_num_text.fragments_mut()[1].color = Some(graphics::BLACK);
-                        self.player_num_text.fragments_mut()[1].text =
-                            format!(" {}", self.player_num + 1);
+                        // self.player_num_text.fragments_mut()[1].text =
+                        //     format!(" {}", self.player_num + 1);
                     }
                 }
                 _ => println!("[!] input_config_menu_option didn't find match"),
@@ -516,22 +522,22 @@ impl InputConfigMenu {
     }
 
     fn inc_or_dec_selection(&mut self, inc_flag: bool) {
-        if !self.sub_selection_keyboard_flag
-            && self.selection == InputConfigMenuOption::PlayerInput as u8
-        {
-            if inc_flag {
-                self.player_num = (self.player_num + 1) % MAX_NUM_PLAYERS;
-            } else {
-                self.player_num = if self.player_num == 0 {
-                    MAX_NUM_PLAYERS - 1
-                } else {
-                    self.player_num - 1
-                };
-            }
-            // display player_num + 1 because index by 1 to users
-            self.player_num_text.fragments_mut()[1].text = format!("<{}>", self.player_num + 1);
-            self.update_sub_text_strings();
-        }
+        // if !self.sub_selection_keyboard_flag
+        //     && self.selection == InputConfigMenuOption::PlayerInput as u8
+        // {
+        //     if inc_flag {
+        //         self.player_num = (self.player_num + 1) % MAX_NUM_PLAYERS;
+        //     } else {
+        //         self.player_num = if self.player_num == 0 {
+        //             MAX_NUM_PLAYERS - 1
+        //         } else {
+        //             self.player_num - 1
+        //         };
+        //     }
+        //     // display player_num + 1 because index by 1 to users
+        //     self.player_num_text.fragments_mut()[1].text = format!("<{}>", self.player_num + 1);
+        //     self.update_sub_text_strings();
+        // }
     }
 
     fn update_sub_text_strings(&mut self) {
@@ -584,6 +590,7 @@ impl InputConfigMenu {
 
         self.draw_text(ctx, &self.back_text, 0.1, &window_dimensions);
         self.draw_text(ctx, &self.player_num_text, 0.3, &window_dimensions);
+        self.draw_text(ctx, &self.rotatris_keycode_notice, 0.9, &window_dimensions);
 
         // display nothing special on InputConfigMenuOption::Back, so just draw the extra stuff when it's not on InputConfigMenuOption::Back
         // and then later determine which of the other InputConfigMenuOption's it is for the specifics
@@ -592,7 +599,7 @@ impl InputConfigMenu {
             // with a color based on whether or not the user is editing controls
             let editing_indicator_rectangle: graphics::Mesh;
             let rect_w = window_dimensions.0 / 2.0;
-            let rect_h = window_dimensions.1 / 2.0;
+            let rect_h = window_dimensions.1 / 2.5;
             let rect_x = (window_dimensions.0 - rect_w) / 2.0;
             let rect_y = window_dimensions.1 * 0.4;
             if !self.sub_selection_keyboard_flag {

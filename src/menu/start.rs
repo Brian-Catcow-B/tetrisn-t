@@ -14,11 +14,11 @@ use crate::menu::TEXT_SCALE_DOWN;
 use crate::menu::HELP_RED;
 use crate::menu::SELECT_GREEN;
 
-const NUM_STARTMENUOPTION_TEXT_ENTRIES: u8 = 4;
+const NUM_STARTMENUOPTION_TEXT_ENTRIES: u8 = 3;
 #[repr(u8)]
 enum StartMenuOption {
     Start,
-    NumPlayers,
+    // NumPlayers,
     StartingLevel,
     Controls,
 }
@@ -129,19 +129,19 @@ impl StartMenu {
                     self.start_text.fragments_mut()[0].color = Some(graphics::BLACK);
                 }
             }
-            x if x == StartMenuOption::NumPlayers as u8 => {
-                if select_flag {
-                    self.num_players_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-                    self.num_players_text.fragments_mut()[1].color = Some(SELECT_GREEN);
-                    self.num_players_text.fragments_mut()[1].text =
-                        format!("<{}>", self.num_players);
-                } else {
-                    self.num_players_text.fragments_mut()[0].color = Some(graphics::BLACK);
-                    self.num_players_text.fragments_mut()[1].color = Some(graphics::BLACK);
-                    self.num_players_text.fragments_mut()[1].text =
-                        format!(" {}", self.num_players);
-                }
-            }
+            // x if x == StartMenuOption::NumPlayers as u8 => {
+            //     if select_flag {
+            //         self.num_players_text.fragments_mut()[0].color = Some(SELECT_GREEN);
+            //         self.num_players_text.fragments_mut()[1].color = Some(SELECT_GREEN);
+            //         self.num_players_text.fragments_mut()[1].text =
+            //             format!("<{}>", self.num_players);
+            //     } else {
+            //         self.num_players_text.fragments_mut()[0].color = Some(graphics::BLACK);
+            //         self.num_players_text.fragments_mut()[1].color = Some(graphics::BLACK);
+            //         self.num_players_text.fragments_mut()[1].text =
+            //             format!(" {}", self.num_players);
+            //     }
+            // }
             x if x == StartMenuOption::StartingLevel as u8 => {
                 if select_flag {
                     self.starting_level_text.fragments_mut()[0].color = Some(SELECT_GREEN);
@@ -168,19 +168,20 @@ impl StartMenu {
 
     fn inc_or_dec_selection(&mut self, inc_flag: bool) {
         // the if/else here only includes StartMenuOptions that have a value that can be modified
-        if self.selection == StartMenuOption::NumPlayers as u8 {
-            // special case (index by 1 because we can't have 0 players)
-            if inc_flag {
-                self.num_players = self.num_players % MAX_NUM_PLAYERS + 1;
-            } else {
-                self.num_players = if self.num_players == 1 {
-                    MAX_NUM_PLAYERS
-                } else {
-                    self.num_players - 1
-                };
-            }
-            self.num_players_text.fragments_mut()[1].text = format!("<{}>", self.num_players);
-        } else if self.selection == StartMenuOption::StartingLevel as u8 {
+        // if self.selection == StartMenuOption::NumPlayers as u8 {
+        //     // special case (index by 1 because we can't have 0 players)
+        //     if inc_flag {
+        //         self.num_players = self.num_players % MAX_NUM_PLAYERS + 1;
+        //     } else {
+        //         self.num_players = if self.num_players == 1 {
+        //             MAX_NUM_PLAYERS
+        //         } else {
+        //             self.num_players - 1
+        //         };
+        //     }
+        //     self.num_players_text.fragments_mut()[1].text = format!("<{}>", self.num_players);
+        // } else
+        if self.selection == StartMenuOption::StartingLevel as u8 {
             if inc_flag {
                 self.starting_level = (self.starting_level + 1) % (MAX_STARTING_LEVEL + 1);
             } else {
@@ -201,9 +202,9 @@ impl StartMenu {
             self.draw_text(ctx, &self.not_enough_controls_text, 0.1, &window_dimensions);
         }
         self.draw_text(ctx, &self.start_text, 0.2, &window_dimensions);
-        self.draw_text(ctx, &self.num_players_text, 0.4, &window_dimensions);
-        self.draw_text(ctx, &self.starting_level_text, 0.6, &window_dimensions);
-        self.draw_text(ctx, &self.controls_text, 0.8, &window_dimensions);
+        // self.draw_text(ctx, &self.num_players_text, 0.4, &window_dimensions);
+        self.draw_text(ctx, &self.starting_level_text, 0.4, &window_dimensions);
+        self.draw_text(ctx, &self.controls_text, 0.6, &window_dimensions);
     }
 
     fn draw_text(

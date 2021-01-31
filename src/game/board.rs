@@ -211,19 +211,19 @@ impl Board {
         ];
 
         // DEBUG
-        for a in 0..4 {
-            for b in 0..board_width as usize {
-                matrix[a][b] = Tile::new(false, false, 0, Shapes::I);
-                matrix[b][a] = Tile::new(false, false, 0, Shapes::I);
-                matrix[board_width as usize - a - 1][b] = Tile::new(false, false, 0, Shapes::I);
-                matrix[b][board_width as usize - a - 1] = Tile::new(false, false, 0, Shapes::I);
-            }
-        }
-        matrix[9][9] = Tile::new(false, false, 0, Shapes::I);
-        matrix[board_width as usize / 2][board_height as usize - 1] = Tile::new_empty();
-        matrix[board_width as usize / 2][board_height as usize - 2] = Tile::new_empty();
-        matrix[board_width as usize / 2][board_height as usize - 3] = Tile::new_empty();
-        matrix[board_width as usize / 2][board_height as usize - 4] = Tile::new_empty();
+        // for a in 0..4 {
+        //     for b in 0..board_width as usize {
+        //         matrix[a][b] = Tile::new(false, false, 0, Shapes::I);
+        //         matrix[b][a] = Tile::new(false, false, 0, Shapes::I);
+        //         matrix[board_width as usize - a - 1][b] = Tile::new(false, false, 0, Shapes::I);
+        //         matrix[b][board_width as usize - a - 1] = Tile::new(false, false, 0, Shapes::I);
+        //     }
+        // }
+        // matrix[9][9] = Tile::new(false, false, 0, Shapes::I);
+        // matrix[board_width as usize / 2][board_height as usize - 1] = Tile::new_empty();
+        // matrix[board_width as usize / 2][board_height as usize - 2] = Tile::new_empty();
+        // matrix[board_width as usize / 2][board_height as usize - 3] = Tile::new_empty();
+        // matrix[board_width as usize / 2][board_height as usize - 4] = Tile::new_empty();
         // DEBUG END
         Self {
             width: board_width,
