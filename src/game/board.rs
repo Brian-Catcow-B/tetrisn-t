@@ -173,15 +173,31 @@ impl Board {
         for _ in 0..num_players {
             vec_active_piece.push(Piece::new(Shapes::None));
         }
+        let mut matrix = vec![
+            vec![Tile::new_empty(); board_width as usize];
+            (board_height + board_height_buffer) as usize
+        ];
+
+        // DEBUG
+        for a in 0..4 {
+            for b in 0..board_width as usize {
+                matrix[a][b] = Tile::new(false, false, 0, Shapes::I);
+                matrix[b][a] = Tile::new(false, false, 0, Shapes::I);
+                matrix[board_width as usize - a - 1][b] = Tile::new(false, false, 0, Shapes::I);
+                matrix[b][board_width as usize - a - 1] = Tile::new(false, false, 0, Shapes::I);
+            }
+        }
+        matrix[board_width as usize / 2][board_height as usize - 1] = Tile::new_empty();
+        matrix[board_width as usize / 2][board_height as usize - 2] = Tile::new_empty();
+        matrix[board_width as usize / 2][board_height as usize - 3] = Tile::new_empty();
+        matrix[board_width as usize / 2][board_height as usize - 4] = Tile::new_empty();
+        // DEBUG END
         Self {
             width: board_width,
             height: board_height,
             height_buffer: board_height_buffer,
             spawn_row,
-            matrix: vec![
-                vec![Tile::new_empty(); board_width as usize];
-                (board_height + board_height_buffer) as usize
-            ],
+            matrix,
             vec_active_piece,
             vec_full_lines: vec![],
         }
@@ -227,9 +243,15 @@ impl Board {
         player: u8,
         spawn_col: u8,
         spawn_piece_shape: Shapes,
+        current_gravity: Movement,
     ) -> (bool, bool) {
         let new_piece = Piece::new(spawn_piece_shape);
-        let spawn_positions = new_piece.spawn_pos(spawn_col, self.spawn_row, self.height_buffer);
+        let spawn_positions = new_piece.spawn_pos(
+            spawn_col,
+            self.spawn_row,
+            self.height_buffer,
+            current_gravity,
+        );
         let mut blocked_flag: bool = false;
         for position in spawn_positions.iter().take(4) {
             if !self.matrix[position.0 as usize][position.1 as usize].empty {

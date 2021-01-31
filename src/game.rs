@@ -26,7 +26,7 @@ use crate::menu::MenuGameOptions;
 
 const BOARD_HEIGHT: u8 = 20u8;
 
-const ROTATRIS_BOARD_SIDE_LENGTH: u8 = 16u8;
+const ROTATRIS_BOARD_SIDE_LENGTH: u8 = 20u8;
 
 pub const CLEAR_DELAY: i8 = 0i8;
 
@@ -73,12 +73,6 @@ pub const UNDETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.2;
 pub enum Modes {
     Classic,
     Rotatris,
-}
-
-pub enum InvisibilityLevels {
-    None,
-    Near,
-    All,
 }
 
 // this struct is for the Menu class so that it can return what game options to start the game with
@@ -374,6 +368,7 @@ impl Game {
                             player.player_num,
                             player.spawn_column,
                             player.next_piece_shape,
+                            self.gravity_direction,
                         );
                         if blocked.0 {
                             if blocked.1 {
@@ -750,7 +745,8 @@ impl Game {
             for x in 0..self.bh.board.width {
                 for y in 0..self.bh.board.height {
                     // actually go through and add tiles to a spritebatch
-                    if !self.bh.board.matrix[(y + self.bh.board.height_buffer) as usize][x as usize].empty
+                    if !self.bh.board.matrix[(y + self.bh.board.height_buffer) as usize][x as usize]
+                        .empty
                     {
                         // account for the gravity direction in how to draw it (rotatris)
                         let center = self.bh.board.width / 2;
@@ -758,9 +754,15 @@ impl Game {
                         let (y_draw_pos, x_draw_pos) = match self.gravity_direction {
                             Movement::Down => (y, x),
                             Movement::Left => (center * 2 - x - is_center_even, y),
-                            Movement::Up => (center * 2 - y - is_center_even, center * 2 - x - is_center_even),
+                            Movement::Up => (
+                                center * 2 - y - is_center_even,
+                                center * 2 - x - is_center_even,
+                            ),
                             Movement::Right => (x, center * 2 - y - is_center_even),
-                            _ => panic!("[!] Error: self.gravity_direction is {}", self.gravity_direction as u8),
+                            _ => panic!(
+                                "[!] Error: self.gravity_direction is {}",
+                                self.gravity_direction as u8
+                            ),
                         };
                         // create the proper DrawParam and add to the spritebatch
                         let player_tile = graphics::DrawParam::new().dest(Point2::new(

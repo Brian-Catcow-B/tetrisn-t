@@ -35,6 +35,7 @@ pub enum Movement {
     Right,
     RotateCw,
     RotateCcw,
+    DoubleRotate,
     None,
 }
 
@@ -47,12 +48,14 @@ impl From<u8> for Movement {
             3 => Movement::Right,
             4 => Movement::RotateCw,
             5 => Movement::RotateCcw,
-            6 => Movement::None,
+            6 => Movement::DoubleRotate,
+            7 => Movement::None,
             _ => panic!("[!] Unknown Movement value: {}", value),
         }
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct Piece {
     pub shape: Shapes,
     pub positions: [(u8, u8); 4],
@@ -191,8 +194,10 @@ impl Piece {
         spawn_column: u8,
         spawn_row: u8,
         board_height_buffer: u8,
+        current_gravity: Movement,
     ) -> [(u8, u8); 4] {
-        match self.shape {
+        let mut piece_copy = Self::new(self.shape);
+        piece_copy.positions = match piece_copy.shape {
             Shapes::None => {
                 println!("[!] tried to spawn a piece with shape type Shapes::None");
                 [(0xff, 0xff); 4]
@@ -201,14 +206,14 @@ impl Piece {
                 [
                     (spawn_row + board_height_buffer, spawn_column - 2), // [-][-][-][-] | [-][-][0][-]
                     (spawn_row + board_height_buffer, spawn_column - 1), // [-][-][-][-] | [-][-][1][-]
-                    (spawn_row + board_height_buffer, spawn_column), // [0][1][2][3] | [-][-][2][-]
+                    (spawn_row + board_height_buffer, spawn_column), //     [0][1][2][3] | [-][-][2][-]
                     (spawn_row + board_height_buffer, spawn_column + 1), // [-][-][-][-] | [-][-][3][-]
                 ]
             }
             Shapes::O => {
                 [
                     (spawn_row + board_height_buffer, spawn_column - 1), //     [-][-][-][-]
-                    (spawn_row + board_height_buffer, spawn_column),     //     [-][-][-][-]
+                    (spawn_row + board_height_buffer, spawn_column),     //         [-][-][-][-]
                     (spawn_row + 1 + board_height_buffer, spawn_column - 1), // [-][0][1][-]
                     (spawn_row + 1 + board_height_buffer, spawn_column), //     [-][2][3][-]
                 ]
@@ -253,6 +258,31 @@ impl Piece {
                     (spawn_row + 1 + board_height_buffer, spawn_column + 1), // [-][-][2][3] | [-][-][0][-]
                 ]
             }
+        };
+        if piece_copy.shape == Shapes::None {
+            panic!("[!] Error: `Piece::spawn_pos()` called with shape: Shapes::None");
+        } else if piece_copy.shape == Shapes::O {
+            piece_copy.positions
+        } else {
+            match current_gravity {
+                Movement::Down => piece_copy.positions,
+                Movement::Left => {
+                    piece_copy.positions = piece_copy.rotate(true);
+                    piece_copy.piece_pos(Movement::Right)
+                }
+                Movement::Up => {
+                    piece_copy.positions = piece_copy.double_rotate();
+                    piece_copy.piece_pos(Movement::Down)
+                }
+                Movement::Right => {
+                    piece_copy.positions = piece_copy.rotate(false);
+                    piece_copy.piece_pos(Movement::Down)
+                }
+                _ => panic!(
+                    "[!] Error: current_gravity is invalid: {} (in `Piece::spawn_pos()`)",
+                    current_gravity as u8
+                ),
+            }
         }
     }
 
@@ -294,16 +324,22 @@ impl Piece {
             if self.num_rotations == 4 {
                 if r#move == Movement::RotateCw {
                     self.rotate(true)
-                } else {
+                } else if r#move == Movement::RotateCcw {
                     self.rotate(false)
+                } else {
+                    self.double_rotate()
                 }
             // I, S, Z
             } else if self.num_rotations == 2 {
                 // the I piece is special in that it starts with rotation: 1 so that it lines up with S and Z
-                if self.rotation == 0 {
-                    self.rotate(false)
+                if r#move != Movement::DoubleRotate {
+                    if self.rotation == 0 {
+                        self.rotate(false)
+                    } else {
+                        self.rotate(true)
+                    }
                 } else {
-                    self.rotate(true)
+                    self.positions
                 }
             } else if self.num_rotations == 1 {
                 self.positions
@@ -377,6 +413,59 @@ impl Piece {
                 ),
             ]
         }
+    }
+
+    fn double_rotate(&self) -> [(u8, u8); 4] {
+        if self.pivot > 3 {
+            println!("[!] tried to rotate piece with pivot fields {}", self.pivot);
+            return self.positions;
+        }
+        let pivot = self.pivot;
+        let positions = [
+            (
+                self.positions[self.pivot as usize].0
+                    + (self.positions[0].1 - self.positions[self.pivot as usize].1),
+                self.positions[self.pivot as usize].1
+                    + (self.positions[self.pivot as usize].0 - self.positions[0].0),
+            ),
+            (
+                self.positions[self.pivot as usize].0
+                    + (self.positions[1].1 - self.positions[self.pivot as usize].1),
+                self.positions[self.pivot as usize].1
+                    + (self.positions[self.pivot as usize].0 - self.positions[1].0),
+            ),
+            (
+                self.positions[self.pivot as usize].0
+                    + (self.positions[2].1 - self.positions[self.pivot as usize].1),
+                self.positions[self.pivot as usize].1
+                    + (self.positions[self.pivot as usize].0 - self.positions[2].0),
+            ),
+            (
+                self.positions[self.pivot as usize].0
+                    + (self.positions[3].1 - self.positions[self.pivot as usize].1),
+                self.positions[self.pivot as usize].1
+                    + (self.positions[self.pivot as usize].0 - self.positions[3].0),
+            ),
+        ];
+
+        [
+            (
+                positions[pivot as usize].0 + (positions[0].1 - positions[pivot as usize].1),
+                positions[pivot as usize].1 + (positions[pivot as usize].0 - positions[0].0),
+            ),
+            (
+                positions[pivot as usize].0 + (positions[1].1 - positions[pivot as usize].1),
+                positions[pivot as usize].1 + (positions[pivot as usize].0 - positions[1].0),
+            ),
+            (
+                positions[pivot as usize].0 + (positions[2].1 - positions[pivot as usize].1),
+                positions[pivot as usize].1 + (positions[pivot as usize].0 - positions[2].0),
+            ),
+            (
+                positions[pivot as usize].0 + (positions[3].1 - positions[pivot as usize].1),
+                positions[pivot as usize].1 + (positions[pivot as usize].0 - positions[3].0),
+            ),
+        ]
     }
 }
 
