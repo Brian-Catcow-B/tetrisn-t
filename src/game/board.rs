@@ -89,16 +89,34 @@ impl BoardHandler {
     pub fn rotatris_attempt_clear_rings(&mut self, level: u8) -> (u8, u32) {
         let mut num_cleared_rings = 0;
         let mut score_from_cleared_rings = 0;
-        let num_rings_to_check = self.board.width / 2 - 4;
+        let num_rings_to_check = self.board.width / 2 - 3;
 
         // go from inner rings to outer rings checking if any ring is full, avoiding the middle 4 rings
         for z in (0..num_rings_to_check).rev() {
             if self.rotatris_check_single_ring(z) {
                 num_cleared_rings += 1;
                 // clear and pull inner stuff out
-                for j in (z + 1)..num_rings_to_check {
+                for j in (z + 1)..(self.board.width / 2) {
                     self.rotatris_pull_single_ring_out(j);
                 }
+            }
+        }
+
+        score_from_cleared_rings += match num_cleared_rings {
+            0 => return (0, 0),
+            1 => SCORE_SINGLE_BASE as u32 * (level as u32 + 1),
+            2 => SCORE_DOUBLE_BASE as u32 * (level as u32 + 1),
+            3 => SCORE_TRIPLE_BASE as u32 * (level as u32 + 1),
+            4 => SCORE_QUADRUPLE_BASE as u32 * (level as u32 + 1),
+            _ => {
+                println!("[!] player was attributed a number of rings too large maybe, what the heck? num_cleared_rings: {}", num_cleared_rings);
+                0u32
+            }
+        };
+
+        if num_cleared_rings > 0 {
+            for z in num_rings_to_check..(self.board.width + 1 / 2) {
+                self.rotatris_emptify_single_ring(z);
             }
         }
 
@@ -145,6 +163,20 @@ impl BoardHandler {
         self.board.matrix[k + 1][j - 1] = self.board.matrix[k][j];
         self.board.matrix[k + 1][k + 1] = self.board.matrix[k][k];
     }
+
+    fn rotatris_emptify_single_ring(&mut self, z: u8) {
+        let board_side_length = self.board.width;
+        for a in [z, board_side_length - z - 1].into_iter() {
+            for b in z..(board_side_length - z) {
+                if b >= z && b <= board_side_length - z {
+                    self.board.matrix[*a as usize][b as usize].empty = true;
+                    self.board.matrix[*a as usize][b as usize].active = false;
+                    self.board.matrix[b as usize][*a as usize].empty = true;
+                    self.board.matrix[b as usize][*a as usize].active = false;
+                }
+            }
+        }
+    }
 }
 
 // example Board coordinates system (2 width, 2 height)
@@ -187,6 +219,7 @@ impl Board {
                 matrix[b][board_width as usize - a - 1] = Tile::new(false, false, 0, Shapes::I);
             }
         }
+        matrix[9][9] = Tile::new(false, false, 0, Shapes::I);
         matrix[board_width as usize / 2][board_height as usize - 1] = Tile::new_empty();
         matrix[board_width as usize / 2][board_height as usize - 2] = Tile::new_empty();
         matrix[board_width as usize / 2][board_height as usize - 3] = Tile::new_empty();
