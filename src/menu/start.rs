@@ -70,7 +70,7 @@ impl StartMenu {
                     .scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
             ),
             not_enough_controls_text: Text::new(
-                TextFragment::new("[!] Not enough controls setup to start")
+                TextFragment::new("[!] Setup controls first")
                     .color(HELP_RED)
                     .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
             ),
