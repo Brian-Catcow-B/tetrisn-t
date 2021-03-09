@@ -16,6 +16,8 @@ Because of weird coding stuff, this is done each game no matter what, but might 
 Because ggez only supports xinput, a program like rewasd is required for non-xinput controllers, which allows remapping of non-xinput controllers to act as an xinput controller.
 rewasd does cost money (unless you download an earlier version from 3rd party), but here's an alternative: http://ds4windows.com/
 
+The file `./resources/gamecontrollerdb.txt` can be empty; the program creates that in case the system being used is Linux.
+
 ### Linux
 For linux, this program uses SDL2 gamepad configurations for controllers.
 A list of automatically-detected controllers can be found in the `resources` folder in `gamecontrollerdb.txt`, which is based on this file: https://github.com/gabomdq/SDL_GameControllerDB/blob/master/gamecontrollerdb.txt
