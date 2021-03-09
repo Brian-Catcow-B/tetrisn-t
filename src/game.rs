@@ -131,7 +131,6 @@ pub struct Game {
     // drawing
     tile_size: f32,
     batch_empty_tile: spritebatch::SpriteBatch,
-    batch_highlight_active_tile: spritebatch::SpriteBatch,
     vec_batch_player_piece: Vec<spritebatch::SpriteBatch>,
     vec_batch_next_piece: Vec<spritebatch::SpriteBatch>,
     game_info_text: Text,
@@ -276,9 +275,6 @@ impl Game {
             game_over_delay: GAME_OVER_DELAY,
             tile_size: 0f32,
             batch_empty_tile,
-            batch_highlight_active_tile: spritebatch::SpriteBatch::new(
-                TileGraphic::new_active_highlight(ctx).image,
-            ),
             vec_batch_player_piece,
             vec_batch_next_piece,
             game_info_text,
@@ -650,7 +646,7 @@ impl Game {
             self.draw_text(ctx, &self.pause_text, 0.4, &(window_width, window_height));
         } else {
             // DRAW GAME
-            // add each non-empty tile to the correct SpriteBatch and add highlights to active pieces
+            // add each non-empty tile to the correct SpriteBatch
             for x in 0..self.board.width {
                 for y in 0..self.board.height {
                     if !self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].empty {
@@ -662,12 +658,6 @@ impl Game {
                             y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                         ));
                         self.vec_batch_player_piece[player as usize].add(player_tile);
-                        // highlight if active
-                        if self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize]
-                            .active
-                        {
-                            self.batch_highlight_active_tile.add(player_tile);
-                        }
                     }
                 }
             }
@@ -726,18 +716,6 @@ impl Game {
                 )
                 .unwrap();
             }
-            // highlights
-            graphics::draw(
-                ctx,
-                &self.batch_highlight_active_tile,
-                DrawParam::new()
-                    .dest(Point2::new(
-                        board_top_left_corner,
-                        NON_BOARD_SPACE_U as f32 * self.tile_size,
-                    ))
-                    .scale(Vector2::new(scaled_tile_size, scaled_tile_size)),
-            )
-            .unwrap();
             // next piece tiles
             for player in self.vec_players.iter() {
                 graphics::draw(
@@ -767,8 +745,6 @@ impl Game {
             for player in 0..self.num_players {
                 self.vec_batch_player_piece[player as usize].clear();
             }
-            // clear highlight sprite batch
-            self.batch_highlight_active_tile.clear();
         }
     }
 
