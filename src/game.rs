@@ -250,7 +250,7 @@ impl Game {
                 .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
         );
         let pause_text = Text::new(
-            TextFragment::new("PAUSED\n\nDown + RotateCw + RotateCcw + ESC/Start to quit")
+            TextFragment::new("PAUSED\n\nDown + ESC/Start to quit")
                 .color(graphics::WHITE)
                 .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
         );
@@ -312,11 +312,7 @@ impl Game {
             } else {
                 for player in &mut self.vec_players {
                     // should we quit to main menu?
-                    if player.input.keydown_down.0
-                        && player.input.keydown_rotate_ccw.0
-                        && player.input.keydown_rotate_cw.0
-                        && player.input.keydown_start.1
-                    {
+                    if player.input.keydown_down.0 && player.input.keydown_start.1 {
                         return ProgramState::Menu;
                     }
                     // should we resume?
