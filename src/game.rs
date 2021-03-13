@@ -132,6 +132,8 @@ pub struct Game {
     tile_size: f32,
     batch_empty_tile: spritebatch::SpriteBatch,
     batch_highlight_active_tile: spritebatch::SpriteBatch,
+    batch_highlight_clearing_standard_tile: spritebatch::SpriteBatch,
+    batch_highlight_clearing_tetrisnt_tile: spritebatch::SpriteBatch,
     vec_batch_player_piece: Vec<spritebatch::SpriteBatch>,
     vec_batch_next_piece: Vec<spritebatch::SpriteBatch>,
     game_info_text: Text,
@@ -278,6 +280,12 @@ impl Game {
             batch_empty_tile,
             batch_highlight_active_tile: spritebatch::SpriteBatch::new(
                 TileGraphic::new_active_highlight(ctx).image,
+            ),
+            batch_highlight_clearing_standard_tile: spritebatch::SpriteBatch::new(
+                TileGraphic::new_clear_standard_highlight(ctx).image,
+            ),
+            batch_highlight_clearing_tetrisnt_tile: spritebatch::SpriteBatch::new(
+                TileGraphic::new_clear_tetrisnt_highlight(ctx).image,
             ),
             vec_batch_player_piece,
             vec_batch_next_piece,
@@ -667,6 +675,64 @@ impl Game {
                     }
                 }
             }
+            // line clear highlights
+            for full_line in self.board.vec_full_lines.iter() {
+                if full_line.lines_cleared_together < 4 {
+                    // standard clear animation
+                    let y = (full_line.row - BOARD_HEIGHT_BUFFER_U) as usize;
+                    let board_max_index_remainder_2 = (self.board.width - 1) % 2;
+                    // go from the middle to the outside and reach the end right before full_line.clear_delay reaches 0
+                    for x in (self.board.width / 2)..self.board.width {
+                        let highlight_pos_right = graphics::DrawParam::new().dest(Point2::new(
+                            x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                            y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                        ));
+                        let highlight_pos_left = graphics::DrawParam::new().dest(Point2::new(
+                            (self.board.width as f32 - (x + board_max_index_remainder_2) as f32)
+                                * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                            y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                        ));
+
+                        self.batch_highlight_clearing_standard_tile
+                            .add(highlight_pos_right);
+                        self.batch_highlight_clearing_standard_tile
+                            .add(highlight_pos_left);
+
+                        if ((x as f32) / (self.board.width as f32) - 0.5) * 2.0
+                            > 1.0 - (full_line.clear_delay as f32 / CLEAR_DELAY as f32)
+                        {
+                            break;
+                        }
+                    }
+                } else {
+                    // tetrisnt clear animation
+                    let y = (full_line.row - BOARD_HEIGHT_BUFFER_U) as usize;
+                    let board_max_index_remainder_2 = (self.board.width - 1) % 2;
+                    // go from the middle to the outside and reach the end right before full_line.clear_delay reaches 0
+                    for x in (self.board.width / 2)..self.board.width {
+                        let highlight_pos_right = graphics::DrawParam::new().dest(Point2::new(
+                            x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                            y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                        ));
+                        let highlight_pos_left = graphics::DrawParam::new().dest(Point2::new(
+                            (self.board.width as f32 - (x + board_max_index_remainder_2) as f32)
+                                * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                            y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                        ));
+
+                        self.batch_highlight_clearing_tetrisnt_tile
+                            .add(highlight_pos_right);
+                        self.batch_highlight_clearing_tetrisnt_tile
+                            .add(highlight_pos_left);
+
+                        if ((x as f32) / (self.board.width as f32) - 0.5) * 2.0
+                            > 1.0 - (full_line.clear_delay as f32 / CLEAR_DELAY as f32)
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
             // next pieces
             for player in &mut self.vec_players {
                 if player.redraw_next_piece_flag {
@@ -722,10 +788,34 @@ impl Game {
                 )
                 .unwrap();
             }
-            // highlights
+            // active tile highlights
             graphics::draw(
                 ctx,
                 &self.batch_highlight_active_tile,
+                DrawParam::new()
+                    .dest(Point2::new(
+                        board_top_left_corner,
+                        NON_BOARD_SPACE_U as f32 * self.tile_size,
+                    ))
+                    .scale(Vector2::new(scaled_tile_size, scaled_tile_size)),
+            )
+            .unwrap();
+            // clearing tile standard highlights
+            graphics::draw(
+                ctx,
+                &self.batch_highlight_clearing_standard_tile,
+                DrawParam::new()
+                    .dest(Point2::new(
+                        board_top_left_corner,
+                        NON_BOARD_SPACE_U as f32 * self.tile_size,
+                    ))
+                    .scale(Vector2::new(scaled_tile_size, scaled_tile_size)),
+            )
+            .unwrap();
+            // clearing tile tetrisnt highlights
+            graphics::draw(
+                ctx,
+                &self.batch_highlight_clearing_tetrisnt_tile,
                 DrawParam::new()
                     .dest(Point2::new(
                         board_top_left_corner,
@@ -763,8 +853,12 @@ impl Game {
             for player in 0..self.num_players {
                 self.vec_batch_player_piece[player as usize].clear();
             }
-            // clear highlight sprite batch
+            // clear highlight active tile sprite batch
             self.batch_highlight_active_tile.clear();
+            // clear highlight clearing tile standard sprite batch
+            self.batch_highlight_clearing_standard_tile.clear();
+            // clear highlight clearing tile tetrisnt sprite batch
+            self.batch_highlight_clearing_tetrisnt_tile.clear();
         }
     }
 
