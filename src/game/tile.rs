@@ -95,8 +95,10 @@ impl Tile {
             player,
         }
     }
+}
 
-    pub fn new_empty() -> Self {
+impl Default for Tile {
+    fn default() -> Self {
         Self {
             empty: true,
             active: false,

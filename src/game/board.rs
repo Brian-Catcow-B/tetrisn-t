@@ -27,7 +27,7 @@ impl Board {
             vec_active_piece.push(Piece::new(Shapes::None));
         }
         let matrix = vec![
-            vec![Tile::new_empty(); board_width as usize];
+            vec![Tile::default(); board_width as usize];
             (board_height + BOARD_HEIGHT_BUFFER_U) as usize
         ];
 
@@ -55,7 +55,7 @@ impl Board {
             .take(4)
         {
             if position != &(0xffu8, 0xffu8) {
-                self.matrix[position.0 as usize][position.1 as usize] = Tile::new_empty();
+                self.matrix[position.0 as usize][position.1 as usize] = Tile::default();
             } else {
                 println!("[!] tried to emptify piece that contained position (0xffu8, 0xffu8)");
             }
@@ -330,7 +330,7 @@ impl Board {
             self.matrix
                 .remove(self.vec_full_lines[index - indices_destroyed].row as usize);
             self.matrix
-                .insert(0, vec![Tile::new_empty(); self.width as usize]);
+                .insert(0, vec![Tile::default(); self.width as usize]);
             self.vec_full_lines.remove(index - indices_destroyed);
             indices_destroyed += 1;
             // now is when we step backwards through the self.vec_full_lines vector,
