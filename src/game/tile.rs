@@ -30,8 +30,32 @@ const PLAYER_TILE_BRIGHTEN: [f32; 3] = [0.40, 0.25, 0.10];
 // [-][-][-][2][2][-][-][-]
 // [-][-][-][-][-][-][-][-]
 
-// this one is actually opacity, since it's drawn over the top of a player's active piece's tiles
+// this one is actually opacity out of 0xff, since it's drawn over the top of a player's active piece's tiles
 const PLAYER_TILE_ACTIVE_HIGHLIGHT: [u8; 3] = [0x50, 0x09, 0x00];
+
+// [0][1][1][1][1][1][1][0]
+// [1][1][1][2][2][1][1][1]
+// [1][1][2][2][2][2][1][1]
+// [1][2][2][2][2][2][2][1]
+// [1][2][2][2][2][2][2][1]
+// [1][1][2][2][2][2][1][1]
+// [1][1][1][2][2][1][1][1]
+// [0][1][1][1][1][1][1][0]
+
+// this one is actually opacity out of 0xff, since it's drawn over the top of clearing tiles' sprites
+const CLEARING_TILE_STANDARD_HIGHLIGHT: [u8; 3] = [0x60, 0x10, 0x05];
+
+// [0][1][1][1][1][1][1][0]
+// [1][1][1][2][2][1][1][1]
+// [1][1][2][2][2][2][1][1]
+// [1][2][2][2][2][2][2][1]
+// [1][2][2][2][2][2][2][1]
+// [1][1][2][2][2][2][1][1]
+// [1][1][1][2][2][1][1][1]
+// [0][1][1][1][1][1][1][0]
+
+// this one is actually opacity out of 0xff, since it's drawn over the top of clearing tiles' sprites (when 4 lines are cleared at once)
+const CLEARING_TILE_TETRISNT_HIGHLIGHT: [u8; 3] = [0xa0, 0x30, 0x10];
 
 // [0][1][1][1][1][1][1][0]
 // [1][1][1][2][2][1][1][1]
@@ -389,6 +413,144 @@ impl TileGraphic {
                 &TileGraphic::pack_color_buf(&pixel_color_buf),
             )
             .expect("Failed to create active player tile highlight image"),
+        }
+    }
+
+    pub fn new_clear_standard_highlight(ctx: &mut Context) -> Self {
+        // create a buffer of (u8, u8, u8, u8), because rgba, big enough to hold each pixel
+        let mut pixel_color_buf: [(u8, u8, u8, u8);
+            NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize] =
+            [WHITE;
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize];
+
+        // corners (0)
+        for x in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
+            for y in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
+                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                    CLEARING_TILE_STANDARD_HIGHLIGHT[0];
+                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                    CLEARING_TILE_STANDARD_HIGHLIGHT[0];
+            }
+        }
+
+        // edges (1)
+        for x in 1..NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1 {
+            for y in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
+                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                    CLEARING_TILE_STANDARD_HIGHLIGHT[1];
+                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                    CLEARING_TILE_STANDARD_HIGHLIGHT[1];
+            }
+        }
+
+        // around the corners (1)
+        for x in &[
+            1,
+            2,
+            NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 3,
+            NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2,
+        ] {
+            for y in &[1, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2] {
+                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                    CLEARING_TILE_STANDARD_HIGHLIGHT[1];
+                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                    CLEARING_TILE_STANDARD_HIGHLIGHT[1];
+            }
+        }
+
+        // inside (2)
+        for x in 3..NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 3 {
+            for y in &[1, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2] {
+                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                    CLEARING_TILE_STANDARD_HIGHLIGHT[2];
+                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                    CLEARING_TILE_STANDARD_HIGHLIGHT[2];
+            }
+        }
+        for x in 2..NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2 {
+            for y in 2..NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2 {
+                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                    CLEARING_TILE_STANDARD_HIGHLIGHT[2];
+            }
+        }
+
+        Self {
+            image: graphics::Image::from_rgba8(
+                ctx,
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
+                &TileGraphic::pack_color_buf(&pixel_color_buf),
+            )
+            .expect("Failed to create tile clearing standard highlight image"),
+        }
+    }
+
+    pub fn new_clear_tetrisnt_highlight(ctx: &mut Context) -> Self {
+        // create a buffer of (u8, u8, u8, u8), because rgba, big enough to hold each pixel
+        let mut pixel_color_buf: [(u8, u8, u8, u8);
+            NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize] =
+            [WHITE;
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize];
+
+        // corners (0)
+        for x in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
+            for y in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
+                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                    CLEARING_TILE_TETRISNT_HIGHLIGHT[0];
+                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                    CLEARING_TILE_TETRISNT_HIGHLIGHT[0];
+            }
+        }
+
+        // edges (1)
+        for x in 1..NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1 {
+            for y in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
+                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                    CLEARING_TILE_TETRISNT_HIGHLIGHT[1];
+                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                    CLEARING_TILE_TETRISNT_HIGHLIGHT[1];
+            }
+        }
+
+        // around the corners (1)
+        for x in &[
+            1,
+            2,
+            NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 3,
+            NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2,
+        ] {
+            for y in &[1, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2] {
+                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                    CLEARING_TILE_TETRISNT_HIGHLIGHT[1];
+                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                    CLEARING_TILE_TETRISNT_HIGHLIGHT[1];
+            }
+        }
+
+        // inside (2)
+        for x in 3..NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 3 {
+            for y in &[1, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2] {
+                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                    CLEARING_TILE_TETRISNT_HIGHLIGHT[2];
+                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                    CLEARING_TILE_TETRISNT_HIGHLIGHT[2];
+            }
+        }
+        for x in 2..NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2 {
+            for y in 2..NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2 {
+                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                    CLEARING_TILE_TETRISNT_HIGHLIGHT[2];
+            }
+        }
+
+        Self {
+            image: graphics::Image::from_rgba8(
+                ctx,
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
+                &TileGraphic::pack_color_buf(&pixel_color_buf),
+            )
+            .expect("Failed to create tile clearing tetrisnt highlight image"),
         }
     }
 
