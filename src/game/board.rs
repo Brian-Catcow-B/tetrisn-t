@@ -13,7 +13,7 @@ pub struct Board {
     pub height: u8,
     pub matrix: Vec<Vec<Tile>>,
     pub vec_active_piece: Vec<Piece>,
-    vec_full_lines: Vec<FullLine>,
+    pub vec_full_lines: Vec<FullLine>,
 }
 
 // example Board coordinates system (2 width, 2 height)
@@ -26,13 +26,23 @@ impl Board {
         for _ in 0..num_players {
             vec_active_piece.push(Piece::new(Shapes::None));
         }
+        let matrix = vec![
+            vec![Tile::default(); board_width as usize];
+            (board_height + BOARD_HEIGHT_BUFFER_U) as usize
+        ];
+
+        // DEBUG TILES ADDED
+        // let mut matrix = vec![vec![Tile::new_empty(); board_width as usize]; (board_height + BOARD_HEIGHT_BUFFER_U) as usize];
+        // for x in 0..(board_width - 1) {
+        //     for y in (board_height + BOARD_HEIGHT_BUFFER_U - 8)..(board_height + BOARD_HEIGHT_BUFFER_U) {
+        //         matrix[y as usize][x as usize] = Tile::new(false, false, 0u8);
+        //     }
+        // }
+
         Self {
             width: board_width,
             height: board_height,
-            matrix: vec![
-                vec![Tile::new_empty(); board_width as usize];
-                (board_height + BOARD_HEIGHT_BUFFER_U) as usize
-            ],
+            matrix,
             vec_active_piece,
             vec_full_lines: vec![],
         }
@@ -45,7 +55,7 @@ impl Board {
             .take(4)
         {
             if position != &(0xffu8, 0xffu8) {
-                self.matrix[position.0 as usize][position.1 as usize] = Tile::new_empty();
+                self.matrix[position.0 as usize][position.1 as usize] = Tile::default();
             } else {
                 println!("[!] tried to emptify piece that contained position (0xffu8, 0xffu8)");
             }
@@ -123,18 +133,24 @@ impl Board {
             if movement == Movement::Down && self.should_lock(player) {
                 // lock piece and push any full lines to vec_full_lines
                 self.vec_active_piece[player as usize].shape = Shapes::None;
-                let mut is_full_line = false;
+                let mut full_line_rows: Vec<u8> = Vec::with_capacity(4);
                 for row in &self.lock_piece(player) {
                     if self.is_row_full(*row) {
-                        is_full_line = true;
-                        self.vec_full_lines.push(FullLine::new(*row, player));
+                        full_line_rows.push(*row);
                     }
                 }
-                if is_full_line {
+                if !full_line_rows.is_empty() {
+                    for row in full_line_rows.iter() {
+                        self.vec_full_lines.push(FullLine::new(
+                            *row,
+                            full_line_rows.len() as u8,
+                            player,
+                        ));
+                    }
                     self.vec_full_lines.sort();
                 }
 
-                return (false, is_full_line);
+                return (false, !full_line_rows.is_empty());
             }
 
             return (false, false);
@@ -314,7 +330,7 @@ impl Board {
             self.matrix
                 .remove(self.vec_full_lines[index - indices_destroyed].row as usize);
             self.matrix
-                .insert(0, vec![Tile::new_empty(); self.width as usize]);
+                .insert(0, vec![Tile::default(); self.width as usize]);
             self.vec_full_lines.remove(index - indices_destroyed);
             indices_destroyed += 1;
             // now is when we step backwards through the self.vec_full_lines vector,
@@ -342,17 +358,19 @@ impl Board {
 }
 
 #[derive(Ord, Eq, PartialOrd, PartialEq)]
-struct FullLine {
+pub struct FullLine {
     pub row: u8,
+    pub lines_cleared_together: u8,
     pub player: u8,
     pub clear_delay: i8,
     pub remove_flag: bool,
 }
 
 impl FullLine {
-    pub fn new(row: u8, player: u8) -> Self {
+    pub fn new(row: u8, lines_cleared_together: u8, player: u8) -> Self {
         Self {
             row,
+            lines_cleared_together,
             player,
             clear_delay: CLEAR_DELAY,
             remove_flag: false,
