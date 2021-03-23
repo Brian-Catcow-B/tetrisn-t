@@ -658,6 +658,19 @@ impl BoardRotatris {
         self.matrix[k + 1][j - 1] = self.matrix[k][j];
         self.matrix[k + 1][k + 1] = self.matrix[k][k];
     }
+
+    fn rotatris_emptify_single_ring(&mut self, z: u8) {
+        for a in [z, self.board_side_length - z - 1].into_iter() {
+            for b in z..(self.board_side_length - z) {
+                if b >= z && b <= self.board_side_length - z {
+                    self.matrix[*a as usize][b as usize].empty = true;
+                    self.matrix[*a as usize][b as usize].active = false;
+                    self.matrix[b as usize][*a as usize].empty = true;
+                    self.matrix[b as usize][*a as usize].active = false;
+                }
+            }
+        }
+    }
 }
 
 
