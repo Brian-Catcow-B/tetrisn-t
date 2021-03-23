@@ -15,87 +15,21 @@ pub struct BoardHandler {
 impl BoardHandler {
     pub fn new(board_width: u8, board_height: u8, num_players: u8, mode: Modes) -> Self {
         let (board_height_buffer, piece_spawn_row, rotatris) = match mode {
-            Modes::Rotatris => (0, (board_height - 1) / 2, Some(BoardRotatris::new())),
+            Modes::Rotatris => (0, (board_height - 1) / 2, Some(BoardRotatris::new(board_width, board_width / 2, num_players))),
             Modes::Classic => (2, 0, None),
         };
         Self {
             mode,
-            board: BoardClassic::new(
-                board_width,
-                board_height,
-                board_height_buffer,
-                piece_spawn_row,
-                num_players,
-            ),
+            classic,
             rotatris,
         }
     }
 
     pub fn attempt_clear_lines(&mut self, level: u8) -> (u8, u32) {
         match self.mode {
-            Modes::Classic => self.board.attempt_clear_lines(level),
-            Modes::Rotatris => self.rotatris_attempt_clear_rings(level),
+            Modes::Classic => self.classic.expect("[!] BoardHandler has wrong option").attempt_clear_lines(level),
+            Modes::Rotatris => self.rotatris.expect("[!] BoardHandler has wrong option").rotatris_attempt_clear_rings(level),
         }
-    }
-
-    pub fn rotatris_attempt_clear_rings(&mut self, level: u8) -> (u8, u32) {
-        let mut num_cleared_rings = 0;
-        let mut score_from_cleared_rings = 0;
-        let num_rings_to_check = self.board.width / 2 - 4;
-
-        // go from inner rings to outer rings checking if any ring is full, avoiding the middle 4 rings
-        for z in (0..num_rings_to_check).rev() {
-            if self.rotatris_check_single_ring(z) {
-                num_cleared_rings += 1;
-                // clear and pull inner stuff out
-                for j in (z + 1)..num_rings_to_check {
-                    self.rotatris_pull_single_ring_out(j);
-                }
-            }
-        }
-
-        (num_cleared_rings, score_from_cleared_rings)
-    }
-
-    fn rotatris_check_single_ring(&mut self, z: u8) -> bool {
-        let board_side_length = self.board.width;
-        for a in [z, board_side_length - z - 1].into_iter() {
-            for b in z..(board_side_length - z) {
-                if b >= z && b <= board_side_length - z {
-                    if self.board.matrix[*a as usize][b as usize].empty
-                        || self.board.matrix[*a as usize][b as usize].active
-                        || self.board.matrix[b as usize][*a as usize].empty
-                        || self.board.matrix[b as usize][*a as usize].active
-                    {
-                        return false;
-                    }
-                }
-            }
-        }
-
-        true
-    }
-
-    fn rotatris_pull_single_ring_out(&mut self, j: u8) {
-        let j = j as usize;
-        let k = self.board.width as usize - j - 1;
-
-        // sides
-        for a in j..=k {
-            // top
-            self.board.matrix[j - 1][a] = self.board.matrix[j][a];
-            // left
-            self.board.matrix[a][j - 1] = self.board.matrix[a][j];
-            // down
-            self.board.matrix[k + 1][a] = self.board.matrix[k][a];
-            // right
-            self.board.matrix[a][k + 1] = self.board.matrix[a][k];
-        }
-        // corners
-        self.board.matrix[j - 1][j - 1] = self.board.matrix[j][j];
-        self.board.matrix[j - 1][k + 1] = self.board.matrix[j][k];
-        self.board.matrix[k + 1][j - 1] = self.board.matrix[k][j];
-        self.board.matrix[k + 1][k + 1] = self.board.matrix[k][k];
     }
 }
 
@@ -126,34 +60,12 @@ impl BoardClassic {
             vec_active_piece.push(Piece::new(Shapes::None));
         }
         let mut matrix = vec![
-            vec![Tile::new_empty(); board_width as usize];
+            vec![Tile::default(); board_width as usize];
             (board_height + board_height_buffer) as usize
         ];
 
-        // DEBUG
-        for a in 0..4 {
-            for b in 0..board_width as usize {
-                matrix[a][b] = Tile::new(false, false, 0, Shapes::I);
-                matrix[b][a] = Tile::new(false, false, 0, Shapes::I);
-                matrix[board_width as usize - a - 1][b] = Tile::new(false, false, 0, Shapes::I);
-                matrix[b][board_width as usize - a - 1] = Tile::new(false, false, 0, Shapes::I);
-            }
-        }
-        matrix[board_width as usize / 2][board_height as usize - 1] = Tile::new_empty();
-        matrix[board_width as usize / 2][board_height as usize - 2] = Tile::new_empty();
-        matrix[board_width as usize / 2][board_height as usize - 3] = Tile::new_empty();
-        matrix[board_width as usize / 2][board_height as usize - 4] = Tile::new_empty();
-        // DEBUG END
-        Self {
-            width: board_width,
-            height: board_height,
-            height_buffer: board_height_buffer,
-            spawn_row,
-            matrix,
-        ];
-
         // DEBUG TILES ADDED
-        // let mut matrix = vec![vec![Tile::new_empty(); board_width as usize]; (board_height + BOARD_HEIGHT_BUFFER_U) as usize];
+        // let mut matrix = vec![vec![Tile::default(); board_width as usize]; (board_height + BOARD_HEIGHT_BUFFER_U) as usize];
         // for x in 0..(board_width - 1) {
         //     for y in (board_height + BOARD_HEIGHT_BUFFER_U - 8)..(board_height + BOARD_HEIGHT_BUFFER_U) {
         //         matrix[y as usize][x as usize] = Tile::new(false, false, 0u8);
@@ -163,6 +75,8 @@ impl BoardClassic {
         Self {
             width: board_width,
             height: board_height,
+            height_buffer: board_height_buffer,
+            spawn_row: board_height_buffer,
             matrix,
             vec_active_piece,
             vec_full_lines: vec![],
@@ -560,9 +474,10 @@ impl FullLine {
 // other modes
 pub struct BoardRotatris {
     pub board_rotation: u8, // 0, 1, 2, 3: 0, 90, 180, 270; CW
-    pub side_length: u8,
+    pub board_side_length: u8,
     pub spawn_row: u8,
     pub matrix: Vec<Vec<Tile>>,
+    pub vec_active_piece: Vec<Piece>,
 }
 
 impl BoardRotatris {
@@ -576,49 +491,41 @@ impl BoardRotatris {
             vec_active_piece.push(Piece::new(Shapes::None));
         }
         let mut matrix = vec![
-            vec![Tile::new_empty(); board_side_length as usize];
+            vec![Tile::default(); board_side_length as usize];
             board_side_length as usize
         ];
 
         // DEBUG
         for a in 0..4 {
-            for b in 0..board_width as usize {
+            for b in 0..board_side_length as usize {
                 matrix[a][b] = Tile::new(false, false, 0, Shapes::I);
                 matrix[b][a] = Tile::new(false, false, 0, Shapes::I);
-                matrix[board_width as usize - a - 1][b] = Tile::new(false, false, 0, Shapes::I);
-                matrix[b][board_width as usize - a - 1] = Tile::new(false, false, 0, Shapes::I);
+                matrix[board_side_length as usize - a - 1][b] = Tile::new(false, false, 0, Shapes::I);
+                matrix[b][board_side_length as usize - a - 1] = Tile::new(false, false, 0, Shapes::I);
             }
         }
-        matrix[board_width as usize / 2][board_height as usize - 1] = Tile::new_empty();
-        matrix[board_width as usize / 2][board_height as usize - 2] = Tile::new_empty();
-        matrix[board_width as usize / 2][board_height as usize - 3] = Tile::new_empty();
-        matrix[board_width as usize / 2][board_height as usize - 4] = Tile::new_empty();
-        // DEBUG END
-        Self {
-            width: board_width,
-            height: board_height,
-            height_buffer: board_height_buffer,
-            spawn_row,
-            matrix,
-        ];
+        matrix[board_side_length as usize / 2][board_side_length as usize - 1] = Tile::default();
+        matrix[board_side_length as usize / 2][board_side_length as usize - 2] = Tile::default();
+        matrix[board_side_length as usize / 2][board_side_length as usize - 3] = Tile::default();
+        matrix[board_side_length as usize / 2][board_side_length as usize - 4] = Tile::default();
 
         Self {
-            width: board_width,
-            height: board_height,
+            board_rotation: 0,
+            board_side_length,
+            spawn_row,
             matrix,
             vec_active_piece,
-            vec_full_lines: vec![],
         }
     }
 
     // return bool is if rotate was successful
     pub fn rotatris_attempt_rotate_board(&mut self, rotate_direction: Movement) -> bool {
-        let center: u8 = self.board.width / 2;
-        let is_center_even: u8 = (self.board.width + 1) % 2;
+        let center: u8 = self.board_side_length / 2;
+        let is_center_even: u8 = (self.board_side_length + 1) % 2;
         let mut new_positions: [(u8, u8); 4] = [(0u8, 0u8); 4];
         match rotate_direction {
             Movement::RotateCw => {
-                for (index, position) in self.board.vec_active_piece[0]
+                for (index, position) in self.vec_active_piece[0]
                     .positions
                     .iter()
                     .take(4)
@@ -628,7 +535,7 @@ impl BoardRotatris {
                 }
             }
             Movement::RotateCcw => {
-                for (index, position) in self.board.vec_active_piece[0]
+                for (index, position) in self.vec_active_piece[0]
                     .positions
                     .iter()
                     .take(4)
@@ -645,18 +552,111 @@ impl BoardRotatris {
 
         // check validity of new positions
         for position in new_positions.iter().take(4) {
-            if !self.board.matrix[position.0 as usize][position.1 as usize].empty
-                && !self.board.matrix[position.0 as usize][position.1 as usize].active
+            if !self.matrix[position.0 as usize][position.1 as usize].empty
+                && !self.matrix[position.0 as usize][position.1 as usize].active
             {
                 return false;
             }
         }
 
-        self.board.emptify_piece(0);
-        self.board.vec_active_piece[0].positions = new_positions;
-        self.board.playerify_piece(0);
+        self.emptify_piece(0);
+        self.vec_active_piece[0].positions = new_positions;
+        self.playerify_piece(0);
 
         true
+    }
+
+    pub fn playerify_piece(&mut self, player: u8) {
+        for position in self.vec_active_piece[player as usize]
+            .positions
+            .iter()
+            .take(4)
+        {
+            if position != &(0xffu8, 0xffu8) {
+                self.matrix[position.0 as usize][position.1 as usize] = Tile::new(
+                    false,
+                    true,
+                    player,
+                    self.vec_active_piece[player as usize].shape,
+                );
+            } else {
+                println!("[!] tried to playerify piece that contained position (0xffu8, 0xffu8)");
+            }
+        }
+    }
+
+    fn emptify_piece(&mut self, player: u8) {
+        for position in self.vec_active_piece[player as usize]
+            .positions
+            .iter()
+            .take(4)
+        {
+            if position != &(0xffu8, 0xffu8) {
+                self.matrix[position.0 as usize][position.1 as usize].empty = true;
+                self.matrix[position.0 as usize][position.1 as usize].active = false;
+            } else {
+                println!("[!] tried to emptify piece that contained position (0xffu8, 0xffu8)");
+            }
+        }
+    }
+
+    pub fn rotatris_attempt_clear_rings(&mut self, level: u8) -> (u8, u32) {
+        let mut num_cleared_rings = 0;
+        let mut score_from_cleared_rings = 0;
+        let num_rings_to_check = self.board_side_length / 2 - 4;
+
+        // go from inner rings to outer rings checking if any ring is full, avoiding the middle 4 rings
+        for z in (0..num_rings_to_check).rev() {
+            if self.rotatris_check_single_ring(z) {
+                num_cleared_rings += 1;
+                // clear and pull inner stuff out
+                for j in (z + 1)..num_rings_to_check {
+                    self.rotatris_pull_single_ring_out(j);
+                }
+            }
+        }
+
+        (num_cleared_rings, score_from_cleared_rings)
+    }
+
+    fn rotatris_check_single_ring(&mut self, z: u8) -> bool {
+        for a in [z, self.board_side_length - z - 1].into_iter() {
+            for b in z..(self.board_side_length - z) {
+                if b >= z && b <= self.board_side_length - z {
+                    if self.matrix[*a as usize][b as usize].empty
+                        || self.matrix[*a as usize][b as usize].active
+                        || self.matrix[b as usize][*a as usize].empty
+                        || self.matrix[b as usize][*a as usize].active
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        true
+    }
+
+    fn rotatris_pull_single_ring_out(&mut self, j: u8) {
+        let j = j as usize;
+        let k = self.board_side_length as usize - j - 1;
+
+        // sides
+        for a in j..=k {
+            // top
+            self.matrix[j - 1][a] = self.matrix[j][a];
+            // left
+            self.matrix[a][j - 1] = self.matrix[a][j];
+            // down
+            self.matrix[k + 1][a] = self.matrix[k][a];
+            // right
+            self.matrix[a][k + 1] = self.matrix[a][k];
+        }
+        // corners
+        self.matrix[j - 1][j - 1] = self.matrix[j][j];
+        self.matrix[j - 1][k + 1] = self.matrix[j][k];
+        self.matrix[k + 1][j - 1] = self.matrix[k][j];
+        self.matrix[k + 1][k + 1] = self.matrix[k][k];
     }
 }
 

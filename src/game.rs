@@ -749,7 +749,6 @@ impl Game {
             self.draw_text(ctx, &self.pause_text, 0.4, &(window_width, window_height));
         } else {
             // DRAW GAME
-<<<<<<< HEAD
             // add each non-empty tile to the correct SpriteBatch
             for x in 0..self.bh.board.width {
                 for y in 0..self.bh.board.height {
@@ -774,20 +773,10 @@ impl Game {
                             ),
                         };
                         // create the proper DrawParam and add to the spritebatch
-=======
-            // add each non-empty tile to the correct SpriteBatch and add highlights to active pieces
-            for x in 0..self.board.width {
-                for y in 0..self.board.height {
-                    if !self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize].empty {
-                        let player = self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize]
-                            [x as usize]
-                            .player;
->>>>>>> 64d404ebd4ff5e15e394839d9da9c787e0381db6
                         let player_tile = graphics::DrawParam::new().dest(Point2::new(
                             x_draw_pos as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                             y_draw_pos as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                         ));
-<<<<<<< HEAD
                         if self.num_players > 1 {
                             let player = self.bh.board.matrix
                                 [(y + self.bh.board.height_buffer) as usize]
@@ -832,7 +821,6 @@ impl Game {
                             {
                                 self.vec_batch_player_piece[2].add(player_tile);
                             }
-=======
                         self.vec_batch_player_piece[player as usize].add(player_tile);
                         // highlight if active
                         if self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize]
@@ -897,7 +885,6 @@ impl Game {
                             > 1.0 - (full_line.clear_delay as f32 / CLEAR_DELAY as f32)
                         {
                             break;
->>>>>>> 64d404ebd4ff5e15e394839d9da9c787e0381db6
                         }
                     }
                 }
