@@ -427,14 +427,14 @@ impl Game {
                 // rotatris
                 // BOARD ROTATION
                 if self.rotate_board_cw.1 {
-                    if self.bh.rotatris_attempt_rotate_board(Movement::RotateCw) {
+                    if self.bh.attempt_rotate_board(Movement::RotateCw) {
                         self.gravity_direction =
                             Movement::from(((self.gravity_direction as u8) + 1) % 4);
                     }
                 }
 
                 if self.rotate_board_ccw.1 {
-                    if self.bh.rotatris_attempt_rotate_board(Movement::RotateCcw) {
+                    if self.bh.attempt_rotate_board(Movement::RotateCcw) {
                         self.gravity_direction =
                             Movement::from(((self.gravity_direction as u8) + 3) % 4);
                     }
@@ -447,13 +447,11 @@ impl Game {
                     // if it didn't move on the initial input, set waiting_to_shift to true
                     player.waiting_to_shift = !self
                         .bh
-                        .board
                         .attempt_piece_movement(
                             Movement::from(
                                 (Movement::Left as u8 + self.gravity_direction as u8) % 4,
                             ),
                             player.player_num,
-                            self.gravity_direction,
                         )
                         .0;
                     player.das_countdown = DAS_THRESHOLD_BIG;
@@ -462,13 +460,11 @@ impl Game {
                     // if it didn't move on the initial input, set waiting_to_shift to true
                     player.waiting_to_shift = !self
                         .bh
-                        .board
                         .attempt_piece_movement(
                             Movement::from(
                                 (Movement::Right as u8 + self.gravity_direction as u8) % 4,
                             ),
                             player.player_num,
-                            self.gravity_direction,
                         )
                         .0;
                     player.das_countdown = DAS_THRESHOLD_BIG;
@@ -480,13 +476,11 @@ impl Game {
                     if player.das_countdown == 0 || player.waiting_to_shift {
                         if self
                             .bh
-                            .board
                             .attempt_piece_movement(
                                 Movement::from(
                                     (Movement::Left as u8 + self.gravity_direction as u8) % 4,
                                 ),
                                 player.player_num,
-                                self.gravity_direction,
                             )
                             .0
                         {
@@ -505,13 +499,11 @@ impl Game {
                     if player.das_countdown == 0 || player.waiting_to_shift {
                         if self
                             .bh
-                            .board
                             .attempt_piece_movement(
                                 Movement::from(
                                     (Movement::Right as u8 + self.gravity_direction as u8) % 4,
                                 ),
                                 player.player_num,
-                                self.gravity_direction,
                             )
                             .0
                         {
@@ -525,18 +517,12 @@ impl Game {
                 }
                 // CW / CCW
                 if player.input.keydown_rotate_cw.1 {
-                    self.bh.board.attempt_piece_movement(
-                        Movement::RotateCw,
-                        player.player_num,
-                        self.gravity_direction,
-                    );
+                    self.bh
+                        .attempt_piece_movement(Movement::RotateCw, player.player_num);
                 }
                 if player.input.keydown_rotate_ccw.1 {
-                    self.bh.board.attempt_piece_movement(
-                        Movement::RotateCcw,
-                        player.player_num,
-                        self.gravity_direction,
-                    );
+                    self.bh
+                        .attempt_piece_movement(Movement::RotateCcw, player.player_num);
                 }
                 // DOWN
                 // down is interesting because every time the downwards position is false we have to check if it's running into the bottom or an inactive tile so we know if we should lock it
@@ -545,17 +531,14 @@ impl Game {
                     || player.fall_countdown == 0
                 {
                     let (moved_flag, caused_full_line_flag): (bool, bool) =
-                        self.bh.board.attempt_piece_movement(
+                        self.bh.attempt_piece_movement(
                             Movement::from(
                                 (Movement::Down as u8 + self.gravity_direction as u8) % 4,
                             ),
                             player.player_num,
-                            self.gravity_direction,
                         );
                     // if the piece got locked, piece.shape gets set to Shapes::None, so set the spawn piece flag
-                    if self.bh.board.vec_active_piece[player.player_num as usize].shape
-                        == Shapes::None
-                    {
+                    if self.bh.get_shape_from_player(player.player_num) == Shapes::None {
                         player.spawn_piece_flag = true;
                         player.fall_countdown = if self.level < 30 {
                             FALL_DELAY_VALUES[self.level as usize]
@@ -723,12 +706,16 @@ impl Game {
     // then when we actually draw the board, we scale it to the appropriate size and place the top left corner of the board at the appropriate place;
     // there's a sprite batch for each players' tiles and one more for the empty tiles, which is constant, and the player tiles are drawn after so they are on top
     pub fn draw(&mut self, ctx: &mut Context) {
+        // constants used throughout draw
+        let height_buffer = self.bh.get_height_buffer();
+
+        // start doing drawing stuff
         graphics::clear(ctx, graphics::BLACK);
         let (window_width, window_height) = graphics::size(ctx);
         self.tile_size = TileGraphic::get_size(
             ctx,
-            self.bh.board.width,
-            self.bh.board.height + NON_BOARD_SPACE_U + NON_BOARD_SPACE_D,
+            self.bh.get_width(),
+            self.bh.get_height() + NON_BOARD_SPACE_U + NON_BOARD_SPACE_D,
         );
         if self.game_over_flag && self.game_over_delay == 0 {
             // DRAW GAME OVER
@@ -750,14 +737,12 @@ impl Game {
         } else {
             // DRAW GAME
             // add each non-empty tile to the correct SpriteBatch
-            for x in 0..self.bh.board.width {
-                for y in 0..self.bh.board.height {
+            for x in 0..self.bh.get_width() {
+                for y in 0..self.bh.get_height() {
                     // actually go through and add tiles to a spritebatch
-                    if !self.bh.board.matrix[(y + self.bh.board.height_buffer) as usize][x as usize]
-                        .empty
-                    {
+                    if !self.bh.get_empty_from_pos(y + height_buffer, x) {
                         // account for the gravity direction in how to draw it (rotatris)
-                        let center = self.bh.board.width / 2;
+                        let center = self.bh.get_width() / 2;
                         let is_center_even: u8 = (center + 1) % 2;
                         let (y_draw_pos, x_draw_pos) = match self.gravity_direction {
                             Movement::Down => (y, x),
@@ -778,113 +763,85 @@ impl Game {
                             y_draw_pos as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                         ));
                         if self.num_players > 1 {
-                            let player = self.bh.board.matrix
-                                [(y + self.bh.board.height_buffer) as usize]
-                                [x as usize]
-                                .player;
+                            let player = self.bh.get_player_from_pos(y + height_buffer, x);
                             self.vec_batch_player_piece[player as usize].add(player_tile);
                         } else {
-                            if self.bh.board.matrix[(y + self.bh.board.height_buffer) as usize]
-                                [x as usize]
-                                .shape
-                                == Shapes::J
-                                || self.bh.board.matrix[(y + self.bh.board.height_buffer) as usize]
-                                    [x as usize]
-                                    .shape
-                                    == Shapes::S
-                            {
+                            let shape: Shapes = self.bh.get_shape_from_pos(y + height_buffer, x);
+                            if shape == Shapes::J || shape == Shapes::S {
                                 self.vec_batch_player_piece[0].add(player_tile);
-                            } else if self.bh.board.matrix
-                                [(y + self.bh.board.height_buffer) as usize]
-                                [x as usize]
-                                .shape
-                                == Shapes::L
-                                || self.bh.board.matrix[(y + self.bh.board.height_buffer) as usize]
-                                    [x as usize]
-                                    .shape
-                                    == Shapes::Z
-                            {
+                            } else if shape == Shapes::L || shape == Shapes::Z {
                                 self.vec_batch_player_piece[1].add(player_tile);
-                            } else if self.bh.board.matrix
-                                [(y + self.bh.board.height_buffer) as usize]
-                                [x as usize]
-                                .shape
-                                == Shapes::I
-                                || self.bh.board.matrix[(y + self.bh.board.height_buffer) as usize]
-                                    [x as usize]
-                                    .shape
-                                    == Shapes::O
-                                || self.bh.board.matrix[(y + self.bh.board.height_buffer) as usize]
-                                    [x as usize]
-                                    .shape
-                                    == Shapes::T
+                            } else if shape == Shapes::I || shape == Shapes::O || shape == Shapes::T
                             {
                                 self.vec_batch_player_piece[2].add(player_tile);
                             }
+                        }
                         self.vec_batch_player_piece[player as usize].add(player_tile);
                         // highlight if active
-                        if self.board.matrix[(y + BOARD_HEIGHT_BUFFER_U) as usize][x as usize]
-                            .active
-                        {
+                        if self.bh.get_active_from_pos(y + BOARD_HEIGHT_BUFFER_U, x) {
                             self.batch_highlight_active_tile.add(player_tile);
                         }
                     }
                 }
             }
             // line clear highlights
-            for full_line in self.board.vec_full_lines.iter() {
-                if full_line.lines_cleared_together < 4 {
-                    // standard clear animation
-                    let y = (full_line.row - BOARD_HEIGHT_BUFFER_U) as usize;
-                    let board_max_index_remainder_2 = (self.board.width - 1) % 2;
-                    // go from the middle to the outside and reach the end right before full_line.clear_delay reaches 0
-                    for x in (self.board.width / 2)..self.board.width {
-                        let highlight_pos_right = graphics::DrawParam::new().dest(Point2::new(
-                            x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                            y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                        ));
-                        let highlight_pos_left = graphics::DrawParam::new().dest(Point2::new(
-                            (self.board.width as f32 - (x + board_max_index_remainder_2) as f32)
-                                * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                            y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                        ));
+            if let Some(classic) = self.bh.classic {
+                for full_line in classic.vec_full_lines.iter() {
+                    if full_line.lines_cleared_together < 4 {
+                        // standard clear animation
+                        let y = (full_line.row - BOARD_HEIGHT_BUFFER_U) as usize;
+                        let board_max_index_remainder_2 = (self.bh.get_width() - 1) % 2;
+                        // go from the middle to the outside and reach the end right before full_line.clear_delay reaches 0
+                        for x in (self.bh.get_width() / 2)..self.bh.get_width() {
+                            let highlight_pos_right = graphics::DrawParam::new().dest(Point2::new(
+                                x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                            ));
+                            let highlight_pos_left = graphics::DrawParam::new().dest(Point2::new(
+                                (self.bh.get_width() as f32
+                                    - (x + board_max_index_remainder_2) as f32)
+                                    * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                            ));
 
-                        self.batch_highlight_clearing_standard_tile
-                            .add(highlight_pos_right);
-                        self.batch_highlight_clearing_standard_tile
-                            .add(highlight_pos_left);
+                            self.batch_highlight_clearing_standard_tile
+                                .add(highlight_pos_right);
+                            self.batch_highlight_clearing_standard_tile
+                                .add(highlight_pos_left);
 
-                        if ((x as f32) / (self.board.width as f32) - 0.5) * 2.0
-                            > 1.0 - (full_line.clear_delay as f32 / CLEAR_DELAY as f32)
-                        {
-                            break;
+                            if ((x as f32) / (self.bh.get_width() as f32) - 0.5) * 2.0
+                                > 1.0 - (full_line.clear_delay as f32 / CLEAR_DELAY as f32)
+                            {
+                                break;
+                            }
                         }
-                    }
-                } else {
-                    // tetrisnt clear animation
-                    let y = (full_line.row - BOARD_HEIGHT_BUFFER_U) as usize;
-                    let board_max_index_remainder_2 = (self.board.width - 1) % 2;
-                    // go from the middle to the outside and reach the end right before full_line.clear_delay reaches 0
-                    for x in (self.board.width / 2)..self.board.width {
-                        let highlight_pos_right = graphics::DrawParam::new().dest(Point2::new(
-                            x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                            y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                        ));
-                        let highlight_pos_left = graphics::DrawParam::new().dest(Point2::new(
-                            (self.board.width as f32 - (x + board_max_index_remainder_2) as f32)
-                                * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                            y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                        ));
+                    } else {
+                        // tetrisnt clear animation
+                        let y = (full_line.row - BOARD_HEIGHT_BUFFER_U) as usize;
+                        let board_max_index_remainder_2 = (self.bh.get_width() - 1) % 2;
+                        // go from the middle to the outside and reach the end right before full_line.clear_delay reaches 0
+                        for x in (self.bh.get_width() / 2)..self.bh.get_width() {
+                            let highlight_pos_right = graphics::DrawParam::new().dest(Point2::new(
+                                x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                            ));
+                            let highlight_pos_left = graphics::DrawParam::new().dest(Point2::new(
+                                (self.bh.get_width() as f32
+                                    - (x + board_max_index_remainder_2) as f32)
+                                    * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                            ));
 
-                        self.batch_highlight_clearing_tetrisnt_tile
-                            .add(highlight_pos_right);
-                        self.batch_highlight_clearing_tetrisnt_tile
-                            .add(highlight_pos_left);
+                            self.batch_highlight_clearing_tetrisnt_tile
+                                .add(highlight_pos_right);
+                            self.batch_highlight_clearing_tetrisnt_tile
+                                .add(highlight_pos_left);
 
-                        if ((x as f32) / (self.board.width as f32) - 0.5) * 2.0
-                            > 1.0 - (full_line.clear_delay as f32 / CLEAR_DELAY as f32)
-                        {
-                            break;
+                            if ((x as f32) / (self.bh.get_width() as f32) - 0.5) * 2.0
+                                > 1.0 - (full_line.clear_delay as f32 / CLEAR_DELAY as f32)
+                            {
+                                break;
+                            }
                         }
                     }
                 }
@@ -945,7 +902,7 @@ impl Game {
             let board_top_left_corner = window_width / 2.0
                 - (scaled_tile_size
                     * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32
-                    * self.bh.board.width as f32
+                    * self.bh.get_width() as f32
                     / 2.0);
             // empty tiles
             graphics::draw(
