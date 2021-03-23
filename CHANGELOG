@@ -22,3 +22,10 @@ Gamepads auto-map to the first player that doesn't have a GamepadId mapping to i
 Renamed project: Rustrisn-t -> Tetrisn-t.
 Improved menu slightly.
 Various quality-of-life changes.
+
+#########
+# 0.1.1 #
+#########
+Added active piece tile highlights
+Added line clear animation using tile highlights
+Made it easier to quit to menu

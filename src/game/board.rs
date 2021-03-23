@@ -8,19 +8,19 @@ use crate::game::{
 // abstract the board and the possible gamemodes into one struct
 pub struct BoardHandler {
     pub mode: Modes,
-    pub board: Board,
-    pub rotatris: Option<Rotatris>,
+    pub classic: Option<BoardClassic>,
+    pub rotatris: Option<BoardRotatris>,
 }
 
 impl BoardHandler {
     pub fn new(board_width: u8, board_height: u8, num_players: u8, mode: Modes) -> Self {
         let (board_height_buffer, piece_spawn_row, rotatris) = match mode {
-            Modes::Rotatris => (0, (board_height - 1) / 2, Some(Rotatris::new())),
+            Modes::Rotatris => (0, (board_height - 1) / 2, Some(BoardRotatris::new())),
             Modes::Classic => (2, 0, None),
         };
         Self {
             mode,
-            board: Board::new(
+            board: BoardClassic::new(
                 board_width,
                 board_height,
                 board_height_buffer,
@@ -29,54 +29,6 @@ impl BoardHandler {
             ),
             rotatris,
         }
-    }
-
-    // return bool is if rotate was successful
-    pub fn rotatris_attempt_rotate_board(&mut self, rotate_direction: Movement) -> bool {
-        let center: u8 = self.board.width / 2;
-        let is_center_even: u8 = (self.board.width + 1) % 2;
-        let mut new_positions: [(u8, u8); 4] = [(0u8, 0u8); 4];
-        match rotate_direction {
-            Movement::RotateCw => {
-                for (index, position) in self.board.vec_active_piece[0]
-                    .positions
-                    .iter()
-                    .take(4)
-                    .enumerate()
-                {
-                    new_positions[index] = (position.1, center * 2 - position.0 - is_center_even);
-                }
-            }
-            Movement::RotateCcw => {
-                for (index, position) in self.board.vec_active_piece[0]
-                    .positions
-                    .iter()
-                    .take(4)
-                    .enumerate()
-                {
-                    new_positions[index] = (center * 2 - position.1 - is_center_even, position.0);
-                }
-            }
-            _ => {
-                println!("[!] Sent some non-rotation Movement to `rotatris_attempt_rotate_board()`, a method of `BoardHandler`");
-                return false;
-            }
-        }
-
-        // check validity of new positions
-        for position in new_positions.iter().take(4) {
-            if !self.board.matrix[position.0 as usize][position.1 as usize].empty
-                && !self.board.matrix[position.0 as usize][position.1 as usize].active
-            {
-                return false;
-            }
-        }
-
-        self.board.emptify_piece(0);
-        self.board.vec_active_piece[0].positions = new_positions;
-        self.board.playerify_piece(0);
-
-        true
     }
 
     pub fn attempt_clear_lines(&mut self, level: u8) -> (u8, u32) {
@@ -151,17 +103,17 @@ impl BoardHandler {
 // [(0, 0)][(0, 1)]
 // [(1, 0)][(1, 1)]
 
-pub struct Board {
+pub struct BoardClassic {
     pub width: u8,
     pub height: u8,
     pub height_buffer: u8,
     pub spawn_row: u8,
     pub matrix: Vec<Vec<Tile>>,
     pub vec_active_piece: Vec<Piece>,
-    vec_full_lines: Vec<FullLine>,
+    pub vec_full_lines: Vec<FullLine>,
 }
 
-impl Board {
+impl BoardClassic {
     pub fn new(
         board_width: u8,
         board_height: u8,
@@ -197,6 +149,20 @@ impl Board {
             height: board_height,
             height_buffer: board_height_buffer,
             spawn_row,
+            matrix,
+        ];
+
+        // DEBUG TILES ADDED
+        // let mut matrix = vec![vec![Tile::new_empty(); board_width as usize]; (board_height + BOARD_HEIGHT_BUFFER_U) as usize];
+        // for x in 0..(board_width - 1) {
+        //     for y in (board_height + BOARD_HEIGHT_BUFFER_U - 8)..(board_height + BOARD_HEIGHT_BUFFER_U) {
+        //         matrix[y as usize][x as usize] = Tile::new(false, false, 0u8);
+        //     }
+        // }
+
+        Self {
+            width: board_width,
+            height: board_height,
             matrix,
             vec_active_piece,
             vec_full_lines: vec![],
@@ -310,18 +276,24 @@ impl Board {
             if movement == current_gravity && self.should_lock(player, current_gravity) {
                 // lock piece and push any full lines to vec_full_lines
                 self.vec_active_piece[player as usize].shape = Shapes::None;
-                let mut is_full_line = false;
+                let mut full_line_rows: Vec<u8> = Vec::with_capacity(4);
                 for row in &self.lock_piece(player) {
                     if self.is_row_full(*row) {
-                        is_full_line = true;
-                        self.vec_full_lines.push(FullLine::new(*row, player));
+                        full_line_rows.push(*row);
                     }
                 }
-                if is_full_line {
+                if !full_line_rows.is_empty() {
+                    for row in full_line_rows.iter() {
+                        self.vec_full_lines.push(FullLine::new(
+                            *row,
+                            full_line_rows.len() as u8,
+                            player,
+                        ));
+                    }
                     self.vec_full_lines.sort();
                 }
 
-                return (false, is_full_line);
+                return (false, !full_line_rows.is_empty());
             }
 
             return (false, false);
@@ -537,7 +509,7 @@ impl Board {
             self.matrix
                 .remove(self.vec_full_lines[index - indices_destroyed].row as usize);
             self.matrix
-                .insert(0, vec![Tile::new_empty(); self.width as usize]);
+                .insert(0, vec![Tile::default(); self.width as usize]);
             self.vec_full_lines.remove(index - indices_destroyed);
             indices_destroyed += 1;
             // now is when we step backwards through the self.vec_full_lines vector,
@@ -565,17 +537,19 @@ impl Board {
 }
 
 #[derive(Ord, Eq, PartialOrd, PartialEq)]
-struct FullLine {
+pub struct FullLine {
     pub row: u8,
+    pub lines_cleared_together: u8,
     pub player: u8,
     pub clear_delay: i8,
     pub remove_flag: bool,
 }
 
 impl FullLine {
-    pub fn new(row: u8, player: u8) -> Self {
+    pub fn new(row: u8, lines_cleared_together: u8, player: u8) -> Self {
         Self {
             row,
+            lines_cleared_together,
             player,
             clear_delay: CLEAR_DELAY,
             remove_flag: false,
@@ -584,15 +558,129 @@ impl FullLine {
 }
 
 // other modes
-pub struct Rotatris {
+pub struct BoardRotatris {
     pub board_rotation: u8, // 0, 1, 2, 3: 0, 90, 180, 270; CW
+    pub side_length: u8,
+    pub spawn_row: u8,
+    pub matrix: Vec<Vec<Tile>>,
 }
 
-impl Rotatris {
-    fn new() -> Self {
-        Self { board_rotation: 0 }
+impl BoardRotatris {
+    pub fn new(
+        board_side_length: u8,
+        spawn_row: u8,
+        num_players: u8,
+    ) -> Self {
+        let mut vec_active_piece: Vec<Piece> = Vec::with_capacity(num_players as usize);
+        for _ in 0..num_players {
+            vec_active_piece.push(Piece::new(Shapes::None));
+        }
+        let mut matrix = vec![
+            vec![Tile::new_empty(); board_side_length as usize];
+            board_side_length as usize
+        ];
+
+        // DEBUG
+        for a in 0..4 {
+            for b in 0..board_width as usize {
+                matrix[a][b] = Tile::new(false, false, 0, Shapes::I);
+                matrix[b][a] = Tile::new(false, false, 0, Shapes::I);
+                matrix[board_width as usize - a - 1][b] = Tile::new(false, false, 0, Shapes::I);
+                matrix[b][board_width as usize - a - 1] = Tile::new(false, false, 0, Shapes::I);
+            }
+        }
+        matrix[board_width as usize / 2][board_height as usize - 1] = Tile::new_empty();
+        matrix[board_width as usize / 2][board_height as usize - 2] = Tile::new_empty();
+        matrix[board_width as usize / 2][board_height as usize - 3] = Tile::new_empty();
+        matrix[board_width as usize / 2][board_height as usize - 4] = Tile::new_empty();
+        // DEBUG END
+        Self {
+            width: board_width,
+            height: board_height,
+            height_buffer: board_height_buffer,
+            spawn_row,
+            matrix,
+        ];
+
+        Self {
+            width: board_width,
+            height: board_height,
+            matrix,
+            vec_active_piece,
+            vec_full_lines: vec![],
+        }
+    }
+
+    // return bool is if rotate was successful
+    pub fn rotatris_attempt_rotate_board(&mut self, rotate_direction: Movement) -> bool {
+        let center: u8 = self.board.width / 2;
+        let is_center_even: u8 = (self.board.width + 1) % 2;
+        let mut new_positions: [(u8, u8); 4] = [(0u8, 0u8); 4];
+        match rotate_direction {
+            Movement::RotateCw => {
+                for (index, position) in self.board.vec_active_piece[0]
+                    .positions
+                    .iter()
+                    .take(4)
+                    .enumerate()
+                {
+                    new_positions[index] = (position.1, center * 2 - position.0 - is_center_even);
+                }
+            }
+            Movement::RotateCcw => {
+                for (index, position) in self.board.vec_active_piece[0]
+                    .positions
+                    .iter()
+                    .take(4)
+                    .enumerate()
+                {
+                    new_positions[index] = (center * 2 - position.1 - is_center_even, position.0);
+                }
+            }
+            _ => {
+                println!("[!] Sent some non-rotation Movement to `rotatris_attempt_rotate_board()`, a method of `BoardHandler`");
+                return false;
+            }
+        }
+
+        // check validity of new positions
+        for position in new_positions.iter().take(4) {
+            if !self.board.matrix[position.0 as usize][position.1 as usize].empty
+                && !self.board.matrix[position.0 as usize][position.1 as usize].active
+            {
+                return false;
+            }
+        }
+
+        self.board.emptify_piece(0);
+        self.board.vec_active_piece[0].positions = new_positions;
+        self.board.playerify_piece(0);
+
+        true
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #[cfg(test)]
 mod tests {
@@ -610,7 +698,7 @@ mod tests {
         let num_players = 3;
         let mut score: u64 = 0;
         let mut num_cleared_lines: u16 = 0;
-        let mut board = Board::new(board_width, board_height, num_players);
+        let mut board = BoardClassic::new(board_width, board_height, num_players);
 
         for x in 0..4 {
             for y in (board_height + self.height_buffer - 8)..board_height + self.height_buffer {
