@@ -776,10 +776,8 @@ impl BoardRotatris {
         }
 
         if cant_move_flag {
-            println!("can't move {} == {} && should_lock(player)?", Gravity::from(movement) as u8 , self.gravity as u8);
             // TODO: fix this awful code
             if Gravity::from(movement) == self.gravity && self.should_lock(player) {
-                println!("hey we should be locking now");
                 // lock piece and push any full lines to vec_full_lines
                 self.vec_active_piece[player as usize].shape = Shapes::None;
 
@@ -912,11 +910,9 @@ impl BoardRotatris {
             .iter()
             .take(4)
         {
-            println!("gravity: {}", self.gravity as u8);
             // we just want to know if moving down by 1 will run the piece into the bottom of the board or an inactive tile
             match self.gravity {
                 Gravity::Down => {
-                    println!("position.0: {}; self.board_size: {}", position.0, self.board_size);
                     if position.0 as usize + 1 >= self.board_size as usize {
                         return true;
                     }
@@ -986,7 +982,6 @@ impl BoardRotatris {
         for z in (0..num_rings_to_check).rev() {
             if self.rotatris_check_single_ring(z) {
                 num_cleared_rings += 1;
-                println!("ring {} is  full", z);
                 // clear and pull inner stuff out
                 for j in (z + 1)..num_rings_to_check {
                     self.rotatris_pull_single_ring_out(j);
@@ -996,7 +991,6 @@ impl BoardRotatris {
         }
 
         if num_cleared_rings > 0 {
-            println!("and we're out with a line clear: {}", num_cleared_rings);
             // get rid of all tiles in the middle area
             for z in num_rings_to_check..=((self.board_size - 1) / 2) {
                 self.emptify_single_ring(z);
