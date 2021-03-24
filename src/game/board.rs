@@ -8,7 +8,7 @@ use crate::game::{
 static BH_WRONG_MODE: &str = "[!] BoardHandler has wrong option";
 
 #[repr(u8)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum Gravity {
     Down,
     Left,
@@ -24,6 +24,18 @@ impl From<u8> for Gravity {
             2 => Gravity::Up,
             3 => Gravity::Right,
             _ => panic!("Unknown Gravity value: {}", value),
+        }
+    }
+}
+
+impl From<Movement> for Gravity {
+    fn from(value: Movement) -> Gravity {
+        match value {
+            Movement::Down => Gravity::Down,
+            Movement::Left => Gravity::Left,
+            Movement::Up => Gravity::Up,
+            Movement::Right => Gravity::Right,
+            _ => panic!("Unknown Gravity value: {}", value as u8),
         }
     }
 }
@@ -638,18 +650,18 @@ impl BoardRotatris {
         let mut matrix = vec![vec![Tile::default(); board_size as usize]; board_size as usize];
 
         // DEBUG
-        for a in 0..4 {
-            for b in 0..board_size as usize {
-                matrix[a][b] = Tile::new(false, false, 0, Shapes::I);
-                matrix[b][a] = Tile::new(false, false, 0, Shapes::I);
-                matrix[board_size as usize - a - 1][b] = Tile::new(false, false, 0, Shapes::I);
-                matrix[b][board_size as usize - a - 1] = Tile::new(false, false, 0, Shapes::I);
-            }
-        }
-        matrix[board_size as usize / 2][board_size as usize - 1] = Tile::default();
-        matrix[board_size as usize / 2][board_size as usize - 2] = Tile::default();
-        matrix[board_size as usize / 2][board_size as usize - 3] = Tile::default();
-        matrix[board_size as usize / 2][board_size as usize - 4] = Tile::default();
+        // for a in 0..4 {
+        //     for b in 0..board_size as usize {
+        //         matrix[a][b] = Tile::new(false, false, 0, Shapes::I);
+        //         matrix[b][a] = Tile::new(false, false, 0, Shapes::I);
+        //         matrix[board_size as usize - a - 1][b] = Tile::new(false, false, 0, Shapes::I);
+        //         matrix[b][board_size as usize - a - 1] = Tile::new(false, false, 0, Shapes::I);
+        //     }
+        // }
+        // matrix[board_size as usize / 2][board_size as usize - 1] = Tile::default();
+        // matrix[board_size as usize / 2][board_size as usize - 2] = Tile::default();
+        // matrix[board_size as usize / 2][board_size as usize - 3] = Tile::default();
+        // matrix[board_size as usize / 2][board_size as usize - 4] = Tile::default();
 
         Self {
             gravity: Gravity::Down,
@@ -708,9 +720,9 @@ impl BoardRotatris {
         self.gravity = Gravity::from(
             (self.gravity as u8
                 + if rotate_direction == Movement::RotateCw {
-                    3
-                } else {
                     1
+                } else {
+                    3
                 })
                 % 4,
         );
@@ -745,7 +757,7 @@ impl BoardRotatris {
         let new_positions = self.vec_active_piece[player as usize].piece_pos(movement);
         for position in new_positions.iter().take(4) {
             // due to integer underflow (u8 board width and u8 board height), we must only check the positive side of x and y positions
-            if position.0 >= self.board_size + self.board_size {
+            if position.0 >= self.board_size {
                 cant_move_flag = true;
                 break;
             }
@@ -764,8 +776,10 @@ impl BoardRotatris {
         }
 
         if cant_move_flag {
+            println!("can't move {} == {} && should_lock(player)?", Gravity::from(movement) as u8 , self.gravity as u8);
             // TODO: fix this awful code
-            if movement as u8 == self.gravity as u8 && self.should_lock(player) {
+            if Gravity::from(movement) == self.gravity && self.should_lock(player) {
+                println!("hey we should be locking now");
                 // lock piece and push any full lines to vec_full_lines
                 self.vec_active_piece[player as usize].shape = Shapes::None;
 
@@ -898,9 +912,11 @@ impl BoardRotatris {
             .iter()
             .take(4)
         {
+            println!("gravity: {}", self.gravity as u8);
             // we just want to know if moving down by 1 will run the piece into the bottom of the board or an inactive tile
             match self.gravity {
                 Gravity::Down => {
+                    println!("position.0: {}; self.board_size: {}", position.0, self.board_size);
                     if position.0 as usize + 1 >= self.board_size as usize {
                         return true;
                     }
@@ -970,14 +986,17 @@ impl BoardRotatris {
         for z in (0..num_rings_to_check).rev() {
             if self.rotatris_check_single_ring(z) {
                 num_cleared_rings += 1;
+                println!("ring {} is  full", z);
                 // clear and pull inner stuff out
                 for j in (z + 1)..num_rings_to_check {
                     self.rotatris_pull_single_ring_out(j);
                 }
+            } else {
             }
         }
 
         if num_cleared_rings > 0 {
+            println!("and we're out with a line clear: {}", num_cleared_rings);
             // get rid of all tiles in the middle area
             for z in num_rings_to_check..=((self.board_size - 1) / 2) {
                 self.emptify_single_ring(z);
