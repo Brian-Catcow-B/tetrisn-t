@@ -780,7 +780,7 @@ impl Game {
                 }
             }
             // line clear highlights
-            if let Some(classic) = self.bh.classic {
+            if let Some(classic) = &self.bh.classic {
                 for full_line in classic.vec_full_lines.iter() {
                     if full_line.lines_cleared_together < 4 {
                         // standard clear animation

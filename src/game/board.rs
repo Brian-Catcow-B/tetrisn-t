@@ -68,21 +68,21 @@ impl BoardHandler {
     // get...
     pub fn get_width(&mut self) -> u8 {
         match self.mode {
-            Modes::Classic => self.classic.expect(BH_WRONG_MODE).width,
-            Modes::Rotatris => self.rotatris.expect(BH_WRONG_MODE).board_size,
+            Modes::Classic => self.classic.as_mut().expect(BH_WRONG_MODE).width,
+            Modes::Rotatris => self.rotatris.as_mut().expect(BH_WRONG_MODE).board_size,
         }
     }
 
     pub fn get_height(&mut self) -> u8 {
         match self.mode {
-            Modes::Classic => self.classic.expect(BH_WRONG_MODE).height,
-            Modes::Rotatris => self.rotatris.expect(BH_WRONG_MODE).board_size,
+            Modes::Classic => self.classic.as_mut().expect(BH_WRONG_MODE).height,
+            Modes::Rotatris => self.rotatris.as_mut().expect(BH_WRONG_MODE).board_size,
         }
     }
 
     pub fn get_height_buffer(&mut self) -> u8 {
         match self.mode {
-            Modes::Classic => self.classic.expect(BH_WRONG_MODE).height_buffer,
+            Modes::Classic => self.classic.as_mut().expect(BH_WRONG_MODE).height_buffer,
             Modes::Rotatris => 0u8,
         }
     }
@@ -90,10 +90,10 @@ impl BoardHandler {
     pub fn get_active_from_pos(&mut self, y: u8, x: u8) -> bool {
         match self.mode {
             Modes::Classic => {
-                self.classic.expect(BH_WRONG_MODE).matrix[y as usize][x as usize].active
+                self.classic.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].active
             }
             Modes::Rotatris => {
-                self.rotatris.expect(BH_WRONG_MODE).matrix[y as usize][x as usize].active
+                self.rotatris.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].active
             }
         }
     }
@@ -101,10 +101,10 @@ impl BoardHandler {
     pub fn get_empty_from_pos(&mut self, y: u8, x: u8) -> bool {
         match self.mode {
             Modes::Classic => {
-                self.classic.expect(BH_WRONG_MODE).matrix[y as usize][x as usize].empty
+                self.classic.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].empty
             }
             Modes::Rotatris => {
-                self.rotatris.expect(BH_WRONG_MODE).matrix[y as usize][x as usize].empty
+                self.rotatris.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].empty
             }
         }
     }
@@ -112,10 +112,10 @@ impl BoardHandler {
     pub fn get_player_from_pos(&mut self, y: u8, x: u8) -> u8 {
         match self.mode {
             Modes::Classic => {
-                self.classic.expect(BH_WRONG_MODE).matrix[y as usize][x as usize].player
+                self.classic.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].player
             }
             Modes::Rotatris => {
-                self.rotatris.expect(BH_WRONG_MODE).matrix[y as usize][x as usize].player
+                self.rotatris.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].player
             }
         }
     }
@@ -123,10 +123,10 @@ impl BoardHandler {
     pub fn get_shape_from_pos(&mut self, y: u8, x: u8) -> Shapes {
         match self.mode {
             Modes::Classic => {
-                self.classic.expect(BH_WRONG_MODE).matrix[y as usize][x as usize].shape
+                self.classic.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].shape
             }
             Modes::Rotatris => {
-                self.rotatris.expect(BH_WRONG_MODE).matrix[y as usize][x as usize].shape
+                self.rotatris.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].shape
             }
         }
     }
@@ -134,10 +134,14 @@ impl BoardHandler {
     pub fn get_shape_from_player(&mut self, player: u8) -> Shapes {
         match self.mode {
             Modes::Classic => {
-                self.classic.expect(BH_WRONG_MODE).vec_active_piece[player as usize].shape
+                self.classic.as_mut().expect(BH_WRONG_MODE).vec_active_piece[player as usize].shape
             }
             Modes::Rotatris => {
-                self.rotatris.expect(BH_WRONG_MODE).vec_active_piece[player as usize].shape
+                self.rotatris
+                    .as_mut()
+                    .expect(BH_WRONG_MODE)
+                    .vec_active_piece[player as usize]
+                    .shape
             }
         }
     }
@@ -150,16 +154,16 @@ impl BoardHandler {
         spawn_piece_shape: Shapes,
     ) -> (bool, bool) {
         match self.mode {
-            Modes::Classic => self.classic.expect(BH_WRONG_MODE).attempt_piece_spawn(
-                player,
-                spawn_col,
-                spawn_piece_shape,
-            ),
-            Modes::Rotatris => self.rotatris.expect(BH_WRONG_MODE).attempt_piece_spawn(
-                player,
-                spawn_col,
-                spawn_piece_shape,
-            ),
+            Modes::Classic => self
+                .classic
+                .as_mut()
+                .expect(BH_WRONG_MODE)
+                .attempt_piece_spawn(player, spawn_col, spawn_piece_shape),
+            Modes::Rotatris => self
+                .rotatris
+                .as_mut()
+                .expect(BH_WRONG_MODE)
+                .attempt_piece_spawn(player, spawn_col, spawn_piece_shape),
         }
     }
 
@@ -167,10 +171,12 @@ impl BoardHandler {
         match self.mode {
             Modes::Classic => self
                 .classic
+                .as_mut()
                 .expect(BH_WRONG_MODE)
                 .attempt_clear_lines(level),
             Modes::Rotatris => self
                 .rotatris
+                .as_mut()
                 .expect(BH_WRONG_MODE)
                 .rotatris_attempt_clear_rings(level),
         }
@@ -180,10 +186,12 @@ impl BoardHandler {
         match self.mode {
             Modes::Classic => self
                 .classic
+                .as_mut()
                 .expect(BH_WRONG_MODE)
                 .attempt_piece_movement(m, p),
             Modes::Rotatris => self
                 .rotatris
+                .as_mut()
                 .expect(BH_WRONG_MODE)
                 .attempt_piece_movement(m, p),
         }
@@ -195,14 +203,26 @@ impl BoardHandler {
                 println!("[!] `attempt_rotate_board` called but mode is Modes::Classic");
                 false
             }
-            Modes::Rotatris => self.rotatris.expect(BH_WRONG_MODE).attempt_rotate_board(rd),
+            Modes::Rotatris => self
+                .rotatris
+                .as_mut()
+                .expect(BH_WRONG_MODE)
+                .attempt_rotate_board(rd),
         }
     }
 
     pub fn playerify_piece(&mut self, player: u8) {
         match self.mode {
-            Modes::Classic => self.classic.expect(BH_WRONG_MODE).playerify_piece(player),
-            Modes::Rotatris => self.rotatris.expect(BH_WRONG_MODE).playerify_piece(player),
+            Modes::Classic => self
+                .classic
+                .as_mut()
+                .expect(BH_WRONG_MODE)
+                .playerify_piece(player),
+            Modes::Rotatris => self
+                .rotatris
+                .as_mut()
+                .expect(BH_WRONG_MODE)
+                .playerify_piece(player),
         }
     }
 }
