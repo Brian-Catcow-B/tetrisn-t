@@ -1,3 +1,5 @@
+use crate::game::board::Gravity;
+
 #[repr(u8)]
 #[derive(PartialEq, Eq, Copy, Clone)]
 pub enum Shapes {
@@ -194,7 +196,7 @@ impl Piece {
         spawn_column: u8,
         spawn_row: u8,
         board_height_buffer: u8,
-        current_gravity: Movement,
+        current_gravity: Gravity,
     ) -> [(u8, u8); 4] {
         let mut piece_copy = Self::new(self.shape);
         piece_copy.positions = match piece_copy.shape {
@@ -265,16 +267,16 @@ impl Piece {
             piece_copy.positions
         } else {
             match current_gravity {
-                Movement::Down => piece_copy.positions,
-                Movement::Left => {
+                Gravity::Down => piece_copy.positions,
+                Gravity::Left => {
                     piece_copy.positions = piece_copy.rotate(true);
                     piece_copy.piece_pos(Movement::Right)
                 }
-                Movement::Up => {
+                Gravity::Up => {
                     piece_copy.positions = piece_copy.double_rotate();
                     piece_copy.piece_pos(Movement::Down)
                 }
-                Movement::Right => {
+                Gravity::Right => {
                     piece_copy.positions = piece_copy.rotate(false);
                     piece_copy.piece_pos(Movement::Down)
                 }

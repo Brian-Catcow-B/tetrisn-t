@@ -8,6 +8,7 @@ use crate::game::{
 static BH_WRONG_MODE: &str = "[!] BoardHandler has wrong option";
 
 #[repr(u8)]
+#[derive(Copy, Clone)]
 pub enum Gravity {
     Down,
     Left,
@@ -36,18 +37,27 @@ pub struct BoardHandler {
 
 impl BoardHandler {
     pub fn new(board_width: u8, board_height: u8, num_players: u8, mode: Modes) -> Self {
-        let (board_height_buffer, piece_spawn_row, rotatris) = match mode {
-            Modes::Rotatris => (
-                0,
-                (board_height - 1) / 2,
-                Some(BoardRotatris::new(
-                    board_width,
-                    board_width / 2,
-                    num_players,
-                )),
-            ),
-            Modes::Classic => (2, 0, None),
+        // determine some rules based on gamemode
+        let (board_height_buffer, spawn_row) = match mode {
+            Modes::Rotatris => (0, (board_height - 1) / 2),
+            Modes::Classic => (2, 0),
         };
+        let mut classic: Option<BoardClassic> = None;
+        let mut rotatris: Option<BoardRotatris> = None;
+        match mode {
+            Modes::Rotatris => {
+                rotatris = Some(BoardRotatris::new(board_width, spawn_row, num_players))
+            }
+            Modes::Classic => {
+                classic = Some(BoardClassic::new(
+                    board_width,
+                    board_height,
+                    board_height_buffer,
+                    spawn_row,
+                    num_players,
+                ))
+            }
+        }
         Self {
             mode,
             classic,
@@ -59,14 +69,14 @@ impl BoardHandler {
     pub fn get_width(&mut self) -> u8 {
         match self.mode {
             Modes::Classic => self.classic.expect(BH_WRONG_MODE).width,
-            Modes::Rotatris => self.rotatris.expect(BH_WRONG_MODE).board_side_length,
+            Modes::Rotatris => self.rotatris.expect(BH_WRONG_MODE).board_size,
         }
     }
 
     pub fn get_height(&mut self) -> u8 {
         match self.mode {
             Modes::Classic => self.classic.expect(BH_WRONG_MODE).height,
-            Modes::Rotatris => self.rotatris.expect(BH_WRONG_MODE).board_side_length,
+            Modes::Rotatris => self.rotatris.expect(BH_WRONG_MODE).board_size,
         }
     }
 
@@ -74,17 +84,6 @@ impl BoardHandler {
         match self.mode {
             Modes::Classic => self.classic.expect(BH_WRONG_MODE).height_buffer,
             Modes::Rotatris => 0u8,
-        }
-    }
-
-    pub fn get_shape_from_pos(&mut self, y: u8, x: u8) -> Shapes {
-        match self.mode {
-            Modes::Classic => {
-                self.classic.expect(BH_WRONG_MODE).matrix[y as usize][x as usize].shape
-            }
-            Modes::Rotatris => {
-                self.rotatris.expect(BH_WRONG_MODE).matrix[y as usize][x as usize].shape
-            }
         }
     }
 
@@ -121,6 +120,17 @@ impl BoardHandler {
         }
     }
 
+    pub fn get_shape_from_pos(&mut self, y: u8, x: u8) -> Shapes {
+        match self.mode {
+            Modes::Classic => {
+                self.classic.expect(BH_WRONG_MODE).matrix[y as usize][x as usize].shape
+            }
+            Modes::Rotatris => {
+                self.rotatris.expect(BH_WRONG_MODE).matrix[y as usize][x as usize].shape
+            }
+        }
+    }
+
     pub fn get_shape_from_player(&mut self, player: u8) -> Shapes {
         match self.mode {
             Modes::Classic => {
@@ -133,6 +143,26 @@ impl BoardHandler {
     }
 
     // board logic functions
+    pub fn attempt_piece_spawn(
+        &mut self,
+        player: u8,
+        spawn_col: u8,
+        spawn_piece_shape: Shapes,
+    ) -> (bool, bool) {
+        match self.mode {
+            Modes::Classic => self.classic.expect(BH_WRONG_MODE).attempt_piece_spawn(
+                player,
+                spawn_col,
+                spawn_piece_shape,
+            ),
+            Modes::Rotatris => self.rotatris.expect(BH_WRONG_MODE).attempt_piece_spawn(
+                player,
+                spawn_col,
+                spawn_piece_shape,
+            ),
+        }
+    }
+
     pub fn attempt_clear_lines(&mut self, level: u8) -> (u8, u32) {
         match self.mode {
             Modes::Classic => self
@@ -163,9 +193,16 @@ impl BoardHandler {
         match self.mode {
             Modes::Classic => {
                 println!("[!] `attempt_rotate_board` called but mode is Modes::Classic");
-                false;
+                false
             }
             Modes::Rotatris => self.rotatris.expect(BH_WRONG_MODE).attempt_rotate_board(rd),
+        }
+    }
+
+    pub fn playerify_piece(&mut self, player: u8) {
+        match self.mode {
+            Modes::Classic => self.classic.expect(BH_WRONG_MODE).playerify_piece(player),
+            Modes::Rotatris => self.rotatris.expect(BH_WRONG_MODE).playerify_piece(player),
         }
     }
 }
@@ -196,7 +233,7 @@ impl BoardClassic {
         for _ in 0..num_players {
             vec_active_piece.push(Piece::new(Shapes::None));
         }
-        let mut matrix = vec![
+        let matrix = vec![
             vec![Tile::default(); board_width as usize];
             (board_height + board_height_buffer) as usize
         ];
@@ -260,15 +297,10 @@ impl BoardClassic {
         player: u8,
         spawn_col: u8,
         spawn_piece_shape: Shapes,
-        current_gravity: Movement,
     ) -> (bool, bool) {
         let new_piece = Piece::new(spawn_piece_shape);
-        let spawn_positions = new_piece.spawn_pos(
-            spawn_col,
-            self.spawn_row,
-            self.height_buffer,
-            current_gravity,
-        );
+        let spawn_positions =
+            new_piece.spawn_pos(spawn_col, self.spawn_row, self.height_buffer, Gravity::Down);
         let mut blocked_flag: bool = false;
         for position in spawn_positions.iter().take(4) {
             if !self.matrix[position.0 as usize][position.1 as usize].empty {
@@ -319,7 +351,7 @@ impl BoardClassic {
         }
 
         if cant_move_flag {
-            if movement == current_gravity && self.should_lock(player, current_gravity) {
+            if movement == Movement::Down && self.should_lock(player) {
                 // lock piece and push any full lines to vec_full_lines
                 self.vec_active_piece[player as usize].shape = Shapes::None;
                 let mut full_line_rows: Vec<u8> = Vec::with_capacity(4);
@@ -367,55 +399,20 @@ impl BoardClassic {
         (true, false)
     }
 
-    fn should_lock(&self, player: u8, current_gravity: Movement) -> bool {
+    fn should_lock(&self, player: u8) -> bool {
         for position in self.vec_active_piece[player as usize]
             .positions
             .iter()
             .take(4)
         {
             // we just want to know if moving down by 1 will run the piece into the bottom of the board or an inactive tile
-            match current_gravity {
-                Movement::Down => {
-                    if position.0 as usize + 1 >= (self.height + self.height_buffer) as usize {
-                        return true;
-                    }
-                    if !self.matrix[position.0 as usize + 1][position.1 as usize].active
-                        && !self.matrix[position.0 as usize + 1][position.1 as usize].empty
-                    {
-                        return true;
-                    }
-                }
-                Movement::Left => {
-                    if position.1 <= 0 {
-                        return true;
-                    }
-                    if !self.matrix[position.0 as usize][position.1 as usize - 1].active
-                        && !self.matrix[position.0 as usize][position.1 as usize - 1].empty
-                    {
-                        return true;
-                    }
-                }
-                Movement::Up => {
-                    if position.0 <= 0 {
-                        return true;
-                    }
-                    if !self.matrix[position.0 as usize - 1][position.1 as usize].active
-                        && !self.matrix[position.0 as usize - 1][position.1 as usize].empty
-                    {
-                        return true;
-                    }
-                }
-                Movement::Right => {
-                    if position.1 >= self.width - 1 {
-                        return true;
-                    }
-                    if !self.matrix[position.0 as usize][position.1 as usize + 1].active
-                        && !self.matrix[position.0 as usize][position.1 as usize + 1].empty
-                    {
-                        return true;
-                    }
-                }
-                _ => panic!("[!] Error: current gravity is {}", current_gravity as u8),
+            if position.0 as usize + 1 >= (self.height + self.height_buffer) as usize {
+                return true;
+            }
+            if !self.matrix[position.0 as usize + 1][position.1 as usize].active
+                && !self.matrix[position.0 as usize + 1][position.1 as usize].empty
+            {
+                return true;
             }
         }
 
@@ -603,43 +600,40 @@ impl FullLine {
     }
 }
 
-// other modes
+// rotatris
 pub struct BoardRotatris {
     pub gravity: Gravity,
-    pub board_side_length: u8,
+    pub board_size: u8,
     pub spawn_row: u8,
     pub matrix: Vec<Vec<Tile>>,
     pub vec_active_piece: Vec<Piece>,
 }
 
 impl BoardRotatris {
-    pub fn new(board_side_length: u8, spawn_row: u8, num_players: u8) -> Self {
+    pub fn new(board_size: u8, spawn_row: u8, num_players: u8) -> Self {
         let mut vec_active_piece: Vec<Piece> = Vec::with_capacity(num_players as usize);
         for _ in 0..num_players {
             vec_active_piece.push(Piece::new(Shapes::None));
         }
-        let mut matrix =
-            vec![vec![Tile::default(); board_side_length as usize]; board_side_length as usize];
+        let mut matrix = vec![vec![Tile::default(); board_size as usize]; board_size as usize];
 
         // DEBUG
         for a in 0..4 {
-            for b in 0..board_side_length as usize {
+            for b in 0..board_size as usize {
                 matrix[a][b] = Tile::new(false, false, 0, Shapes::I);
                 matrix[b][a] = Tile::new(false, false, 0, Shapes::I);
-                matrix[board_side_length as usize - a - 1][b] =
-                    Tile::new(false, false, 0, Shapes::I);
-                matrix[b][board_side_length as usize - a - 1] =
-                    Tile::new(false, false, 0, Shapes::I);
+                matrix[board_size as usize - a - 1][b] = Tile::new(false, false, 0, Shapes::I);
+                matrix[b][board_size as usize - a - 1] = Tile::new(false, false, 0, Shapes::I);
             }
         }
-        matrix[board_side_length as usize / 2][board_side_length as usize - 1] = Tile::default();
-        matrix[board_side_length as usize / 2][board_side_length as usize - 2] = Tile::default();
-        matrix[board_side_length as usize / 2][board_side_length as usize - 3] = Tile::default();
-        matrix[board_side_length as usize / 2][board_side_length as usize - 4] = Tile::default();
+        matrix[board_size as usize / 2][board_size as usize - 1] = Tile::default();
+        matrix[board_size as usize / 2][board_size as usize - 2] = Tile::default();
+        matrix[board_size as usize / 2][board_size as usize - 3] = Tile::default();
+        matrix[board_size as usize / 2][board_size as usize - 4] = Tile::default();
 
         Self {
             gravity: Gravity::Down,
-            board_side_length,
+            board_size,
             spawn_row,
             matrix,
             vec_active_piece,
@@ -648,8 +642,8 @@ impl BoardRotatris {
 
     // return bool is if rotate was successful
     pub fn attempt_rotate_board(&mut self, rotate_direction: Movement) -> bool {
-        let center: u8 = self.board_side_length / 2;
-        let is_center_even: u8 = (self.board_side_length + 1) % 2;
+        let center: u8 = self.board_size / 2;
+        let is_center_even: u8 = (self.board_size + 1) % 2;
         let mut new_positions: [(u8, u8); 4] = [(0u8, 0u8); 4];
         match rotate_direction {
             Movement::RotateCw => {
@@ -692,7 +686,13 @@ impl BoardRotatris {
         self.playerify_piece(0);
 
         self.gravity = Gravity::from(
-            (self.gravity as u8 + if rotate_direction == RotateCw { 1 } else { 3 }) % 4,
+            (self.gravity as u8
+                + if rotate_direction == Movement::RotateCw {
+                    3
+                } else {
+                    1
+                })
+                % 4,
         );
 
         true
@@ -725,11 +725,11 @@ impl BoardRotatris {
         let new_positions = self.vec_active_piece[player as usize].piece_pos(movement);
         for position in new_positions.iter().take(4) {
             // due to integer underflow (u8 board width and u8 board height), we must only check the positive side of x and y positions
-            if position.0 >= self.board_side_length + self.board_side_length {
+            if position.0 >= self.board_size + self.board_size {
                 cant_move_flag = true;
                 break;
             }
-            if position.1 >= self.board_side_length {
+            if position.1 >= self.board_size {
                 cant_move_flag = true;
                 break;
             }
@@ -784,6 +784,39 @@ impl BoardRotatris {
         (true, false)
     }
 
+    // returns (bool, bool) based on (blocked, blocked by some !active tile)
+    pub fn attempt_piece_spawn(
+        &mut self,
+        player: u8,
+        spawn_col: u8,
+        spawn_piece_shape: Shapes,
+    ) -> (bool, bool) {
+        let new_piece = Piece::new(spawn_piece_shape);
+        let spawn_positions =
+            new_piece.spawn_pos(spawn_col, self.spawn_row, self.board_size / 2, self.gravity);
+        let mut blocked_flag: bool = false;
+        for position in spawn_positions.iter().take(4) {
+            if !self.matrix[position.0 as usize][position.1 as usize].empty {
+                if !self.matrix[position.0 as usize][position.1 as usize].active {
+                    return (true, true);
+                }
+                blocked_flag = true;
+            }
+        }
+        if blocked_flag {
+            return (true, false);
+        }
+        self.vec_active_piece[player as usize] = new_piece;
+        self.vec_active_piece[player as usize].positions = spawn_positions;
+        // initialize the tile logic for the newly spawned piece
+        for position in spawn_positions.iter().take(4) {
+            self.matrix[position.0 as usize][position.1 as usize] =
+                Tile::new(false, true, player, spawn_piece_shape);
+        }
+
+        (false, false)
+    }
+
     // returns ring(s) of the locked piece to test if it filled a line
     fn lock_piece(&mut self, player: u8) -> Vec<u8> {
         for position in self.vec_active_piece[player as usize]
@@ -796,19 +829,19 @@ impl BoardRotatris {
         }
 
         let rings_with_repeat: [u8; 4] = [
-            find_ring_from_pos(
+            self.find_ring_from_pos(
                 self.vec_active_piece[player as usize].positions[0].0,
                 self.vec_active_piece[player as usize].positions[0].1,
             ),
-            find_ring_from_pos(
+            self.find_ring_from_pos(
                 self.vec_active_piece[player as usize].positions[1].0,
                 self.vec_active_piece[player as usize].positions[1].1,
             ),
-            find_ring_from_pos(
+            self.find_ring_from_pos(
                 self.vec_active_piece[player as usize].positions[2].0,
                 self.vec_active_piece[player as usize].positions[2].1,
             ),
-            find_ring_from_pos(
+            self.find_ring_from_pos(
                 self.vec_active_piece[player as usize].positions[3].0,
                 self.vec_active_piece[player as usize].positions[3].1,
             ),
@@ -835,8 +868,8 @@ impl BoardRotatris {
 
     fn find_ring_from_pos(&self, y: u8, x: u8) -> u8 {
         std::cmp::min(
-            std::cmp::min(x, self.board_side_length - x - 1),
-            std::cmp::min(y, self.board_side_length - y - 1),
+            std::cmp::min(x, self.board_size - x - 1),
+            std::cmp::min(y, self.board_size - y - 1),
         )
     }
 
@@ -849,7 +882,7 @@ impl BoardRotatris {
             // we just want to know if moving down by 1 will run the piece into the bottom of the board or an inactive tile
             match self.gravity {
                 Gravity::Down => {
-                    if position.0 as usize + 1 >= self.board_side_length as usize {
+                    if position.0 as usize + 1 >= self.board_size as usize {
                         return true;
                     }
                     if !self.matrix[position.0 as usize + 1][position.1 as usize].active
@@ -879,7 +912,7 @@ impl BoardRotatris {
                     }
                 }
                 Gravity::Right => {
-                    if position.1 >= self.board_side_length - 1 {
+                    if position.1 >= self.board_size - 1 {
                         return true;
                     }
                     if !self.matrix[position.0 as usize][position.1 as usize + 1].active
@@ -888,7 +921,7 @@ impl BoardRotatris {
                         return true;
                     }
                 }
-                _ => panic!("[!] Error: current gravity is {}", current_gravity as u8),
+                _ => panic!("[!] Error: current gravity is {}", self.gravity as u8),
             }
         }
 
@@ -913,7 +946,7 @@ impl BoardRotatris {
     pub fn rotatris_attempt_clear_rings(&mut self, level: u8) -> (u8, u32) {
         let mut num_cleared_rings = 0;
         let mut score_from_cleared_rings = 0;
-        let num_rings_to_check = self.board_side_length / 2 - 4;
+        let num_rings_to_check = self.board_size / 2 - 4;
 
         // go from inner rings to outer rings checking if any ring is full, avoiding the middle 4 rings
         for z in (0..num_rings_to_check).rev() {
@@ -926,12 +959,23 @@ impl BoardRotatris {
             }
         }
 
+        score_from_cleared_rings += match num_cleared_rings {
+            1 => SCORE_SINGLE_BASE as u32 * (level as u32 + 1),
+            2 => SCORE_DOUBLE_BASE as u32 * (level as u32 + 1),
+            3 => SCORE_TRIPLE_BASE as u32 * (level as u32 + 1),
+            4 => SCORE_QUADRUPLE_BASE as u32 * (level as u32 + 1),
+            _ => {
+                println!("[!] player was attributed a number of lines too large maybe, what the heck? lines_player_cleared: {}", num_cleared_rings);
+                0u32
+            }
+        };
+
         (num_cleared_rings, score_from_cleared_rings)
     }
 
     fn rotatris_check_single_ring(&mut self, z: u8) -> bool {
-        let min = std::cmp::min(z, self.board_side_length - z);
-        let max = std::cmp::max(z, self.board_side_length - z);
+        let min = std::cmp::min(z, self.board_size - z);
+        let max = std::cmp::max(z, self.board_size - z);
         for a in [min, max - 1].into_iter() {
             for b in min..max {
                 if b >= min && b <= max {
@@ -951,7 +995,7 @@ impl BoardRotatris {
 
     fn rotatris_pull_single_ring_out(&mut self, j: u8) {
         let j = j as usize;
-        let k = self.board_side_length as usize - j - 1;
+        let k = self.board_size as usize - j - 1;
 
         // sides
         for a in j..=k {
@@ -972,9 +1016,9 @@ impl BoardRotatris {
     }
 
     fn rotatris_emptify_single_ring(&mut self, z: u8) {
-        for a in [z, self.board_side_length - z - 1].into_iter() {
-            for b in z..(self.board_side_length - z) {
-                if b >= z && b <= self.board_side_length - z {
+        for a in [z, self.board_size - z - 1].into_iter() {
+            for b in z..(self.board_size - z) {
+                if b >= z && b <= self.board_size - z {
                     self.matrix[*a as usize][b as usize].empty = true;
                     self.matrix[*a as usize][b as usize].active = false;
                     self.matrix[b as usize][*a as usize].empty = true;

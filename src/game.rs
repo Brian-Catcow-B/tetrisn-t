@@ -359,8 +359,7 @@ impl Game {
             // GAME LOGIC
             for player in &mut self.vec_players {
                 if !player.spawn_piece_flag
-                    && self.bh.board.vec_active_piece[player.player_num as usize].shape
-                        == Shapes::None
+                    && self.bh.get_shape_from_player(player.player_num) == Shapes::None
                 {
                     player.input.was_just_pressed_setfalse();
                     self.rotate_board_cw.1 = false;
@@ -372,11 +371,10 @@ impl Game {
                 if player.spawn_piece_flag {
                     if player.spawn_delay <= 0 {
                         // (blocked, blocked by some !active tile); if .1, game over sequence, if .0 and !.1, only blocked by other players, wait until they move, then carry on
-                        let blocked: (bool, bool) = self.bh.board.attempt_piece_spawn(
+                        let blocked: (bool, bool) = self.bh.attempt_piece_spawn(
                             player.player_num,
                             player.spawn_column,
                             player.next_piece_shape,
-                            self.gravity_direction,
                         );
                         if blocked.0 {
                             if blocked.1 {
@@ -384,7 +382,7 @@ impl Game {
                             }
                             continue;
                         } else {
-                            self.bh.board.playerify_piece(player.player_num);
+                            self.bh.playerify_piece(player.player_num);
                             player.spawn_delay = SPAWN_DELAY;
                             player.spawn_piece_flag = false;
                             // set das_countdown to the smaller das value if input left or right is pressed as the piece spawns in
@@ -400,9 +398,7 @@ impl Game {
                                 }
                             }
                             let random_shape = Shapes::from(rand % 7);
-                            if self.bh.board.vec_active_piece[player.player_num as usize].shape
-                                != random_shape
-                            {
+                            if self.bh.get_shape_from_player(player.player_num) != random_shape {
                                 player.next_piece_shape = random_shape;
                             } else {
                                 let mut rand: u8;
@@ -776,9 +772,8 @@ impl Game {
                                 self.vec_batch_player_piece[2].add(player_tile);
                             }
                         }
-                        self.vec_batch_player_piece[player as usize].add(player_tile);
                         // highlight if active
-                        if self.bh.get_active_from_pos(y + BOARD_HEIGHT_BUFFER_U, x) {
+                        if self.bh.get_active_from_pos(y + height_buffer, x) {
                             self.batch_highlight_active_tile.add(player_tile);
                         }
                     }
@@ -789,7 +784,7 @@ impl Game {
                 for full_line in classic.vec_full_lines.iter() {
                     if full_line.lines_cleared_together < 4 {
                         // standard clear animation
-                        let y = (full_line.row - BOARD_HEIGHT_BUFFER_U) as usize;
+                        let y = (full_line.row - height_buffer) as usize;
                         let board_max_index_remainder_2 = (self.bh.get_width() - 1) % 2;
                         // go from the middle to the outside and reach the end right before full_line.clear_delay reaches 0
                         for x in (self.bh.get_width() / 2)..self.bh.get_width() {
@@ -817,7 +812,7 @@ impl Game {
                         }
                     } else {
                         // tetrisnt clear animation
-                        let y = (full_line.row - BOARD_HEIGHT_BUFFER_U) as usize;
+                        let y = (full_line.row - height_buffer) as usize;
                         let board_max_index_remainder_2 = (self.bh.get_width() - 1) % 2;
                         // go from the middle to the outside and reach the end right before full_line.clear_delay reaches 0
                         for x in (self.bh.get_width() / 2)..self.bh.get_width() {
