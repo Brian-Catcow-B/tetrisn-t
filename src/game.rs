@@ -576,7 +576,7 @@ impl Game {
             }
 
             // attempt to line clear (go through the vector of FullLine's and decrement clear_delay if > 0, clear and return (lines_cleared, score) for <= 0)
-            let (returned_lines, returned_score) = self.bh.attempt_clear_lines(self.level);
+            let (returned_lines, returned_score) = self.bh.attempt_clear(self.level);
             if returned_lines > 0 {
                 self.num_cleared_lines += returned_lines as u16;
                 self.game_info_text.fragments_mut()[1].text =
@@ -704,15 +704,14 @@ impl Game {
     pub fn draw(&mut self, ctx: &mut Context) {
         // constants used throughout draw
         let height_buffer = self.bh.get_height_buffer();
+        let width = self.bh.get_width();
+        let height = self.bh.get_height();
 
         // start doing drawing stuff
         graphics::clear(ctx, graphics::BLACK);
         let (window_width, window_height) = graphics::size(ctx);
-        self.tile_size = TileGraphic::get_size(
-            ctx,
-            self.bh.get_width(),
-            self.bh.get_height() + NON_BOARD_SPACE_U + NON_BOARD_SPACE_D,
-        );
+        self.tile_size =
+            TileGraphic::get_size(ctx, width, height + NON_BOARD_SPACE_U + NON_BOARD_SPACE_D);
         if self.game_over_flag && self.game_over_delay == 0 {
             // DRAW GAME OVER
             self.draw_text(
@@ -733,12 +732,12 @@ impl Game {
         } else {
             // DRAW GAME
             // add each non-empty tile to the correct SpriteBatch
-            for x in 0..self.bh.get_width() {
-                for y in 0..self.bh.get_height() {
+            for x in 0..width {
+                for y in 0..height {
                     // actually go through and add tiles to a spritebatch
                     if !self.bh.get_empty_from_pos(y + height_buffer, x) {
                         // account for the gravity direction in how to draw it (rotatris)
-                        let center = self.bh.get_width() / 2;
+                        let center = width / 2;
                         let is_center_even: u8 = (center + 1) % 2;
                         let (y_draw_pos, x_draw_pos) = match self.gravity_direction {
                             Movement::Down => (y, x),
@@ -785,16 +784,15 @@ impl Game {
                     if full_line.lines_cleared_together < 4 {
                         // standard clear animation
                         let y = (full_line.row - height_buffer) as usize;
-                        let board_max_index_remainder_2 = (self.bh.get_width() - 1) % 2;
+                        let board_max_index_remainder_2 = (width - 1) % 2;
                         // go from the middle to the outside and reach the end right before full_line.clear_delay reaches 0
-                        for x in (self.bh.get_width() / 2)..self.bh.get_width() {
+                        for x in (width / 2)..width {
                             let highlight_pos_right = graphics::DrawParam::new().dest(Point2::new(
                                 x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                                 y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                             ));
                             let highlight_pos_left = graphics::DrawParam::new().dest(Point2::new(
-                                (self.bh.get_width() as f32
-                                    - (x + board_max_index_remainder_2) as f32)
+                                (width as f32 - (x + board_max_index_remainder_2) as f32)
                                     * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                                 y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                             ));
@@ -804,7 +802,7 @@ impl Game {
                             self.batch_highlight_clearing_standard_tile
                                 .add(highlight_pos_left);
 
-                            if ((x as f32) / (self.bh.get_width() as f32) - 0.5) * 2.0
+                            if ((x as f32) / (width as f32) - 0.5) * 2.0
                                 > 1.0 - (full_line.clear_delay as f32 / CLEAR_DELAY as f32)
                             {
                                 break;
@@ -813,16 +811,15 @@ impl Game {
                     } else {
                         // tetrisnt clear animation
                         let y = (full_line.row - height_buffer) as usize;
-                        let board_max_index_remainder_2 = (self.bh.get_width() - 1) % 2;
+                        let board_max_index_remainder_2 = (width - 1) % 2;
                         // go from the middle to the outside and reach the end right before full_line.clear_delay reaches 0
-                        for x in (self.bh.get_width() / 2)..self.bh.get_width() {
+                        for x in (width / 2)..width {
                             let highlight_pos_right = graphics::DrawParam::new().dest(Point2::new(
                                 x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                                 y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                             ));
                             let highlight_pos_left = graphics::DrawParam::new().dest(Point2::new(
-                                (self.bh.get_width() as f32
-                                    - (x + board_max_index_remainder_2) as f32)
+                                (width as f32 - (x + board_max_index_remainder_2) as f32)
                                     * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                                 y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                             ));
@@ -832,7 +829,7 @@ impl Game {
                             self.batch_highlight_clearing_tetrisnt_tile
                                 .add(highlight_pos_left);
 
-                            if ((x as f32) / (self.bh.get_width() as f32) - 0.5) * 2.0
+                            if ((x as f32) / (width as f32) - 0.5) * 2.0
                                 > 1.0 - (full_line.clear_delay as f32 / CLEAR_DELAY as f32)
                             {
                                 break;
@@ -895,10 +892,7 @@ impl Game {
 
             // draw each SpriteBatch
             let board_top_left_corner = window_width / 2.0
-                - (scaled_tile_size
-                    * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32
-                    * self.bh.get_width() as f32
-                    / 2.0);
+                - (scaled_tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * width as f32 / 2.0);
             // empty tiles
             graphics::draw(
                 ctx,

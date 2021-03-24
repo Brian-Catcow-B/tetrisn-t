@@ -280,10 +280,6 @@ impl Piece {
                     piece_copy.positions = piece_copy.rotate(false);
                     piece_copy.piece_pos(Movement::Down)
                 }
-                _ => panic!(
-                    "[!] Error: current_gravity is invalid: {} (in `Piece::spawn_pos()`)",
-                    current_gravity as u8
-                ),
             }
         }
     }

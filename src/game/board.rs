@@ -167,7 +167,7 @@ impl BoardHandler {
         }
     }
 
-    pub fn attempt_clear_lines(&mut self, level: u8) -> (u8, u32) {
+    pub fn attempt_clear(&mut self, level: u8) -> (u8, u32) {
         match self.mode {
             Modes::Classic => self
                 .classic
@@ -178,7 +178,7 @@ impl BoardHandler {
                 .rotatris
                 .as_mut()
                 .expect(BH_WRONG_MODE)
-                .rotatris_attempt_clear_rings(level),
+                .attempt_clear_rings(level),
         }
     }
 
@@ -270,7 +270,7 @@ impl BoardClassic {
             width: board_width,
             height: board_height,
             height_buffer: board_height_buffer,
-            spawn_row: board_height_buffer,
+            spawn_row,
             matrix,
             vec_active_piece,
             vec_full_lines: vec![],
@@ -812,8 +812,7 @@ impl BoardRotatris {
         spawn_piece_shape: Shapes,
     ) -> (bool, bool) {
         let new_piece = Piece::new(spawn_piece_shape);
-        let spawn_positions =
-            new_piece.spawn_pos(spawn_col, self.spawn_row, self.board_size / 2, self.gravity);
+        let spawn_positions = new_piece.spawn_pos(spawn_col, self.spawn_row, 0, self.gravity);
         let mut blocked_flag: bool = false;
         for position in spawn_positions.iter().take(4) {
             if !self.matrix[position.0 as usize][position.1 as usize].empty {
@@ -941,7 +940,6 @@ impl BoardRotatris {
                         return true;
                     }
                 }
-                _ => panic!("[!] Error: current gravity is {}", self.gravity as u8),
             }
         }
 
@@ -963,10 +961,10 @@ impl BoardRotatris {
         }
     }
 
-    pub fn rotatris_attempt_clear_rings(&mut self, level: u8) -> (u8, u32) {
+    pub fn attempt_clear_rings(&mut self, level: u8) -> (u8, u32) {
         let mut num_cleared_rings = 0;
         let mut score_from_cleared_rings = 0;
-        let num_rings_to_check = self.board_size / 2 - 4;
+        let num_rings_to_check = self.board_size / 2 - 2;
 
         // go from inner rings to outer rings checking if any ring is full, avoiding the middle 4 rings
         for z in (0..num_rings_to_check).rev() {
@@ -979,16 +977,23 @@ impl BoardRotatris {
             }
         }
 
-        score_from_cleared_rings += match num_cleared_rings {
-            1 => SCORE_SINGLE_BASE as u32 * (level as u32 + 1),
-            2 => SCORE_DOUBLE_BASE as u32 * (level as u32 + 1),
-            3 => SCORE_TRIPLE_BASE as u32 * (level as u32 + 1),
-            4 => SCORE_QUADRUPLE_BASE as u32 * (level as u32 + 1),
-            _ => {
-                println!("[!] player was attributed a number of lines too large maybe, what the heck? lines_player_cleared: {}", num_cleared_rings);
-                0u32
+        if num_cleared_rings > 0 {
+            // get rid of all tiles in the middle area
+            for z in num_rings_to_check..=((self.board_size - 1) / 2) {
+                self.emptify_single_ring(z);
             }
-        };
+
+            score_from_cleared_rings += match num_cleared_rings {
+                1 => SCORE_SINGLE_BASE as u32 * (level as u32 + 1),
+                2 => SCORE_DOUBLE_BASE as u32 * (level as u32 + 1),
+                3 => SCORE_TRIPLE_BASE as u32 * (level as u32 + 1),
+                4 => SCORE_QUADRUPLE_BASE as u32 * (level as u32 + 1),
+                _ => {
+                    println!("[!] player was attributed a number of rings too large maybe, what the heck? num_cleared_rings: {}", num_cleared_rings);
+                    0u32
+                }
+            };
+        }
 
         (num_cleared_rings, score_from_cleared_rings)
     }
@@ -996,7 +1001,7 @@ impl BoardRotatris {
     fn rotatris_check_single_ring(&mut self, z: u8) -> bool {
         let min = std::cmp::min(z, self.board_size - z);
         let max = std::cmp::max(z, self.board_size - z);
-        for a in [min, max - 1].into_iter() {
+        for a in [min, max - 1].iter() {
             for b in min..max {
                 if b >= min && b <= max {
                     if self.matrix[*a as usize][b as usize].empty
@@ -1035,8 +1040,8 @@ impl BoardRotatris {
         self.matrix[k + 1][k + 1] = self.matrix[k][k];
     }
 
-    fn rotatris_emptify_single_ring(&mut self, z: u8) {
-        for a in [z, self.board_size - z - 1].into_iter() {
+    fn emptify_single_ring(&mut self, z: u8) {
+        for a in [z, self.board_size - z - 1].iter() {
             for b in z..(self.board_size - z) {
                 if b >= z && b <= self.board_size - z {
                     self.matrix[*a as usize][b as usize].empty = true;
