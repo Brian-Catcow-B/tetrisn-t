@@ -215,7 +215,7 @@ impl Piece {
             Shapes::O => {
                 [
                     (spawn_row + board_height_buffer, spawn_column - 1), //     [-][-][-][-]
-                    (spawn_row + board_height_buffer, spawn_column),     //         [-][-][-][-]
+                    (spawn_row + board_height_buffer, spawn_column),     //     [-][-][-][-]
                     (spawn_row + 1 + board_height_buffer, spawn_column - 1), // [-][0][1][-]
                     (spawn_row + 1 + board_height_buffer, spawn_column), //     [-][2][3][-]
                 ]

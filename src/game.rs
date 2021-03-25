@@ -28,7 +28,7 @@ const BOARD_HEIGHT: u8 = 20u8;
 
 const ROTATRIS_BOARD_SIDE_LENGTH: u8 = 20u8;
 
-pub const CLEAR_DELAY: i8 = 0i8;
+pub const CLEAR_DELAY_CLASSIC: i8 = 30i8;
 
 pub const SCORE_SINGLE_BASE: u8 = 40u8;
 pub const SCORE_DOUBLE_BASE: u8 = 100u8;
@@ -152,7 +152,7 @@ pub struct Game {
 
 impl Game {
     pub fn new(ctx: &mut Context, game_options: &GameOptions) -> Game {
-        let mode = Modes::Rotatris;
+        let mode = Modes::Classic;
         let board_width = match mode {
             Modes::Classic => 6 + 4 * game_options.num_players,
             Modes::Rotatris => ROTATRIS_BOARD_SIDE_LENGTH,
@@ -544,7 +544,7 @@ impl Game {
                         player.force_fall_countdown = FORCE_FALL_DELAY;
                         // add more spawn delay if locking the piece caused a line clear
                         if caused_full_line_flag {
-                            player.spawn_delay += CLEAR_DELAY as i16;
+                            player.spawn_delay += CLEAR_DELAY_CLASSIC as i16;
                         }
                     }
                     if moved_flag {
@@ -803,7 +803,7 @@ impl Game {
                                 .add(highlight_pos_left);
 
                             if ((x as f32) / (width as f32) - 0.5) * 2.0
-                                > 1.0 - (full_line.clear_delay as f32 / CLEAR_DELAY as f32)
+                                > 1.0 - (full_line.clear_delay as f32 / CLEAR_DELAY_CLASSIC as f32)
                             {
                                 break;
                             }
@@ -830,7 +830,7 @@ impl Game {
                                 .add(highlight_pos_left);
 
                             if ((x as f32) / (width as f32) - 0.5) * 2.0
-                                > 1.0 - (full_line.clear_delay as f32 / CLEAR_DELAY as f32)
+                                > 1.0 - (full_line.clear_delay as f32 / CLEAR_DELAY_CLASSIC as f32)
                             {
                                 break;
                             }

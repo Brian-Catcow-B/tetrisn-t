@@ -2,7 +2,8 @@ use crate::game::piece::{Movement, Piece, Shapes};
 use crate::game::tile::Tile;
 use crate::game::Modes;
 use crate::game::{
-    CLEAR_DELAY, SCORE_DOUBLE_BASE, SCORE_QUADRUPLE_BASE, SCORE_SINGLE_BASE, SCORE_TRIPLE_BASE,
+    CLEAR_DELAY_CLASSIC, SCORE_DOUBLE_BASE, SCORE_QUADRUPLE_BASE, SCORE_SINGLE_BASE,
+    SCORE_TRIPLE_BASE,
 };
 
 static BH_WRONG_MODE: &str = "[!] BoardHandler has wrong option";
@@ -522,6 +523,10 @@ impl BoardClassic {
             // not much to see here
             return (0, 0);
         }
+        println!(
+            "clearing lines now size: {}",
+            vec_clearing_now_indices.len()
+        );
 
         // for the return value, we need to know how many lines are being cleared (the first return in the tuple)
         // and we need to know the amount of points from the lines clearing right now (the second in the tuple)
@@ -627,7 +632,7 @@ impl FullLine {
             row,
             lines_cleared_together,
             player,
-            clear_delay: CLEAR_DELAY,
+            clear_delay: CLEAR_DELAY_CLASSIC,
             remove_flag: false,
         }
     }
@@ -1112,7 +1117,7 @@ mod tests {
         }
 
         // now to clear 2 Tetrises on the same frame and see what happens
-        for _ in 0..=CLEAR_DELAY {
+        for _ in 0..=CLEAR_DELAY_CLASSIC {
             let (returned_lines, returned_score) = board.attempt_clear_lines(0);
             if returned_lines > 0 {
                 num_cleared_lines += returned_lines as u16;
@@ -1159,7 +1164,7 @@ mod tests {
         }
 
         // now clear and see what happens
-        for _ in 0..=CLEAR_DELAY {
+        for _ in 0..=CLEAR_DELAY_CLASSIC {
             let (returned_lines, returned_score) = board.attempt_clear_lines(0);
             if returned_lines > 0 {
                 num_cleared_lines += returned_lines as u16;
@@ -1210,7 +1215,7 @@ mod tests {
         }
 
         // now to clear 2 Tetrises one frame apart and see what happens
-        for _ in 0..=CLEAR_DELAY {
+        for _ in 0..=CLEAR_DELAY_CLASSIC {
             let (returned_lines, returned_score) = board.attempt_clear_lines(0);
             if returned_lines > 0 {
                 num_cleared_lines += returned_lines as u16;
