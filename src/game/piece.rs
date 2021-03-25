@@ -280,6 +280,7 @@ impl Piece {
                     piece_copy.positions = piece_copy.rotate(false);
                     piece_copy.piece_pos(Movement::Down)
                 }
+                Gravity::Invalid => panic!("[!] Gravity::Invalid passed into `spawn_pos()`"),
             }
         }
     }

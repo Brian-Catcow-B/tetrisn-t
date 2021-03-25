@@ -14,6 +14,7 @@ pub enum Gravity {
     Left,
     Up,
     Right,
+    Invalid,
 }
 
 impl From<u8> for Gravity {
@@ -23,7 +24,7 @@ impl From<u8> for Gravity {
             1 => Gravity::Left,
             2 => Gravity::Up,
             3 => Gravity::Right,
-            _ => panic!("Unknown Gravity value: {}", value),
+            _ => panic!("[!] Unknown Gravity value: {}", value),
         }
     }
 }
@@ -35,7 +36,7 @@ impl From<Movement> for Gravity {
             Movement::Left => Gravity::Left,
             Movement::Up => Gravity::Up,
             Movement::Right => Gravity::Right,
-            _ => panic!("Unknown Gravity value: {}", value as u8),
+            _ => Gravity::Invalid,
         }
     }
 }
@@ -951,6 +952,9 @@ impl BoardRotatris {
                     {
                         return true;
                     }
+                }
+                Gravity::Invalid => {
+                    panic!("[!] Gravity::Invalid attempted to be used in `should_lock()`")
                 }
             }
         }
