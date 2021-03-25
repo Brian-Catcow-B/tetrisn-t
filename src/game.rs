@@ -157,7 +157,7 @@ pub struct Game {
 
 impl Game {
     pub fn new(ctx: &mut Context, game_options: &GameOptions) -> Game {
-        let mode = Modes::Rotatris;
+        let mode = Modes::Classic;
         let board_width = match mode {
             Modes::Classic => 6 + 4 * game_options.num_players,
             Modes::Rotatris => ROTATRIS_BOARD_SIDE_LENGTH,
@@ -244,11 +244,18 @@ impl Game {
                 TileGraphic::new_player(ctx, player as u8).image,
             ));
         }
-        let mut game_info_text = Text::new(
-            TextFragment::new("Lines: ")
-                .color(graphics::WHITE)
-                .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
-        );
+        let mut game_info_text = match mode {
+            Modes::Classic => Text::new(
+                TextFragment::new("Lines: ")
+                    .color(graphics::WHITE)
+                    .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
+            ),
+            Modes::Rotatris => Text::new(
+                TextFragment::new("Rings: ")
+                    .color(graphics::WHITE)
+                    .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
+            ),
+        };
         game_info_text.add(
             TextFragment::new("000")
                 .color(graphics::WHITE)
