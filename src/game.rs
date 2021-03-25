@@ -50,8 +50,13 @@ const LITTLE_TEXT_SCALE: f32 = 20.0;
 
 // for each level (as the index), the number of frames it takes for a piece to move down one row (everything after 29 is also 0)
 // it's actually 1 less than the number of frames it takes the piece to fall because the game logic works out better that way
-const FALL_DELAY_VALUES: [u8; 30] = [
+const FALL_DELAY_VALUES_CLASSIC: [u8; 30] = [
     47, 42, 37, 32, 27, 22, 17, 12, 7, 5, 4, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    0,
+];
+// rotatris is much harder, so slower fall rates than classic
+const FALL_DELAY_VALUES_ROTATRIS: [u8; 30] = [
+    60, 50, 40, 35, 30, 25, 20, 15, 10, 7, 6, 5, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     0,
 ];
 
@@ -152,7 +157,7 @@ pub struct Game {
 
 impl Game {
     pub fn new(ctx: &mut Context, game_options: &GameOptions) -> Game {
-        let mode = Modes::Classic;
+        let mode = Modes::Rotatris;
         let board_width = match mode {
             Modes::Classic => 6 + 4 * game_options.num_players,
             Modes::Rotatris => ROTATRIS_BOARD_SIDE_LENGTH,
@@ -537,7 +542,7 @@ impl Game {
                     if self.bh.get_shape_from_player(player.player_num) == Shapes::None {
                         player.spawn_piece_flag = true;
                         player.fall_countdown = if self.level < 30 {
-                            FALL_DELAY_VALUES[self.level as usize]
+                            self.bh.get_fall_delay_from_level(self.level)
                         } else {
                             0
                         };
@@ -549,7 +554,7 @@ impl Game {
                     }
                     if moved_flag {
                         player.fall_countdown = if self.level < 30 {
-                            FALL_DELAY_VALUES[self.level as usize]
+                            self.bh.get_fall_delay_from_level(self.level)
                         } else {
                             0
                         };

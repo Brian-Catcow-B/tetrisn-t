@@ -2,8 +2,8 @@ use crate::game::piece::{Movement, Piece, Shapes};
 use crate::game::tile::Tile;
 use crate::game::Modes;
 use crate::game::{
-    CLEAR_DELAY_CLASSIC, SCORE_DOUBLE_BASE, SCORE_QUADRUPLE_BASE, SCORE_SINGLE_BASE,
-    SCORE_TRIPLE_BASE,
+    CLEAR_DELAY_CLASSIC, FALL_DELAY_VALUES_CLASSIC, FALL_DELAY_VALUES_ROTATRIS, SCORE_DOUBLE_BASE,
+    SCORE_QUADRUPLE_BASE, SCORE_SINGLE_BASE, SCORE_TRIPLE_BASE,
 };
 
 static BH_WRONG_MODE: &str = "[!] BoardHandler has wrong option";
@@ -157,6 +157,13 @@ impl BoardHandler {
                     .vec_active_piece[player as usize]
                     .shape
             }
+        }
+    }
+
+    pub fn get_fall_delay_from_level(&mut self, level: u8) -> u8 {
+        match self.mode {
+            Modes::Classic => FALL_DELAY_VALUES_CLASSIC[level as usize],
+            Modes::Rotatris => FALL_DELAY_VALUES_ROTATRIS[level as usize],
         }
     }
 
