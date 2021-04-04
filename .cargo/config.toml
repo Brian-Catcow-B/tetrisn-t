@@ -1,3 +1,5 @@
 [alias]
 optwin = "build -Z unstable-options --profile opt --target x86_64-pc-windows-gnu"
 relwin = "build --release --target x86_64-pc-windows-gnu"
+relpi  = "build --release --target armv7-unknown-linux-gnueabihf"
+

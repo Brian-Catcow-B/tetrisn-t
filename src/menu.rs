@@ -1,5 +1,5 @@
 use ggez::event::KeyCode;
-use ggez::graphics::{self, Color};
+use ggez::graphics::{self, Color, Text, TextFragment};
 use ggez::Context;
 
 use crate::control::ProgramState;
@@ -21,6 +21,61 @@ mod inputconfig;
 mod start;
 use inputconfig::InputConfigMenu;
 use start::StartMenu;
+
+pub enum MenuItemSize {
+    Small,
+    Normal,
+    Big,
+}
+
+#[derive(Eq, PartialEq)]
+pub enum MenuItemValueType {
+    None,
+    NumPlayers,
+    StartingLevel,
+}
+
+#[derive(Eq, PartialEq)]
+pub enum MenuItemTrigger {
+    None,
+    StartGame,
+    SubMenu1,
+    SubMenu2,
+    Back,
+}
+
+pub struct MenuItem {
+    text: Text,
+    value_type: MenuItemValueType,
+    trigger: MenuItemTrigger,
+}
+
+impl MenuItem {
+    fn new(item_start_str: String, value_type: MenuItemValueType, value: usize, trigger: MenuItemTrigger) -> Self {
+        let mut text = Text::new(
+            TextFragment::new(item_start_str)
+                .color(graphics::BLACK)
+        );
+        if value_type != MenuItemValueType::None {
+            text.add(
+                TextFragment::new(format!(" {}", value))
+                    .color(graphics::BLACK)
+            );
+        }
+        Self {
+            text,
+            value_type,
+            trigger,
+        }
+    }
+
+    fn color(&mut self, new_color: Color) {
+        self.text.fragments_mut()[0].color = Some(new_color);
+        if self.value_type != MenuItemValueType::None {
+            self.text.fragments_mut()[1].color = Some(new_color);
+        }
+    }
+}
 
 pub struct MenuGameOptions {
     pub num_players: u8,
@@ -132,23 +187,30 @@ impl Menu {
     pub fn update(&mut self) -> Option<(ProgramState, MenuGameOptions)> {
         match self.state {
             MenuState::Start => {
-                let ret_bools: (bool, bool) = self.start_menu.update(&self.input);
-                if ret_bools.0 {
-                    if self.ensure_enough_controls() {
-                        return Some((
-                            ProgramState::Game,
-                            MenuGameOptions::new(
-                                self.start_menu.num_players,
-                                self.start_menu.starting_level,
-                                self.input_config_menu.arr_split_controls,
-                            ),
-                        ));
-                    } else {
-                        self.start_menu.not_enough_controls_flag = true;
-                    }
-                } else if ret_bools.1 {
-                    // we are entering the InputConfig menu
-                    self.state = MenuState::InputConfig;
+                let trigger: MenuItemTrigger = self.start_menu.update(&self.input);
+                match trigger {
+                    MenuItemTrigger::StartGame => {
+                        if self.ensure_enough_controls() {
+                            return Some((
+                                ProgramState::Game,
+                                MenuGameOptions::new(
+                                    self.start_menu.num_players,
+                                    self.start_menu.starting_level,
+                                    self.input_config_menu.arr_split_controls,
+                                ),
+                            ));
+                        } else {
+                            self.start_menu.not_enough_controls_flag = true;
+                        }
+                    },
+                    MenuItemTrigger::SubMenu1 => {
+                        // InputConfig menu
+                        self.state = MenuState::InputConfig;
+                    },
+                    MenuItemTrigger::Back => {
+                        println!("[!] what? 1");
+                    },
+                    _ => println!("[!] Wrong menu?"),
                 }
             }
             MenuState::InputConfig => {

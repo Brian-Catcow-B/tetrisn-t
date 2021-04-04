@@ -530,10 +530,6 @@ impl BoardClassic {
             // not much to see here
             return (0, 0);
         }
-        println!(
-            "clearing lines now size: {}",
-            vec_clearing_now_indices.len()
-        );
 
         // for the return value, we need to know how many lines are being cleared (the first return in the tuple)
         // and we need to know the amount of points from the lines clearing right now (the second in the tuple)
