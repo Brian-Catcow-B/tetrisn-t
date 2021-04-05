@@ -51,16 +51,15 @@ pub struct MenuItem {
 }
 
 impl MenuItem {
-    fn new(item_start_str: String, value_type: MenuItemValueType, value: usize, trigger: MenuItemTrigger) -> Self {
-        let mut text = Text::new(
-            TextFragment::new(item_start_str)
-                .color(graphics::BLACK)
-        );
+    fn new(
+        item_start_str: String,
+        value_type: MenuItemValueType,
+        value: usize,
+        trigger: MenuItemTrigger,
+    ) -> Self {
+        let mut text = Text::new(TextFragment::new(item_start_str).color(graphics::BLACK));
         if value_type != MenuItemValueType::None {
-            text.add(
-                TextFragment::new(format!(" {}", value))
-                    .color(graphics::BLACK)
-            );
+            text.add(TextFragment::new(format!(" {}", value)).color(graphics::BLACK));
         }
         Self {
             text,
@@ -69,10 +68,10 @@ impl MenuItem {
         }
     }
 
-    fn color(&mut self, new_color: Color) {
-        self.text.fragments_mut()[0].color = Some(new_color);
+    fn color(&mut self, new_color: &Color) {
+        self.text.fragments_mut()[0].color = Some(*new_color);
         if self.value_type != MenuItemValueType::None {
-            self.text.fragments_mut()[1].color = Some(new_color);
+            self.text.fragments_mut()[1].color = Some(*new_color);
         }
     }
 }
@@ -202,14 +201,15 @@ impl Menu {
                         } else {
                             self.start_menu.not_enough_controls_flag = true;
                         }
-                    },
+                    }
                     MenuItemTrigger::SubMenu1 => {
                         // InputConfig menu
                         self.state = MenuState::InputConfig;
-                    },
+                    }
                     MenuItemTrigger::Back => {
                         println!("[!] what? 1");
-                    },
+                    }
+                    MenuItemTrigger::None => {}
                     _ => println!("[!] Wrong menu?"),
                 }
             }

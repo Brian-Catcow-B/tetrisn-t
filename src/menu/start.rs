@@ -4,6 +4,7 @@ use ggez::nalgebra::Point2;
 use ggez::Context;
 
 use crate::inputs::Input;
+use crate::menu::{MenuItem, MenuItemTrigger};
 
 use crate::menu::MAX_NUM_PLAYERS;
 use crate::menu::MAX_STARTING_LEVEL;
@@ -30,6 +31,7 @@ pub struct StartMenu {
     pub starting_level: u8,
     pub not_enough_controls_flag: bool,
     // drawing
+    // vec_menu_items: Vec<MenuItem>,
     start_text: Text,
     not_enough_controls_text: Text,
     num_players_text: Text,
@@ -84,7 +86,7 @@ impl StartMenu {
         }
     }
 
-    pub fn update(&mut self, input: &Input) -> (bool, bool) {
+    pub fn update(&mut self, input: &Input) -> MenuItemTrigger {
         if input.keydown_right.1 {
             self.inc_or_dec_selection(true);
         }
@@ -111,13 +113,14 @@ impl StartMenu {
 
         if input.keydown_start.1 && self.selection == StartMenuOption::Controls as u8 {
             self.not_enough_controls_flag = false;
-            return (false, true);
+            return MenuItemTrigger::SubMenu1;
         }
 
         if input.keydown_start.1 && self.selection == StartMenuOption::Start as u8 {
-            return (true, false);
+            return MenuItemTrigger::StartGame;
         }
-        (false, false)
+
+        MenuItemTrigger::None
     }
 
     fn set_select(&mut self, select_flag: bool) {
