@@ -22,12 +22,6 @@ mod start;
 use inputconfig::InputConfigMenu;
 use start::StartMenu;
 
-pub enum MenuItemSize {
-    Small,
-    Normal,
-    Big,
-}
-
 #[derive(Eq, PartialEq)]
 pub enum MenuItemValueType {
     None,
@@ -35,7 +29,7 @@ pub enum MenuItemValueType {
     StartingLevel,
 }
 
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Copy, Clone)]
 pub enum MenuItemTrigger {
     None,
     StartGame,
@@ -45,33 +39,82 @@ pub enum MenuItemTrigger {
 }
 
 pub struct MenuItem {
-    text: Text,
-    value_type: MenuItemValueType,
-    trigger: MenuItemTrigger,
+    pub text: Text,
+    pub value_type: MenuItemValueType,
+    max_value: u8,
+    pub value: u8,
+    value_show_increase: u8,
+    pub trigger: MenuItemTrigger,
+    selected: bool,
 }
 
 impl MenuItem {
-    fn new(
-        item_start_str: String,
+    pub fn new(
+        item_start_str: &str,
         value_type: MenuItemValueType,
-        value: usize,
+        value: u8,
         trigger: MenuItemTrigger,
     ) -> Self {
         let mut text = Text::new(TextFragment::new(item_start_str).color(graphics::BLACK));
-        if value_type != MenuItemValueType::None {
-            text.add(TextFragment::new(format!(" {}", value)).color(graphics::BLACK));
+        let mut max_value = 0;
+        let mut value_show_increase = 0;
+        match value_type {
+            MenuItemValueType::None => {}
+            MenuItemValueType::NumPlayers => {
+                max_value = MAX_NUM_PLAYERS;
+                value_show_increase = 1;
+                text.add(
+                    TextFragment::new(format!(" {}", value + value_show_increase))
+                        .color(graphics::BLACK),
+                );
+            }
+            MenuItemValueType::StartingLevel => {
+                max_value = MAX_STARTING_LEVEL;
+                text.add(TextFragment::new(format!(" {}", value)).color(graphics::BLACK));
+            }
         }
         Self {
             text,
             value_type,
+            max_value,
+            value,
+            value_show_increase,
             trigger,
+            selected: false,
         }
     }
 
-    fn color(&mut self, new_color: &Color) {
-        self.text.fragments_mut()[0].color = Some(*new_color);
+    pub fn set_select(&mut self, select: bool) {
+        self.selected = select;
+        self.text.fragments_mut()[0].color = Some(if select {
+            SELECT_GREEN
+        } else {
+            graphics::BLACK
+        });
         if self.value_type != MenuItemValueType::None {
-            self.text.fragments_mut()[1].color = Some(*new_color);
+            self.text.fragments_mut()[1].color = Some(if select {
+                SELECT_GREEN
+            } else {
+                graphics::BLACK
+            });
+            self.text.fragments_mut()[1].text = if select {
+                format!(" <{}>", self.value + self.value_show_increase)
+            } else {
+                format!(" {}", self.value + self.value_show_increase)
+            };
+        }
+    }
+
+    pub fn inc_or_dec(&mut self, inc: bool) {
+        if self.value_type != MenuItemValueType::None {
+            self.value = if inc {
+                (self.value + 1) % self.max_value
+            } else {
+                (self.value - 1 + self.max_value) % self.max_value
+            };
+            // assume it's selected because it's being incremented/decremented
+            self.text.fragments_mut()[1].text =
+                format!(" <{}>", self.value + self.value_show_increase);
         }
     }
 }
@@ -160,7 +203,6 @@ impl Menu {
                 input: Input::new(),
                 state: MenuState::Start,
                 start_menu: StartMenu::new(
-                    window_dimensions,
                     menu_game_options.num_players,
                     menu_game_options.starting_level,
                 ),
@@ -174,7 +216,7 @@ impl Menu {
             Self {
                 input: Input::new(),
                 state: MenuState::Start,
-                start_menu: StartMenu::new(window_dimensions, 1, 0),
+                start_menu: StartMenu::new(1, 0),
                 input_config_menu: InputConfigMenu::new(
                     window_dimensions,
                     [(None, false); MAX_NUM_PLAYERS as usize],
@@ -190,11 +232,13 @@ impl Menu {
                 match trigger {
                     MenuItemTrigger::StartGame => {
                         if self.ensure_enough_controls() {
+                            let (num_players, starting_level) =
+                                self.start_menu.find_important_values();
                             return Some((
                                 ProgramState::Game,
                                 MenuGameOptions::new(
-                                    self.start_menu.num_players,
-                                    self.start_menu.starting_level,
+                                    num_players,
+                                    starting_level,
                                     self.input_config_menu.arr_split_controls,
                                 ),
                             ));
@@ -204,6 +248,7 @@ impl Menu {
                     }
                     MenuItemTrigger::SubMenu1 => {
                         // InputConfig menu
+                        self.start_menu.not_enough_controls_flag = false;
                         self.state = MenuState::InputConfig;
                     }
                     MenuItemTrigger::Back => {
@@ -231,7 +276,7 @@ impl Menu {
                 ctrls_count += 1;
             }
         }
-        ctrls_count >= self.start_menu.num_players
+        ctrls_count >= self.start_menu.find_important_values().0
     }
 
     pub fn key_down_event(&mut self, keycode: KeyCode, _repeat: bool) {
