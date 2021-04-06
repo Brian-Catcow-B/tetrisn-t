@@ -99,6 +99,21 @@ impl StartMenu {
         MenuItemTrigger::None
     }
 
+    // searches through self.vec_menu_items and gets the important values; returns (num_players, starting_level)
+    pub fn find_important_values(&self) -> (u8, u8) {
+        let mut num_players = 0;
+        let mut starting_level = 0;
+        for item in self.vec_menu_items.iter() {
+            match item.value_type {
+                MenuItemValueType::None => {}
+                MenuItemValueType::NumPlayers => num_players = item.value + 1,
+                MenuItemValueType::StartingLevel => starting_level = item.value,
+            }
+        }
+
+        (num_players, starting_level)
+    }
+
     pub fn draw(&mut self, ctx: &mut Context) {
         let window_dimensions = graphics::size(ctx);
         let num_menu_items_to_draw = self.vec_menu_items.len();
@@ -135,18 +150,9 @@ impl StartMenu {
         .unwrap();
     }
 
-    // searches through self.vec_menu_items and gets the important values; returns (num_players, starting_level)
-    pub fn find_important_values(&self) -> (u8, u8) {
-        let mut num_players = 0;
-        let mut starting_level = 0;
-        for item in self.vec_menu_items.iter() {
-            match item.value_type {
-                MenuItemValueType::None => {}
-                MenuItemValueType::NumPlayers => num_players = item.value + 1,
-                MenuItemValueType::StartingLevel => starting_level = item.value,
-            }
+    pub fn resize_event(&mut self, height: f32) {
+        for item in self.vec_menu_items.iter_mut() {
+            item.resize(height);
         }
-
-        (num_players, starting_level)
     }
 }

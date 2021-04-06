@@ -1,5 +1,5 @@
 use ggez::event::KeyCode;
-use ggez::graphics::{self, Color, Scale, Text, TextFragment};
+use ggez::graphics::{self, Color, Font, Scale, Text, TextFragment};
 use ggez::Context;
 
 use crate::control::ProgramState;
@@ -58,12 +58,7 @@ impl MenuItem {
         text_scale_down: f32,
         trigger: MenuItemTrigger,
     ) -> Self {
-        println!("window height: {:?}", window_height);
-        let mut text = Text::new(
-            TextFragment::new(item_start_str)
-                .color(graphics::BLACK)
-                .scale(Scale::uniform(window_height / text_scale_down)),
-        );
+        let mut text = Text::new(TextFragment::new(item_start_str).color(graphics::BLACK));
         let mut max_value = 0;
         let mut value_show_increase = 0;
         match value_type {
@@ -73,19 +68,18 @@ impl MenuItem {
                 value_show_increase = 1;
                 text.add(
                     TextFragment::new(format!(" {}", value + value_show_increase))
-                        .color(graphics::BLACK)
-                        .scale(Scale::uniform(window_height / text_scale_down)),
+                        .color(graphics::BLACK),
                 );
             }
             MenuItemValueType::StartingLevel => {
                 max_value = MAX_STARTING_LEVEL;
-                text.add(
-                    TextFragment::new(format!(" {}", value))
-                        .color(graphics::BLACK)
-                        .scale(Scale::uniform(window_height / text_scale_down)),
-                );
+                text.add(TextFragment::new(format!(" {}", value)).color(graphics::BLACK));
             }
         }
+        text.set_font(
+            Font::default(),
+            Scale::uniform(window_height / text_scale_down),
+        );
         Self {
             text,
             value_type,
@@ -130,6 +124,13 @@ impl MenuItem {
             self.text.fragments_mut()[1].text =
                 format!(" <{}>", self.value + self.value_show_increase);
         }
+    }
+
+    pub fn resize(&mut self, window_height: f32) {
+        self.text.set_font(
+            Font::default(),
+            Scale::uniform(window_height / self.text_scale_down),
+        );
     }
 }
 
@@ -356,6 +357,13 @@ impl Menu {
         match self.state {
             MenuState::Start => self.start_menu.draw(ctx),
             MenuState::InputConfig => self.input_config_menu.draw(ctx),
+        }
+    }
+
+    pub fn resize_event(&mut self, width: f32, height: f32) {
+        match self.state {
+            MenuState::Start => self.start_menu.resize_event(height),
+            MenuState::InputConfig => {}
         }
     }
 }

@@ -181,6 +181,20 @@ impl EventHandler for Control {
     fn resize_event(&mut self, ctx: &mut Context, width: f32, height: f32) {
         let new_rect = graphics::Rect::new(0.0, 0.0, width, height);
         graphics::set_screen_coordinates(ctx, new_rect).unwrap();
+
+        match self.state {
+            ProgramState::Menu => self
+                .menu
+                .as_mut()
+                .expect("[!] control.state == ProgramState::Menu but control.menu == None")
+                .resize_event(width, height),
+            ProgramState::Game => {}
+                // self
+                // .game
+                // .as_mut()
+                // .expect("[!] control.state == ProgramState::Game but control.game == None")
+                // .resize_event(width, height),
+        };
     }
 
     fn focus_event(&mut self, _ctx: &mut Context, gained: bool) {
