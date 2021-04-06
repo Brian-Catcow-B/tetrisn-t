@@ -6,6 +6,8 @@ use ggez::Context;
 use crate::inputs::Input;
 use crate::menu::{MenuItem, MenuItemTrigger, MenuItemValueType};
 
+use crate::menu::TEXT_SCALE_DOWN;
+
 use crate::menu::HELP_RED;
 
 pub struct StartMenu {
@@ -18,30 +20,38 @@ pub struct StartMenu {
 }
 
 impl StartMenu {
-    pub fn new(num_players: u8, starting_level: u8) -> Self {
+    pub fn new(window_dimensions: (f32, f32), num_players: u8, starting_level: u8) -> Self {
         let mut vec_menu_items: Vec<MenuItem> = Vec::with_capacity(4);
         vec_menu_items.push(MenuItem::new(
             "Start",
             MenuItemValueType::None,
             0,
+            window_dimensions.1,
+            TEXT_SCALE_DOWN,
             MenuItemTrigger::StartGame,
         ));
         vec_menu_items.push(MenuItem::new(
             "Number of Players: ",
             MenuItemValueType::NumPlayers,
             num_players - 1,
+            window_dimensions.1,
+            TEXT_SCALE_DOWN,
             MenuItemTrigger::StartGame,
         ));
         vec_menu_items.push(MenuItem::new(
             "Starting Level: ",
             MenuItemValueType::StartingLevel,
             starting_level,
+            window_dimensions.1,
+            TEXT_SCALE_DOWN,
             MenuItemTrigger::StartGame,
         ));
         vec_menu_items.push(MenuItem::new(
             "Controls",
             MenuItemValueType::None,
             0,
+            window_dimensions.1,
+            TEXT_SCALE_DOWN,
             MenuItemTrigger::SubMenu1,
         ));
         vec_menu_items[0].set_select(true);

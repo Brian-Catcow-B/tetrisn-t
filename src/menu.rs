@@ -1,5 +1,5 @@
 use ggez::event::KeyCode;
-use ggez::graphics::{self, Color, Text, TextFragment};
+use ggez::graphics::{self, Color, Scale, Text, TextFragment};
 use ggez::Context;
 
 use crate::control::ProgramState;
@@ -44,6 +44,7 @@ pub struct MenuItem {
     max_value: u8,
     pub value: u8,
     value_show_increase: u8,
+    text_scale_down: f32,
     pub trigger: MenuItemTrigger,
     selected: bool,
 }
@@ -53,9 +54,16 @@ impl MenuItem {
         item_start_str: &str,
         value_type: MenuItemValueType,
         value: u8,
+        window_height: f32,
+        text_scale_down: f32,
         trigger: MenuItemTrigger,
     ) -> Self {
-        let mut text = Text::new(TextFragment::new(item_start_str).color(graphics::BLACK));
+        println!("window height: {:?}", window_height);
+        let mut text = Text::new(
+            TextFragment::new(item_start_str)
+                .color(graphics::BLACK)
+                .scale(Scale::uniform(window_height / text_scale_down)),
+        );
         let mut max_value = 0;
         let mut value_show_increase = 0;
         match value_type {
@@ -65,12 +73,17 @@ impl MenuItem {
                 value_show_increase = 1;
                 text.add(
                     TextFragment::new(format!(" {}", value + value_show_increase))
-                        .color(graphics::BLACK),
+                        .color(graphics::BLACK)
+                        .scale(Scale::uniform(window_height / text_scale_down)),
                 );
             }
             MenuItemValueType::StartingLevel => {
                 max_value = MAX_STARTING_LEVEL;
-                text.add(TextFragment::new(format!(" {}", value)).color(graphics::BLACK));
+                text.add(
+                    TextFragment::new(format!(" {}", value))
+                        .color(graphics::BLACK)
+                        .scale(Scale::uniform(window_height / text_scale_down)),
+                );
             }
         }
         Self {
@@ -79,6 +92,7 @@ impl MenuItem {
             max_value,
             value,
             value_show_increase,
+            text_scale_down,
             trigger,
             selected: false,
         }
@@ -203,6 +217,7 @@ impl Menu {
                 input: Input::new(),
                 state: MenuState::Start,
                 start_menu: StartMenu::new(
+                    window_dimensions,
                     menu_game_options.num_players,
                     menu_game_options.starting_level,
                 ),
@@ -216,7 +231,7 @@ impl Menu {
             Self {
                 input: Input::new(),
                 state: MenuState::Start,
-                start_menu: StartMenu::new(1, 0),
+                start_menu: StartMenu::new(window_dimensions, 1, 0),
                 input_config_menu: InputConfigMenu::new(
                     window_dimensions,
                     [(None, false); MAX_NUM_PLAYERS as usize],
