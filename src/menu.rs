@@ -360,7 +360,7 @@ impl Menu {
         }
     }
 
-    pub fn resize_event(&mut self, width: f32, height: f32) {
+    pub fn resize_event(&mut self, height: f32) {
         match self.state {
             MenuState::Start => self.start_menu.resize_event(height),
             MenuState::InputConfig => {}

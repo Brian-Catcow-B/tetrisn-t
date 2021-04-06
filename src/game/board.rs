@@ -656,7 +656,7 @@ impl BoardRotatris {
         for _ in 0..num_players {
             vec_active_piece.push(Piece::new(Shapes::None));
         }
-        let mut matrix = vec![vec![Tile::default(); board_size as usize]; board_size as usize];
+        let matrix = vec![vec![Tile::default(); board_size as usize]; board_size as usize];
 
         // DEBUG
         // for a in 0..4 {
