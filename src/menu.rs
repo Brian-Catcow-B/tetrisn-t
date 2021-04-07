@@ -27,6 +27,8 @@ pub enum MenuItemValueType {
     None,
     NumPlayers,
     StartingLevel,
+    PlayerNum,
+    KeyCode,
 }
 
 #[derive(Eq, PartialEq, Copy, Clone)]
@@ -36,6 +38,12 @@ pub enum MenuItemTrigger {
     SubMenu1,
     SubMenu2,
     Back,
+    SubSelection,
+    KeyLeft,
+    KeyRight,
+    KeyDown,
+    KeyRotateCw,
+    KeyRotateCcw,
 }
 
 pub struct MenuItem {
@@ -43,6 +51,7 @@ pub struct MenuItem {
     pub value_type: MenuItemValueType,
     max_value: u8,
     pub value: u8,
+    pub keycode: Option<KeyCode>,
     value_show_increase: u8,
     text_scale_down: f32,
     pub trigger: MenuItemTrigger,
@@ -54,6 +63,7 @@ impl MenuItem {
         item_start_str: &str,
         value_type: MenuItemValueType,
         value: u8,
+        keycode: Option<KeyCode>,
         window_height: f32,
         text_scale_down: f32,
         trigger: MenuItemTrigger,
@@ -75,6 +85,17 @@ impl MenuItem {
                 max_value = MAX_STARTING_LEVEL;
                 text.add(TextFragment::new(format!(" {}", value)).color(graphics::BLACK));
             }
+            MenuItemValueType::StartingLevel => {
+                max_value = MAX_NUM_PLAYERS;
+                value_show_increase = 1;
+                text.add(
+                    TextFragment::new(format!(" {}", value + value_show_increase))
+                        .color(graphics::BLACK),
+                );
+            }
+            MenuItemValueType::KeyCode => {
+                text.add(TextFragment::new(format!("{:?}", keycode)).color(graphics::BLACK));
+            }
         }
         text.set_font(
             Font::default(),
@@ -85,6 +106,7 @@ impl MenuItem {
             value_type,
             max_value,
             value,
+            keycode,
             value_show_increase,
             text_scale_down,
             trigger,
@@ -105,16 +127,24 @@ impl MenuItem {
             } else {
                 graphics::BLACK
             });
-            self.text.fragments_mut()[1].text = if select {
-                format!(" <{}>", self.value + self.value_show_increase)
-            } else {
-                format!(" {}", self.value + self.value_show_increase)
-            };
+            if self.value_type == MenuItemValueType::NumPlayers
+                || self.value_type == MenuItemValueType::StartingLevel
+                || self.value_type == MenuItemValueType::PlayerNum
+            {
+                self.text.fragments_mut()[1].text = if select {
+                    format!("<{}>", self.value + self.value_show_increase)
+                } else {
+                    format!(" {}", self.value + self.value_show_increase)
+                };
+            }
         }
     }
 
     pub fn inc_or_dec(&mut self, inc: bool) {
-        if self.value_type != MenuItemValueType::None {
+        if self.value_type == MenuItemValueType::NumPlayers
+            || self.value_type == MenuItemValueType::StartingLevel
+            || self.value_type == MenuItemValueType::PlayerNum
+        {
             self.value = if inc {
                 (self.value + 1) % self.max_value
             } else {
@@ -122,8 +152,13 @@ impl MenuItem {
             };
             // assume it's selected because it's being incremented/decremented
             self.text.fragments_mut()[1].text =
-                format!(" <{}>", self.value + self.value_show_increase);
+                format!("<{}>", self.value + self.value_show_increase);
         }
+    }
+
+    pub fn set_keycode(&mut self, keycode: Option<KeyCode>) {
+        self.keycode = keycode;
+        self.text.fragments_mut()[1].text = format!("{:?}", keycode);
     }
 
     pub fn resize(&mut self, window_height: f32) {
