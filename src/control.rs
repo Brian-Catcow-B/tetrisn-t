@@ -7,6 +7,11 @@ use ggez::{Context, GameResult};
 use crate::game::{Game, GameOptions};
 use crate::menu::{Menu, MenuGameOptions};
 
+static STATE_MENU_BUT_MENU_NONE: &str =
+    "[!] control.state == ProgramState::Menu but control.menu == None";
+static STATE_GAME_BUT_GAME_NONE: &str =
+    "[!] control.state == ProgramState::Game but control.game == None";
+
 #[repr(u8)]
 #[derive(PartialEq, Eq, Copy, Clone)]
 pub enum ProgramState {
@@ -61,11 +66,8 @@ impl EventHandler for Control {
             match self.state {
                 ProgramState::Menu => {
                     // update the menu and get the state with GameOptions if ProgramState is changing
-                    if let Some(state_and_gameoptions) = self
-                        .menu
-                        .as_mut()
-                        .expect("[!] control.state == ProgramState::Menu but control.menu == None")
-                        .update()
+                    if let Some(state_and_gameoptions) =
+                        self.menu.as_mut().expect(STATE_MENU_BUT_MENU_NONE).update()
                     {
                         self.menu = None;
                         self.game_options = Some(state_and_gameoptions.1);
@@ -74,11 +76,8 @@ impl EventHandler for Control {
                 }
                 ProgramState::Game => {
                     // update the game and get the state that the program should be in
-                    let state_returned = self
-                        .game
-                        .as_mut()
-                        .expect("[!] control.state == ProgramState::Game but control.game == None")
-                        .update();
+                    let state_returned =
+                        self.game.as_mut().expect(STATE_GAME_BUT_GAME_NONE).update();
                     // should we change states?
                     if self.state != state_returned {
                         self.game = None;
@@ -102,12 +101,12 @@ impl EventHandler for Control {
             ProgramState::Menu => self
                 .menu
                 .as_mut()
-                .expect("[!] control.state == ProgramState::Menu but control.menu == None")
+                .expect(STATE_MENU_BUT_MENU_NONE)
                 .key_down_event(keycode, repeat),
             ProgramState::Game => self
                 .game
                 .as_mut()
-                .expect("[!] control.state == ProgramState::Game but control.game == None")
+                .expect(STATE_GAME_BUT_GAME_NONE)
                 .key_down_event(keycode, repeat),
         };
     }
@@ -117,12 +116,12 @@ impl EventHandler for Control {
             ProgramState::Menu => self
                 .menu
                 .as_mut()
-                .expect("[!] control.state == ProgramState::Menu but control.menu == None")
+                .expect(STATE_MENU_BUT_MENU_NONE)
                 .key_up_event(keycode),
             ProgramState::Game => self
                 .game
                 .as_mut()
-                .expect("[!] control.state == ProgramState::Game but control.game == None")
+                .expect(STATE_GAME_BUT_GAME_NONE)
                 .key_up_event(keycode),
         };
     }
@@ -133,7 +132,7 @@ impl EventHandler for Control {
             ProgramState::Game => self
                 .game
                 .as_mut()
-                .expect("[!] control.state == ProgramState::Game but control.game == None")
+                .expect(STATE_GAME_BUT_GAME_NONE)
                 .gamepad_button_down_event(btn, id),
         };
     }
@@ -144,7 +143,7 @@ impl EventHandler for Control {
             ProgramState::Game => self
                 .game
                 .as_mut()
-                .expect("[!] control.state == ProgramState::Game but control.game == None")
+                .expect(STATE_GAME_BUT_GAME_NONE)
                 .gamepad_button_up_event(btn, id),
         };
     }
@@ -155,7 +154,7 @@ impl EventHandler for Control {
             ProgramState::Game => self
                 .game
                 .as_mut()
-                .expect("[!] control.state == ProgramState::Game but control.game == None")
+                .expect(STATE_GAME_BUT_GAME_NONE)
                 .gamepad_axis_event(axis, value, id),
         }
     }
@@ -165,12 +164,12 @@ impl EventHandler for Control {
             ProgramState::Menu => self
                 .menu
                 .as_mut()
-                .expect("[!] control.state == ProgramState::Menu but control.menu == None")
+                .expect(STATE_MENU_BUT_MENU_NONE)
                 .draw(ctx),
             ProgramState::Game => self
                 .game
                 .as_mut()
-                .expect("[!] control.state == ProgramState::Game but control.game == None")
+                .expect(STATE_GAME_BUT_GAME_NONE)
                 .draw(ctx),
         };
 
@@ -186,14 +185,13 @@ impl EventHandler for Control {
             ProgramState::Menu => self
                 .menu
                 .as_mut()
-                .expect("[!] control.state == ProgramState::Menu but control.menu == None")
+                .expect(STATE_MENU_BUT_MENU_NONE)
                 .resize_event(height),
-            ProgramState::Game => {}
-                // self
-                // .game
-                // .as_mut()
-                // .expect("[!] control.state == ProgramState::Game but control.game == None")
-                // .resize_event(width, height),
+            ProgramState::Game => self
+                .game
+                .as_mut()
+                .expect(STATE_GAME_BUT_GAME_NONE)
+                .resize_event(width, height),
         };
     }
 
@@ -201,7 +199,7 @@ impl EventHandler for Control {
         if self.state == ProgramState::Game {
             self.game
                 .as_mut()
-                .expect("[!] control.state == ProgramState::Game but control.game == None")
+                .expect(STATE_GAME_BUT_GAME_NONE)
                 .focus_event(gained);
         }
     }

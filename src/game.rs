@@ -292,6 +292,8 @@ impl Game {
                 .scale(Scale::uniform(LITTLE_TEXT_SCALE * 2.0)),
         );
 
+        let (window_width, window_height) = graphics::size(ctx);
+
         Self {
             bh: BoardHandler::new(board_width, board_height, game_options.num_players, mode),
             num_players: game_options.num_players,
@@ -309,7 +311,12 @@ impl Game {
             gravity_direction: Movement::Down,
             game_over_flag: false,
             game_over_delay: GAME_OVER_DELAY,
-            tile_size: 0f32,
+            tile_size: TileGraphic::get_size(
+                window_width,
+                window_height,
+                board_width,
+                board_height + NON_BOARD_SPACE_U + NON_BOARD_SPACE_D,
+            ),
             batch_empty_tile,
             batch_highlight_active_tile: spritebatch::SpriteBatch::new(
                 TileGraphic::new_active_highlight(ctx).image,
@@ -722,8 +729,6 @@ impl Game {
         // start doing drawing stuff
         graphics::clear(ctx, graphics::BLACK);
         let (window_width, window_height) = graphics::size(ctx);
-        self.tile_size =
-            TileGraphic::get_size(ctx, width, height + NON_BOARD_SPACE_U + NON_BOARD_SPACE_D);
         if self.game_over_flag && self.game_over_delay == 0 {
             // DRAW GAME OVER
             self.draw_text(
@@ -1042,6 +1047,15 @@ impl Game {
             )),
         )
         .unwrap();
+    }
+
+    pub fn resize_event(&mut self, width: f32, height: f32) {
+        self.tile_size = TileGraphic::get_size(
+            width,
+            height,
+            self.bh.get_width(),
+            self.bh.get_height() + NON_BOARD_SPACE_U + NON_BOARD_SPACE_D,
+        );
     }
 
     pub fn focus_event(&mut self, gained: bool) {

@@ -561,10 +561,15 @@ impl TileGraphic {
         }
     }
 
-    pub fn get_size(ctx: &mut Context, board_width: u8, board_height: u8) -> f32 {
+    pub fn get_size(
+        window_width: f32,
+        window_height: f32,
+        board_width: u8,
+        board_height: u8,
+    ) -> f32 {
         std::cmp::min(
-            graphics::size(ctx).1 as u32 / board_height as u32,
-            graphics::size(ctx).0 as u32 / board_width as u32,
+            window_height as u32 / board_height as u32,
+            window_width as u32 / board_width as u32,
         ) as f32
     }
 
