@@ -21,24 +21,6 @@ use crate::menu::SELECT_GREEN;
 static KEY_UNEXPECTEDLY_NONE: &str =
     "[!] KeyCode of most recently pressed key is unexpectedly None";
 
-// const NUM_INPUTCONFIGMENUOPTION_TEXT_ENTRIES: u8 = 2;
-// #[repr(u8)]
-// enum InputConfigMenuOption {
-//     Back,
-//     PlayerInput,
-// }
-
-// currently `Start` is, for keyboards, always `ESC`, and alternate controls are only for Left/Right/Down for controllers, so don't include that in the number of entries for keyboards
-// const NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_TEXT_ENTRIES: u8 = 5;
-// #[repr(u8)]
-// enum InputConfigMenuSubOptionKeyboard {
-//     Left,
-//     Right,
-//     Down,
-//     RotateCw,
-//     RotateCcw,
-// }
-
 pub struct InputConfigMenu {
     // logic
     selection: usize,
@@ -59,20 +41,12 @@ pub struct InputConfigMenu {
         bool,
     ); MAX_NUM_PLAYERS as usize],
     // text
-    vec_menu_items_text: Vec<MenuItem>,
-    // back_text: Text,
-    // player_num_text: Text,
+    vec_menu_items_main: Vec<MenuItem>,
     // subtext
     vec_menu_items_keycode: Vec<MenuItem>,
     input_uninitialized_text: Text,
     keycode_conflict_text: Text,
     is_gamepad_text: Text,
-    // k_left_text: Text,
-    // k_right_text: Text,
-    // k_down_text: Text,
-    // k_rotate_cw_text: Text,
-    // k_rotate_ccw_text: Text,
-    // k_start_text: Text,
 }
 
 impl InputConfigMenu {
@@ -102,8 +76,9 @@ impl InputConfigMenu {
             }
             arr_split_controls[idx].1 = ctrls.1;
         }
-        let mut vec_menu_items_text: Vec<MenuItem> = Vec::with_capacity(2);
-        vec_menu_items_text.push(MenuItem::new(
+        // main MenuItems
+        let mut vec_menu_items_main: Vec<MenuItem> = Vec::with_capacity(2);
+        vec_menu_items_main.push(MenuItem::new(
             "Back",
             MenuItemValueType::None,
             0,
@@ -112,7 +87,7 @@ impl InputConfigMenu {
             TEXT_SCALE_DOWN,
             MenuItemTrigger::Back,
         ));
-        vec_menu_items_text.push(MenuItem::new(
+        vec_menu_items_main.push(MenuItem::new(
             "Player Number: ",
             MenuItemValueType::PlayerNum,
             0,
@@ -121,17 +96,9 @@ impl InputConfigMenu {
             TEXT_SCALE_DOWN,
             MenuItemTrigger::SubSelection,
         ));
-        vec_menu_items_text[0].set_select(true);
-        // let mut player_num_text = Text::new(
-        //     TextFragment::new("Player Number: ")
-        //         .color(graphics::BLACK)
-        //         .scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
-        // );
-        // player_num_text.add(
-        //     TextFragment::new(" 1")
-        //         .color(graphics::BLACK)
-        //         .scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
-        // );
+        vec_menu_items_main[0].set_select(true);
+
+        // keycode MenuItems
         let first_player_previous_controls: (
             Option<KeyCode>,
             Option<KeyCode>,
@@ -140,31 +107,6 @@ impl InputConfigMenu {
             Option<KeyCode>,
         );
         if let Some(ctrls) = last_used_arr_controls[0].0 {
-            // k_left_text.add(
-            //     TextFragment::new(format!("{:?}", ctrls.left))
-            //         .color(graphics::BLACK)
-            //         .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-            // );
-            // k_right_text.add(
-            //     TextFragment::new(format!("{:?}", ctrls.right))
-            //         .color(graphics::BLACK)
-            //         .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-            // );
-            // k_down_text.add(
-            //     TextFragment::new(format!("{:?}", ctrls.down))
-            //         .color(graphics::BLACK)
-            //         .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-            // );
-            // k_rotate_cw_text.add(
-            //     TextFragment::new(format!("{:?}", ctrls.rotate_cw))
-            //         .color(graphics::BLACK)
-            //         .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-            // );
-            // k_rotate_ccw_text.add(
-            //     TextFragment::new(format!("{:?}", ctrls.rotate_ccw))
-            //         .color(graphics::BLACK)
-            //         .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-            // );
             first_player_previous_controls = (
                 Some(ctrls.left),
                 Some(ctrls.right),
@@ -221,89 +163,6 @@ impl InputConfigMenu {
             TEXT_SCALE_DOWN,
             MenuItemTrigger::KeyRotateCcw,
         ));
-        // let mut k_left_text = Text::new(
-        //     TextFragment::new("Left:     ")
-        //         .color(graphics::BLACK)
-        //         .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-        // );
-        // let mut k_right_text = Text::new(
-        //     TextFragment::new("Right:    ")
-        //         .color(graphics::BLACK)
-        //         .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-        // );
-        // let mut k_down_text = Text::new(
-        //     TextFragment::new("Down:     ")
-        //         .color(graphics::BLACK)
-        //         .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-        // );
-        // let mut k_rotate_cw_text = Text::new(
-        //     TextFragment::new("RotateCw:  ")
-        //         .color(graphics::BLACK)
-        //         .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-        // );
-        // let mut k_rotate_ccw_text = Text::new(
-        //     TextFragment::new("RotateCcw:  ")
-        //         .color(graphics::BLACK)
-        //         .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-        // );
-        // let k_start_text = Text::new(
-        //     TextFragment::new("Start/Pause: Esc")
-        //         .color(graphics::BLACK)
-        //         .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-        // );
-        // if let Some(ctrls) = last_used_arr_controls[0].0 {
-        //     k_left_text.add(
-        //         TextFragment::new(format!("{:?}", ctrls.left))
-        //             .color(graphics::BLACK)
-        //             .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-        //     );
-        //     k_right_text.add(
-        //         TextFragment::new(format!("{:?}", ctrls.right))
-        //             .color(graphics::BLACK)
-        //             .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-        //     );
-        //     k_down_text.add(
-        //         TextFragment::new(format!("{:?}", ctrls.down))
-        //             .color(graphics::BLACK)
-        //             .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-        //     );
-        //     k_rotate_cw_text.add(
-        //         TextFragment::new(format!("{:?}", ctrls.rotate_cw))
-        //             .color(graphics::BLACK)
-        //             .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-        //     );
-        //     k_rotate_ccw_text.add(
-        //         TextFragment::new(format!("{:?}", ctrls.rotate_ccw))
-        //             .color(graphics::BLACK)
-        //             .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-        //     );
-        // } else {
-        //     k_left_text.add(
-        //         TextFragment::new("None")
-        //             .color(graphics::BLACK)
-        //             .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-        //     );
-        //     k_right_text.add(
-        //         TextFragment::new("None")
-        //             .color(graphics::BLACK)
-        //             .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-        //     );
-        //     k_down_text.add(
-        //         TextFragment::new("None")
-        //             .color(graphics::BLACK)
-        //             .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-        //     );
-        //     k_rotate_cw_text.add(
-        //         TextFragment::new("None")
-        //             .color(graphics::BLACK)
-        //             .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-        //     );
-        //     k_rotate_ccw_text.add(
-        //         TextFragment::new("None")
-        //             .color(graphics::BLACK)
-        //             .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
-        //     );
-        // }
         Self {
             selection: 0,
             player_num: 0,
@@ -314,13 +173,7 @@ impl InputConfigMenu {
             keycode_conflict_flag: false,
             arr_split_controls,
             // text
-            vec_menu_items_text,
-            // back_text: Text::new(
-            //     TextFragment::new("Back")
-            //         .color(SELECT_GREEN)
-            //         .scale(Scale::uniform(window_dimensions.1 / TEXT_SCALE_DOWN)),
-            // ),
-            // player_num_text,
+            vec_menu_items_main,
             // subtext
             vec_menu_items_keycode,
             input_uninitialized_text: Text::new(
@@ -338,46 +191,40 @@ impl InputConfigMenu {
                     .color(graphics::BLACK)
                     .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
             ),
-            // k_left_text,
-            // k_right_text,
-            // k_down_text,
-            // k_rotate_cw_text,
-            // k_rotate_ccw_text,
-            // k_start_text,
         }
     }
 
     pub fn update(&mut self, input: &Input) -> bool {
         if !self.sub_selection_keyboard_flag {
             if input.keydown_right.1 {
-                self.vec_menu_items_text[self.selection].inc_or_dec(true);
+                self.vec_menu_items_main[self.selection].inc_or_dec(true);
             }
 
             if input.keydown_left.1 {
-                self.vec_menu_items_text[self.selection].inc_or_dec(false);
+                self.vec_menu_items_main[self.selection].inc_or_dec(false);
             }
 
             if input.keydown_down.1 {
-                self.vec_menu_items_text[self.selection].set_select(false);
-                self.selection = (self.selection + 1) % self.vec_menu_items_text.len();
-                self.vec_menu_items_text[self.selection].set_select(false);
+                self.vec_menu_items_main[self.selection].set_select(false);
+                self.selection = (self.selection + 1) % self.vec_menu_items_main.len();
+                self.vec_menu_items_main[self.selection].set_select(true);
                 self.most_recently_pressed_key = None;
             }
 
             if input.keydown_up.1 {
-                self.vec_menu_items_text[self.selection].set_select(false);
+                self.vec_menu_items_main[self.selection].set_select(false);
                 self.selection = if self.selection == 0 {
-                    self.vec_menu_items_text.len() - 1
+                    self.vec_menu_items_main.len() - 1
                 } else {
                     self.selection - 1
                 };
-                self.vec_menu_items_text[self.selection].set_select(true);
+                self.vec_menu_items_main[self.selection].set_select(true);
                 self.most_recently_pressed_key = None;
             }
 
             // special case, set player's controls to gamepad ('G' was pressed)
             if input.keydown_rotate_cw.1
-                && self.vec_menu_items_text[self.selection].trigger == MenuItemTrigger::SubSelection
+                && self.vec_menu_items_main[self.selection].trigger == MenuItemTrigger::SubSelection
             {
                 self.arr_split_controls[self.player_num as usize].1 = true;
                 if let Some(ctrls) = self.arr_split_controls[self.player_num as usize].0 {
@@ -388,10 +235,10 @@ impl InputConfigMenu {
 
             // 'Space' or 'Return' was pressed
             if input.keydown_start.1 {
-                if self.vec_menu_items_text[self.selection].trigger == MenuItemTrigger::Back {
+                if self.vec_menu_items_main[self.selection].trigger == MenuItemTrigger::Back {
                     self.sub_selection_keyboard = 0;
                     return true;
-                } else if self.vec_menu_items_text[self.selection].trigger
+                } else if self.vec_menu_items_main[self.selection].trigger
                     == MenuItemTrigger::SubSelection
                 {
                     self.most_recently_pressed_key = None;
@@ -404,13 +251,13 @@ impl InputConfigMenu {
                         Some((None, None, None, None, None));
                     self.update_sub_text_strings();
                     self.sub_selection_keyboard_flag = true;
-                    self.vec_menu_items_text[self.selection].set_select(true);
+                    self.vec_menu_items_main[self.selection].set_select(true);
                 }
             }
 
             // 'Escape' was pressed
             if input.keydown_rotate_ccw.1 {
-                if self.vec_menu_items_text[self.selection].trigger == MenuItemTrigger::SubSelection
+                if self.vec_menu_items_main[self.selection].trigger == MenuItemTrigger::SubSelection
                 {
                     // remove input stuff from selection if we are on the SubSelection option
                     if let Some(ctrls) = self.arr_split_controls[self.player_num as usize].0 {
@@ -532,121 +379,13 @@ impl InputConfigMenu {
             {
                 self.vec_used_keycode.remove(used_key_idx - items_removed);
                 items_removed += 1;
-                // we only need to get rid of NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_TEXT_ENTRIES
+                // we only need to get rid of self.vec_menu_items_keycode.len()
                 if items_removed >= self.vec_menu_items_keycode.len() {
                     return;
                 }
             }
         }
     }
-
-    // fn set_select(&mut self, select_flag: bool) {
-    //     TODO
-
-    //     if !self.sub_selection_keyboard_flag {
-    //         match self.selection {
-    //             x if x == InputConfigMenuOption::Back as u8 => {
-    //                 if select_flag {
-    //                     self.back_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-    //                 } else {
-    //                     self.back_text.fragments_mut()[0].color = Some(graphics::BLACK);
-    //                 }
-    //             }
-    //             x if x == InputConfigMenuOption::PlayerInput as u8 => {
-    //                 if select_flag {
-    //                     self.player_num_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-    //                     self.player_num_text.fragments_mut()[1].color = Some(SELECT_GREEN);
-    //                     self.player_num_text.fragments_mut()[1].text =
-    //                         format!("<{}>", self.player_num + 1);
-    //                 } else {
-    //                     self.player_num_text.fragments_mut()[0].color = Some(graphics::BLACK);
-    //                     self.player_num_text.fragments_mut()[1].color = Some(graphics::BLACK);
-    //                     self.player_num_text.fragments_mut()[1].text =
-    //                         format!(" {}", self.player_num + 1);
-    //                 }
-    //             }
-    //             _ => println!("[!] input_config_menu_option didn't find match"),
-    //         }
-    //     } else if self.sub_selection_keyboard_flag {
-    //         match self.sub_selection_keyboard {
-    //             x if x == InputConfigMenuSubOptionKeyboard::Left as u8 => {
-    //                 if select_flag {
-    //                     self.k_left_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-    //                     self.k_left_text.fragments_mut()[1].color = Some(SELECT_GREEN);
-    //                 } else {
-    //                     self.k_left_text.fragments_mut()[0].color = Some(graphics::BLACK);
-    //                     self.k_left_text.fragments_mut()[1].color = Some(graphics::BLACK);
-    //                     self.k_left_text.fragments_mut()[1].text = format!(" {:?}", self.most_recently_pressed_key.expect("[!] was setting keycode text, but most_recently_pressed_key == None"));
-    //                     self.most_recently_pressed_key = None;
-    //                 }
-    //             }
-    //             x if x == InputConfigMenuSubOptionKeyboard::Right as u8 => {
-    //                 if select_flag {
-    //                     self.k_right_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-    //                     self.k_right_text.fragments_mut()[1].color = Some(SELECT_GREEN);
-    //                 } else {
-    //                     self.k_right_text.fragments_mut()[0].color = Some(graphics::BLACK);
-    //                     self.k_right_text.fragments_mut()[1].color = Some(graphics::BLACK);
-    //                     self.k_right_text.fragments_mut()[1].text = format!(" {:?}", self.most_recently_pressed_key.expect("[!] was setting keycode text, but most_recently_pressed_key == None"));
-    //                     self.most_recently_pressed_key = None;
-    //                 }
-    //             }
-    //             x if x == InputConfigMenuSubOptionKeyboard::Down as u8 => {
-    //                 if select_flag {
-    //                     self.k_down_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-    //                     self.k_down_text.fragments_mut()[1].color = Some(SELECT_GREEN);
-    //                 } else {
-    //                     self.k_down_text.fragments_mut()[0].color = Some(graphics::BLACK);
-    //                     self.k_down_text.fragments_mut()[1].color = Some(graphics::BLACK);
-    //                     self.k_down_text.fragments_mut()[1].text = format!(" {:?}", self.most_recently_pressed_key.expect("[!] was setting keycode text, but most_recently_pressed_key == None"));
-    //                     self.most_recently_pressed_key = None;
-    //                 }
-    //             }
-    //             x if x == InputConfigMenuSubOptionKeyboard::RotateCw as u8 => {
-    //                 if select_flag {
-    //                     self.k_rotate_cw_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-    //                     self.k_rotate_cw_text.fragments_mut()[1].color = Some(SELECT_GREEN);
-    //                 } else {
-    //                     self.k_rotate_cw_text.fragments_mut()[0].color = Some(graphics::BLACK);
-    //                     self.k_rotate_cw_text.fragments_mut()[1].color = Some(graphics::BLACK);
-    //                     self.k_rotate_cw_text.fragments_mut()[1].text = format!(" {:?}", self.most_recently_pressed_key.expect("[!] was setting keycode text, but most_recently_pressed_key == None"));
-    //                     self.most_recently_pressed_key = None;
-    //                 }
-    //             }
-    //             x if x == InputConfigMenuSubOptionKeyboard::RotateCcw as u8 => {
-    //                 if select_flag {
-    //                     self.k_rotate_ccw_text.fragments_mut()[0].color = Some(SELECT_GREEN);
-    //                     self.k_rotate_ccw_text.fragments_mut()[1].color = Some(SELECT_GREEN);
-    //                 } else {
-    //                     self.k_rotate_ccw_text.fragments_mut()[0].color = Some(graphics::BLACK);
-    //                     self.k_rotate_ccw_text.fragments_mut()[1].color = Some(graphics::BLACK);
-    //                     self.k_rotate_ccw_text.fragments_mut()[1].text = format!(" {:?}", self.most_recently_pressed_key.expect("[!] was setting keycode text, but most_recently_pressed_key == None"));
-    //                     self.most_recently_pressed_key = None;
-    //                 }
-    //             }
-    //             _ => println!("[!] input_config_menu_option didn't find match"),
-    //         }
-    //     }
-    // }
-
-    // fn inc_or_dec_selection(&mut self, inc_flag: bool) {
-    //     if !self.sub_selection_keyboard_flag
-    //         && self.selection == InputConfigMenuOption::PlayerInput as u8
-    //     {
-    //         if inc_flag {
-    //             self.player_num = (self.player_num + 1) % MAX_NUM_PLAYERS;
-    //         } else {
-    //             self.player_num = if self.player_num == 0 {
-    //                 MAX_NUM_PLAYERS - 1
-    //             } else {
-    //                 self.player_num - 1
-    //             };
-    //         }
-    //         // display player_num + 1 because index by 1 to users
-    //         self.player_num_text.fragments_mut()[1].text = format!("<{}>", self.player_num + 1);
-    //         self.update_sub_text_strings();
-    //     }
-    // }
 
     fn update_sub_text_strings(&mut self) {
         // TODO
@@ -655,7 +394,7 @@ impl InputConfigMenu {
     pub fn draw(&mut self, ctx: &mut Context) {
         let window_dimensions = graphics::size(ctx);
 
-        for (index, item) in self.vec_menu_items_text.iter().enumerate() {
+        for (index, item) in self.vec_menu_items_main.iter().enumerate() {
             self.draw_text(
                 ctx,
                 &item.text,
@@ -668,7 +407,7 @@ impl InputConfigMenu {
 
         // display nothing special on InputConfigMenuOption::Back, so just draw the extra stuff when it's not on InputConfigMenuOption::Back
         // and then later determine which of the other InputConfigMenuOption's it is for the specifics
-        if self.vec_menu_items_text[self.selection].trigger != MenuItemTrigger::Back {
+        if self.vec_menu_items_main[self.selection].trigger != MenuItemTrigger::Back {
             // draw a rectangle containing the subtexts for choosing controls
             // with a color based on whether or not the user is editing controls
             let editing_indicator_rectangle: graphics::Mesh;
@@ -705,7 +444,7 @@ impl InputConfigMenu {
             }
             graphics::draw(ctx, &editing_indicator_rectangle, (Point2::new(0.0, 0.0),)).unwrap();
 
-            if self.vec_menu_items_text[self.selection].trigger != MenuItemTrigger::SubSelection {
+            if self.vec_menu_items_main[self.selection].trigger != MenuItemTrigger::SubSelection {
                 if self.keycode_conflict_flag {
                     self.draw_text(ctx, &self.keycode_conflict_text, 0.43, &window_dimensions);
                 }
@@ -719,12 +458,6 @@ impl InputConfigMenu {
                             &window_dimensions,
                         );
                     }
-                // self.draw_text(ctx, &self.k_left_text, 0.5, &window_dimensions);
-                // self.draw_text(ctx, &self.k_right_text, 0.55, &window_dimensions);
-                // self.draw_text(ctx, &self.k_down_text, 0.6, &window_dimensions);
-                // self.draw_text(ctx, &self.k_rotate_cw_text, 0.65, &window_dimensions);
-                // self.draw_text(ctx, &self.k_rotate_ccw_text, 0.7, &window_dimensions);
-                // self.draw_text(ctx, &self.k_start_text, 0.75, &window_dimensions);
                 } else if self.arr_split_controls[self.player_num as usize].1 {
                     self.draw_text(ctx, &self.is_gamepad_text, 0.63, &window_dimensions);
                 } else {
