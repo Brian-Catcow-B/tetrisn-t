@@ -18,6 +18,9 @@ use crate::menu::HELP_RED;
 use crate::menu::LIGHT_GRAY;
 use crate::menu::SELECT_GREEN;
 
+static KEY_UNEXPECTEDLY_NONE: &str =
+    "[!] KeyCode of most recently pressed key is unexpectedly None";
+
 // const NUM_INPUTCONFIGMENUOPTION_TEXT_ENTRIES: u8 = 2;
 // #[repr(u8)]
 // enum InputConfigMenuOption {
@@ -38,9 +41,9 @@ use crate::menu::SELECT_GREEN;
 
 pub struct InputConfigMenu {
     // logic
-    selection: u8,
+    selection: usize,
     player_num: u8,
-    sub_selection_keyboard: u8,
+    sub_selection_keyboard: usize,
     sub_selection_keyboard_flag: bool,
     pub most_recently_pressed_key: Option<KeyCode>,
     vec_used_keycode: Vec<KeyCode>,
@@ -101,7 +104,7 @@ impl InputConfigMenu {
         }
         let mut vec_menu_items_text: Vec<MenuItem> = Vec::with_capacity(2);
         vec_menu_items_text.push(MenuItem::new(
-            "back",
+            "Back",
             MenuItemValueType::None,
             0,
             None,
@@ -345,35 +348,36 @@ impl InputConfigMenu {
     }
 
     pub fn update(&mut self, input: &Input) -> bool {
-        if input.keydown_right.1 && !self.sub_selection_keyboard_flag {
-            self.inc_or_dec_selection(true);
-        }
-
-        if input.keydown_left.1 && !self.sub_selection_keyboard_flag {
-            self.inc_or_dec_selection(false);
-        }
-
         if !self.sub_selection_keyboard_flag {
+            if input.keydown_right.1 {
+                self.vec_menu_items_text[self.selection].inc_or_dec(true);
+            }
+
+            if input.keydown_left.1 {
+                self.vec_menu_items_text[self.selection].inc_or_dec(false);
+            }
+
             if input.keydown_down.1 {
-                self.set_select(false);
-                self.selection = (self.selection + 1) % NUM_INPUTCONFIGMENUOPTION_TEXT_ENTRIES;
-                self.set_select(true);
+                self.vec_menu_items_text[self.selection].set_select(false);
+                self.selection = (self.selection + 1) % self.vec_menu_items_text.len();
+                self.vec_menu_items_text[self.selection].set_select(false);
                 self.most_recently_pressed_key = None;
             }
 
             if input.keydown_up.1 {
-                self.set_select(false);
+                self.vec_menu_items_text[self.selection].set_select(false);
                 self.selection = if self.selection == 0 {
-                    NUM_INPUTCONFIGMENUOPTION_TEXT_ENTRIES - 1
+                    self.vec_menu_items_text.len() - 1
                 } else {
                     self.selection - 1
                 };
-                self.set_select(true);
+                self.vec_menu_items_text[self.selection].set_select(true);
                 self.most_recently_pressed_key = None;
             }
 
+            // special case, set player's controls to gamepad ('G' was pressed)
             if input.keydown_rotate_cw.1
-                && self.selection == InputConfigMenuOption::PlayerInput as u8
+                && self.vec_menu_items_text[self.selection].trigger == MenuItemTrigger::SubSelection
             {
                 self.arr_split_controls[self.player_num as usize].1 = true;
                 if let Some(ctrls) = self.arr_split_controls[self.player_num as usize].0 {
@@ -382,15 +386,14 @@ impl InputConfigMenu {
                 }
             }
 
-            if input.keydown_rotate_ccw.1 {
-                return true;
-            }
-
+            // 'Space' or 'Return' was pressed
             if input.keydown_start.1 {
-                if self.selection == InputConfigMenuOption::Back as u8 {
+                if self.vec_menu_items_text[self.selection].trigger == MenuItemTrigger::Back {
                     self.sub_selection_keyboard = 0;
                     return true;
-                } else if self.selection == InputConfigMenuOption::PlayerInput as u8 {
+                } else if self.vec_menu_items_text[self.selection].trigger
+                    == MenuItemTrigger::SubSelection
+                {
                     self.most_recently_pressed_key = None;
                     if let Some(ctrls) = self.arr_split_controls[self.player_num as usize].0 {
                         self.remove_from_used_keycodes(&ctrls);
@@ -401,30 +404,34 @@ impl InputConfigMenu {
                         Some((None, None, None, None, None));
                     self.update_sub_text_strings();
                     self.sub_selection_keyboard_flag = true;
-                    self.set_select(true);
+                    self.vec_menu_items_text[self.selection].set_select(true);
                 }
             }
 
-            // remove input stuff from selection if we are on PlayerInput and Escape is pressed
-            if self.selection == InputConfigMenuOption::PlayerInput as u8
-                && input.keydown_rotate_ccw.1
-            {
-                if let Some(ctrls) = self.arr_split_controls[self.player_num as usize].0 {
-                    self.remove_from_used_keycodes(&ctrls);
-                    self.arr_split_controls[self.player_num as usize].0 = None;
+            // 'Escape' was pressed
+            if input.keydown_rotate_ccw.1 {
+                if self.vec_menu_items_text[self.selection].trigger == MenuItemTrigger::SubSelection
+                {
+                    // remove input stuff from selection if we are on the SubSelection option
+                    if let Some(ctrls) = self.arr_split_controls[self.player_num as usize].0 {
+                        self.remove_from_used_keycodes(&ctrls);
+                        self.arr_split_controls[self.player_num as usize].0 = None;
+                    }
+                    self.arr_split_controls[self.player_num as usize].1 = false;
+                    self.most_recently_pressed_key = None;
+                } else {
+                    return true;
                 }
-                self.arr_split_controls[self.player_num as usize].1 = false;
-                self.most_recently_pressed_key = None;
             }
         } else if self.sub_selection_keyboard_flag && self.most_recently_pressed_key.is_some() {
-            // first check if the KeyCode is Escape, and if it is, just delete the layout entry and go out of the subselection section
+            // first check if the KeyCode is 'Escape', and if it is, just delete the layout entry and go out of the subselection section
             // second check if the KeyCode was already used. If it was, set the error message flag to true
             if input.keydown_rotate_ccw.1 {
-                self.set_select(false);
+                self.vec_menu_items_keycode[self.sub_selection_keyboard].set_select(false);
                 self.keycode_conflict_flag = false;
                 self.sub_selection_keyboard = 0;
                 self.sub_selection_keyboard_flag = false;
-                // the user was in the middle of creating keyboard controls when they hit Escape, so pop however many KeyCode's off vec_used_keycode as the user set up
+                // the user was in the middle of creating keyboard controls when they hit 'Escape', so pop however many KeyCode's off vec_used_keycode that the user set up
                 if let Some(ctrls) = self.arr_split_controls[self.player_num as usize].0 {
                     if (ctrls.3).is_some() {
                         for _ in 1..=4 {
@@ -444,54 +451,46 @@ impl InputConfigMenu {
                 }
                 self.arr_split_controls[self.player_num as usize].0 = None;
                 self.most_recently_pressed_key = None;
-            } else if self.vec_used_keycode.contains(
-                &self
-                    .most_recently_pressed_key
-                    .expect("[!] KeyCode of most recently pressed key is unexpectedly None"),
-            ) {
+            } else if self
+                .vec_used_keycode
+                .contains(&self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE))
+            {
+                // user tried to press a key that is currently assigned
                 self.keycode_conflict_flag = true;
             } else {
+                // no conflict, enter KeyCode of key pressed
                 self.keycode_conflict_flag = false;
                 match (self.arr_split_controls[self.player_num as usize].0).as_mut() {
-                    Some(mut ctrls) => match self.sub_selection_keyboard {
-                        x if x == InputConfigMenuSubOptionKeyboard::Left as u8 => {
+                    Some(mut ctrls) => match self.vec_menu_items_keycode
+                        [self.sub_selection_keyboard]
+                        .trigger
+                    {
+                        MenuItemTrigger::KeyLeft => {
                             ctrls.0 = self.most_recently_pressed_key;
                             self.vec_used_keycode
-                                .push(self.most_recently_pressed_key.expect(
-                                    "[!] KeyCode of most recently pressed key is unexpectedly None",
-                                ));
+                                .push(self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE));
                         }
-                        x if x == InputConfigMenuSubOptionKeyboard::Right as u8 => {
+                        MenuItemTrigger::KeyRight => {
                             ctrls.1 = self.most_recently_pressed_key;
                             self.vec_used_keycode
-                                .push(self.most_recently_pressed_key.expect(
-                                    "[!] KeyCode of most recently pressed key is unexpectedly None",
-                                ));
+                                .push(self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE));
                         }
-                        x if x == InputConfigMenuSubOptionKeyboard::Down as u8 => {
+                        MenuItemTrigger::KeyDown => {
                             ctrls.2 = self.most_recently_pressed_key;
                             self.vec_used_keycode
-                                .push(self.most_recently_pressed_key.expect(
-                                    "[!] KeyCode of most recently pressed key is unexpectedly None",
-                                ));
+                                .push(self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE));
                         }
-                        x if x == InputConfigMenuSubOptionKeyboard::RotateCw as u8 => {
+                        MenuItemTrigger::KeyRotateCw => {
                             ctrls.3 = self.most_recently_pressed_key;
                             self.vec_used_keycode
-                                .push(self.most_recently_pressed_key.expect(
-                                    "[!] KeyCode of most recently pressed key is unexpectedly None",
-                                ));
+                                .push(self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE));
                         }
-                        x if x == InputConfigMenuSubOptionKeyboard::RotateCcw as u8 => {
+                        MenuItemTrigger::KeyRotateCcw => {
                             ctrls.4 = self.most_recently_pressed_key;
                             self.vec_used_keycode
-                                .push(self.most_recently_pressed_key.expect(
-                                    "[!] KeyCode of most recently pressed key is unexpectedly None",
-                                ));
+                                .push(self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE));
                         }
-                        _ => println!(
-                            "[!] couldn't get correct tuple index to set most recently pressed key"
-                        ),
+                        _ => println!("[!] weird MenuItemTrigger in vec_menu_items_keycode item"),
                     },
                     None => {
                         println!(
@@ -500,12 +499,10 @@ impl InputConfigMenu {
                         );
                     }
                 }
-                self.set_select(false);
-                if self.sub_selection_keyboard
-                    < NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_TEXT_ENTRIES as u8 - 1
-                {
+                self.vec_menu_items_keycode[self.sub_selection_keyboard].set_select(false);
+                if self.sub_selection_keyboard < self.vec_menu_items_keycode.len() - 1 {
                     self.sub_selection_keyboard += 1;
-                    self.set_select(true);
+                    self.vec_menu_items_keycode[self.sub_selection_keyboard].set_select(true);
                 } else {
                     self.sub_selection_keyboard = 0;
                     self.sub_selection_keyboard_flag = false;
@@ -536,7 +533,7 @@ impl InputConfigMenu {
                 self.vec_used_keycode.remove(used_key_idx - items_removed);
                 items_removed += 1;
                 // we only need to get rid of NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_TEXT_ENTRIES
-                if items_removed >= NUM_INPUTCONFIGMENUSUBOPTIONKEYBOARD_TEXT_ENTRIES as usize {
+                if items_removed >= self.vec_menu_items_keycode.len() {
                     return;
                 }
             }
@@ -653,49 +650,6 @@ impl InputConfigMenu {
 
     fn update_sub_text_strings(&mut self) {
         // TODO
-
-        // if let Some(ctrls) = self.arr_split_controls[self.player_num as usize].0 {
-        //     match ctrls.0 {
-        //         Some(keycode) => {
-        //             self.k_left_text.fragments_mut()[1].text = format!("{:?}", keycode);
-        //         }
-        //         None => {
-        //             self.k_left_text.fragments_mut()[1].text = "None".to_string();
-        //         }
-        //     }
-        //     match ctrls.1 {
-        //         Some(keycode) => {
-        //             self.k_right_text.fragments_mut()[1].text = format!("{:?}", keycode);
-        //         }
-        //         None => {
-        //             self.k_right_text.fragments_mut()[1].text = "None".to_string();
-        //         }
-        //     }
-        //     match ctrls.2 {
-        //         Some(keycode) => {
-        //             self.k_down_text.fragments_mut()[1].text = format!("{:?}", keycode);
-        //         }
-        //         None => {
-        //             self.k_down_text.fragments_mut()[1].text = "None".to_string();
-        //         }
-        //     }
-        //     match ctrls.3 {
-        //         Some(keycode) => {
-        //             self.k_rotate_cw_text.fragments_mut()[1].text = format!("{:?}", keycode);
-        //         }
-        //         None => {
-        //             self.k_rotate_cw_text.fragments_mut()[1].text = "None".to_string();
-        //         }
-        //     }
-        //     match ctrls.4 {
-        //         Some(keycode) => {
-        //             self.k_rotate_ccw_text.fragments_mut()[1].text = format!("{:?}", keycode);
-        //         }
-        //         None => {
-        //             self.k_rotate_ccw_text.fragments_mut()[1].text = "None".to_string();
-        //         }
-        //     }
-        // }
     }
 
     pub fn draw(&mut self, ctx: &mut Context) {
@@ -714,7 +668,7 @@ impl InputConfigMenu {
 
         // display nothing special on InputConfigMenuOption::Back, so just draw the extra stuff when it's not on InputConfigMenuOption::Back
         // and then later determine which of the other InputConfigMenuOption's it is for the specifics
-        if self.selection != InputConfigMenuOption::Back as u8 {
+        if self.vec_menu_items_text[self.selection].trigger != MenuItemTrigger::Back {
             // draw a rectangle containing the subtexts for choosing controls
             // with a color based on whether or not the user is editing controls
             let editing_indicator_rectangle: graphics::Mesh;
@@ -751,7 +705,7 @@ impl InputConfigMenu {
             }
             graphics::draw(ctx, &editing_indicator_rectangle, (Point2::new(0.0, 0.0),)).unwrap();
 
-            if self.selection == InputConfigMenuOption::PlayerInput as u8 {
+            if self.vec_menu_items_text[self.selection].trigger != MenuItemTrigger::SubSelection {
                 if self.keycode_conflict_flag {
                     self.draw_text(ctx, &self.keycode_conflict_text, 0.43, &window_dimensions);
                 }

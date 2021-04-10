@@ -85,7 +85,7 @@ impl MenuItem {
                 max_value = MAX_STARTING_LEVEL;
                 text.add(TextFragment::new(format!(" {}", value)).color(graphics::BLACK));
             }
-            MenuItemValueType::StartingLevel => {
+            MenuItemValueType::PlayerNum => {
                 max_value = MAX_NUM_PLAYERS;
                 value_show_increase = 1;
                 text.add(

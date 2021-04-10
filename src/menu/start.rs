@@ -109,9 +109,9 @@ impl StartMenu {
         let mut starting_level = 0;
         for item in self.vec_menu_items.iter() {
             match item.value_type {
-                MenuItemValueType::None => {}
                 MenuItemValueType::NumPlayers => num_players = item.value + 1,
                 MenuItemValueType::StartingLevel => starting_level = item.value,
+                _ => {}
             }
         }
 
