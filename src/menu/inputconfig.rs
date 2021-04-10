@@ -5,6 +5,7 @@ use ggez::nalgebra::Point2;
 use ggez::Context;
 
 use crate::inputs::{Input, KeyboardControlScheme};
+use crate::movement::Movement;
 
 use crate::menu::{MenuItem, MenuItemTrigger, MenuItemValueType};
 
@@ -17,6 +18,7 @@ use crate::menu::DARK_GRAY;
 use crate::menu::HELP_RED;
 use crate::menu::LIGHT_GRAY;
 
+static INVALID_LAST_USED_CONTROLS: &str = "[!] last used controls was Some() but invalid data";
 static KEY_UNEXPECTEDLY_NONE: &str =
     "[!] KeyCode of most recently pressed key is unexpectedly None";
 
@@ -65,13 +67,10 @@ impl InputConfigMenu {
             bool,
         ); MAX_NUM_PLAYERS as usize] = [(None, false); MAX_NUM_PLAYERS as usize];
         for (idx, ctrls) in last_used_arr_controls.iter().enumerate() {
-            if let Some(k_ctrls) = ctrls.0 {
-                arr_split_controls[idx].0 = Some(k_ctrls.split());
-                vec_used_keycode.push(k_ctrls.left);
-                vec_used_keycode.push(k_ctrls.right);
-                vec_used_keycode.push(k_ctrls.down);
-                vec_used_keycode.push(k_ctrls.rotate_cw);
-                vec_used_keycode.push(k_ctrls.rotate_ccw);
+            if let Some(k_ctrl_scheme) = &ctrls.0 {
+                for key_move_pair in k_ctrl_scheme.vec_keycode_movement_pair.iter() {
+                    vec_used_keycode.push(key_move_pair.0);
+                }
             }
             arr_split_controls[idx].1 = ctrls.1;
         }
@@ -105,13 +104,33 @@ impl InputConfigMenu {
             Option<KeyCode>,
             Option<KeyCode>,
         );
-        if let Some(ctrls) = last_used_arr_controls[0].0 {
+        if let Some(ctrls) = &last_used_arr_controls[0].0 {
             first_player_previous_controls = (
-                Some(ctrls.left),
-                Some(ctrls.right),
-                Some(ctrls.down),
-                Some(ctrls.rotate_cw),
-                Some(ctrls.rotate_ccw),
+                Some(
+                    ctrls
+                        .keycode_from_movement(Movement::Left)
+                        .expect(INVALID_LAST_USED_CONTROLS),
+                ),
+                Some(
+                    ctrls
+                        .keycode_from_movement(Movement::Right)
+                        .expect(INVALID_LAST_USED_CONTROLS),
+                ),
+                Some(
+                    ctrls
+                        .keycode_from_movement(Movement::Down)
+                        .expect(INVALID_LAST_USED_CONTROLS),
+                ),
+                Some(
+                    ctrls
+                        .keycode_from_movement(Movement::RotateCw)
+                        .expect(INVALID_LAST_USED_CONTROLS),
+                ),
+                Some(
+                    ctrls
+                        .keycode_from_movement(Movement::RotateCcw)
+                        .expect(INVALID_LAST_USED_CONTROLS),
+                ),
             );
         } else {
             first_player_previous_controls = (None, None, None, None, None);

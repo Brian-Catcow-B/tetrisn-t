@@ -16,6 +16,7 @@ mod game;
 mod menu;
 
 mod inputs;
+mod movement;
 
 use ggez::input::gamepad::GilrsGamepadContext;
 

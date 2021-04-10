@@ -7,6 +7,7 @@ use ggez::Context;
 use rand::random;
 
 use crate::control::ProgramState;
+use crate::movement::Movement;
 
 mod player;
 use crate::game::player::{Player, SPAWN_DELAY};
@@ -16,7 +17,7 @@ use crate::game::tile::TileGraphic;
 use crate::game::tile::NUM_PIXEL_ROWS_PER_TILEGRAPHIC;
 
 mod piece;
-use crate::game::piece::{Movement, NextPiece, Shapes};
+use crate::game::piece::{NextPiece, Shapes};
 
 mod board;
 use crate::game::board::BoardHandler;
@@ -75,6 +76,8 @@ pub const INITIAL_HANG_FRAMES: u8 = 180;
 pub const DETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.5;
 pub const UNDETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.2;
 
+static INVALID_LAST_USED_CONTROLS: &str = "[!] last used controls was Some() but invalid data";
+
 pub enum Modes {
     Classic,
     Rotatris,
@@ -95,12 +98,22 @@ impl From<&MenuGameOptions> for GameOptions {
         for controls in menu_game_options.arr_controls.iter() {
             if let Some(ctrls) = controls.0 {
                 vec_controls.push((
-                    Some(KeyboardControlScheme::new(
-                        ctrls.left,
-                        ctrls.right,
-                        ctrls.down,
-                        ctrls.rotate_cw,
-                        ctrls.rotate_ccw,
+                    Some(KeyboardControlScheme::new_classic(
+                        ctrls
+                            .keycode_from_movement(Movement::Left)
+                            .expect(INVALID_LAST_USED_CONTROLS),
+                        ctrls
+                            .keycode_from_movement(Movement::Right)
+                            .expect(INVALID_LAST_USED_CONTROLS),
+                        ctrls
+                            .keycode_from_movement(Movement::Down)
+                            .expect(INVALID_LAST_USED_CONTROLS),
+                        ctrls
+                            .keycode_from_movement(Movement::RotateCw)
+                            .expect(INVALID_LAST_USED_CONTROLS),
+                        ctrls
+                            .keycode_from_movement(Movement::RotateCcw)
+                            .expect(INVALID_LAST_USED_CONTROLS),
                     )),
                     false,
                 ));

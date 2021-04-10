@@ -1,10 +1,11 @@
-use crate::game::piece::{Movement, Piece, Shapes};
+use crate::game::piece::{Piece, Shapes};
 use crate::game::tile::Tile;
 use crate::game::Modes;
 use crate::game::{
     CLEAR_DELAY_CLASSIC, FALL_DELAY_VALUES_CLASSIC, FALL_DELAY_VALUES_ROTATRIS, SCORE_DOUBLE_BASE,
     SCORE_QUADRUPLE_BASE, SCORE_SINGLE_BASE, SCORE_TRIPLE_BASE,
 };
+use crate::movement::Movement;
 
 static BH_WRONG_MODE: &str = "[!] BoardHandler has wrong option";
 

@@ -195,7 +195,7 @@ impl MenuGameOptions {
         for (idx, ctrls) in arr_split_controls.iter().enumerate() {
             if let Some(k_ctrls) = ctrls.0 {
                 arr_controls[idx] = (
-                    Some(KeyboardControlScheme::new(
+                    Some(KeyboardControlScheme::new_classic(
                         k_ctrls.0.expect(
                             "[!] attempted to create KeyboardControlScheme with Left == None",
                         ),

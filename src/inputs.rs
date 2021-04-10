@@ -1,3 +1,4 @@
+use crate::movement::Movement;
 use ggez::event::KeyCode;
 
 // (is pressed down, was pressed this frame)
@@ -44,7 +45,7 @@ impl Input {
         self.keydown_start = (false, false);
     }
 
-    pub fn _print_inputs(&self) {
+    pub fn _debug_print_inputs(&self) {
         println!("Left:  ({}, {})", self.keydown_left.0, self.keydown_left.1);
         println!(
             "Right: ({}, {})",
@@ -67,47 +68,87 @@ impl Input {
     }
 }
 
-#[derive(Copy, Clone)]
 pub struct KeyboardControlScheme {
-    pub left: KeyCode,
-    pub right: KeyCode,
-    pub down: KeyCode,
-    pub rotate_cw: KeyCode,
-    pub rotate_ccw: KeyCode,
+    pub vec_keycode_movement_pair: Vec<(KeyCode, Movement)>, // pub left: KeyCode,
+                                                             // pub right: KeyCode,
+                                                             // pub down: KeyCode,
+                                                             // pub rotate_cw: KeyCode,
+                                                             // pub rotate_ccw: KeyCode
 }
 
 impl KeyboardControlScheme {
-    pub fn new(
+    pub fn new_classic(
         left: KeyCode,
         right: KeyCode,
         down: KeyCode,
         rotate_cw: KeyCode,
         rotate_ccw: KeyCode,
     ) -> Self {
+        let mut vec_keycode_movement_pair: Vec<(KeyCode, Movement)> = Vec::with_capacity(5);
+        vec_keycode_movement_pair.push((left, Movement::Left));
+        vec_keycode_movement_pair.push((right, Movement::Right));
+        vec_keycode_movement_pair.push((down, Movement::Down));
+        vec_keycode_movement_pair.push((rotate_cw, Movement::RotateCw));
+        vec_keycode_movement_pair.push((rotate_ccw, Movement::RotateCcw));
         Self {
-            left,
-            right,
-            down,
-            rotate_cw,
-            rotate_ccw,
+            vec_keycode_movement_pair,
         }
     }
 
-    pub fn split(
-        &self,
-    ) -> (
-        Option<KeyCode>,
-        Option<KeyCode>,
-        Option<KeyCode>,
-        Option<KeyCode>,
-        Option<KeyCode>,
-    ) {
-        (
-            Some(self.left),
-            Some(self.right),
-            Some(self.down),
-            Some(self.rotate_cw),
-            Some(self.rotate_ccw),
-        )
+    pub fn index_from_movement(&self, m: Movement) -> Option<usize> {
+        for (index, pair) in self.vec_keycode_movement_pair.iter().enumerate() {
+            if pair.1 == m {
+                return Some(index);
+            }
+        }
+
+        None
+    }
+
+    pub fn keycode_from_movement(&self, m: Movement) -> Option<KeyCode> {
+        for (index, pair) in self.vec_keycode_movement_pair.iter().enumerate() {
+            if pair.1 == m {
+                return Some(pair.0);
+            }
+        }
+
+        None
+    }
+
+    pub fn movement_from_keycode(&self, k: KeyCode) -> Option<Movement> {
+        for (index, pair) in self.vec_keycode_movement_pair.iter().enumerate() {
+            if pair.0 == k {
+                return Some(pair.1);
+            }
+        }
+
+        None
+    }
+
+    // pub fn split(
+    //     &self,
+    // ) -> (
+    //     Option<KeyCode>,
+    //     Option<KeyCode>,
+    //     Option<KeyCode>,
+    //     Option<KeyCode>,
+    //     Option<KeyCode>,
+    // ) {
+    //     (
+    //         Some(self.left),
+    //         Some(self.right),
+    //         Some(self.down),
+    //         Some(self.rotate_cw),
+    //         Some(self.rotate_ccw),
+    //     )
+    // }
+}
+
+impl Default for KeyboardControlScheme {
+    fn default() -> Self {
+        let vec_keycode_movement_pair: Vec<(KeyCode, Movement)> = vec![];
+        Self {
+            vec_keycode_movement_pair,
+        }
     }
 }

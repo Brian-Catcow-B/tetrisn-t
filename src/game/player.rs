@@ -1,9 +1,11 @@
+use ggez::event::{Axis, Button, KeyCode};
+use rand::random;
+
 use crate::game::piece::Shapes;
 use crate::game::{DAS_THRESHOLD_BIG, FORCE_FALL_DELAY, INITIAL_HANG_FRAMES};
 use crate::game::{DETECT_GAMEPAD_AXIS_THRESHOLD, UNDETECT_GAMEPAD_AXIS_THRESHOLD};
 use crate::inputs::{Input, KeyboardControlScheme};
-use ggez::event::{Axis, Button, KeyCode};
-use rand::random;
+use crate::movement::Movement;
 
 pub const SPAWN_DELAY: i16 = 20i16;
 
@@ -58,35 +60,51 @@ impl Player {
     }
 
     pub fn update_input_keydown(&mut self, input: KeyCode) -> bool {
-        if let Some(k_ctrls) = self.control_scheme.0 {
-            if input == k_ctrls.left {
-                if !self.input.keydown_left.0 {
-                    self.input.keydown_left = (true, true);
-                    // for auto-shift reasons and controller reasons...
-                    self.input.keydown_right.0 = false;
-                    return true;
-                }
-            } else if input == k_ctrls.right {
-                if !self.input.keydown_right.0 {
-                    self.input.keydown_right = (true, true);
-                    // for auto-shift reasons and controller reasons...
-                    self.input.keydown_left.0 = false;
-                    return true;
-                }
-            } else if input == k_ctrls.down {
-                if !self.input.keydown_down.0 {
-                    self.input.keydown_down = (true, true);
-                    return true;
-                }
-            } else if input == k_ctrls.rotate_cw {
-                if !self.input.keydown_rotate_cw.0 {
-                    self.input.keydown_rotate_cw = (true, true);
-                    return true;
-                }
-            } else if input == k_ctrls.rotate_ccw {
-                if !self.input.keydown_rotate_ccw.0 {
-                    self.input.keydown_rotate_ccw = (true, true);
-                    return true;
+        if let Some(k_ctrl_scheme) = self.control_scheme.0 {
+            let movement_opt = k_ctrl_scheme.movement_from_keycode(input);
+            if let Some(movement) = movement_opt {
+                match movement {
+                    Movement::Down => {
+                        if !self.input.keydown_down.0 {
+                            self.input.keydown_down = (true, true);
+                            return true;
+                        }
+                    }
+                    Movement::Left => {
+                        if !self.input.keydown_left.0 {
+                            self.input.keydown_left = (true, true);
+                            // for auto-shift reasons and controller reasons...
+                            self.input.keydown_right.0 = false;
+                            return true;
+                        }
+                    }
+                    Movement::Up => {
+                        if !self.input.keydown_up.0 {
+                            self.input.keydown_up = (true, true);
+                            return true;
+                        }
+                    }
+                    Movement::Right => {
+                        if !self.input.keydown_right.0 {
+                            self.input.keydown_right = (true, true);
+                            // for auto-shift reasons and controller reasons...
+                            self.input.keydown_left.0 = false;
+                            return true;
+                        }
+                    }
+                    Movement::RotateCw => {
+                        if !self.input.keydown_rotate_cw.0 {
+                            self.input.keydown_rotate_cw = (true, true);
+                            return true;
+                        }
+                    }
+                    Movement::RotateCcw => {
+                        if !self.input.keydown_rotate_ccw.0 {
+                            self.input.keydown_rotate_ccw = (true, true);
+                            return true;
+                        }
+                    }
+                    _ => {}
                 }
             }
         }
@@ -95,32 +113,46 @@ impl Player {
     }
 
     pub fn update_input_keyup(&mut self, input: KeyCode) -> bool {
-        if let Some(k_ctrls) = self.control_scheme.0 {
-            if input == k_ctrls.left {
-                // for auto-shift reasons
-                if self.input.keydown_left.0 {
-                    self.das_countdown = DAS_THRESHOLD_BIG;
-                    self.waiting_to_shift = false;
+        if let Some(k_ctrl_scheme) = self.control_scheme.0 {
+            let movement_opt = k_ctrl_scheme.movement_from_keycode(input);
+            if let Some(movement) = movement_opt {
+                match movement {
+                    Movement::Down => {
+                        self.input.keydown_down = (false, false);
+                        return true;
+                    }
+                    Movement::Left => {
+                        // for auto-shift reasons
+                        if self.input.keydown_left.0 {
+                            self.das_countdown = DAS_THRESHOLD_BIG;
+                            self.waiting_to_shift = false;
+                        }
+                        self.input.keydown_left = (false, false);
+                        return true;
+                    }
+                    Movement::Up => {
+                        self.input.keydown_up = (false, false);
+                        return true;
+                    }
+                    Movement::Right => {
+                        // for auto-shift reasons
+                        if self.input.keydown_right.0 {
+                            self.das_countdown = DAS_THRESHOLD_BIG;
+                            self.waiting_to_shift = false;
+                        }
+                        self.input.keydown_right = (false, false);
+                        return true;
+                    }
+                    Movement::RotateCw => {
+                        self.input.keydown_rotate_cw = (false, false);
+                        return true;
+                    }
+                    Movement::RotateCcw => {
+                        self.input.keydown_rotate_ccw = (false, false);
+                        return true;
+                    }
+                    _ => {}
                 }
-                self.input.keydown_left = (false, false);
-                return true;
-            } else if input == k_ctrls.right {
-                // for auto-shift reasons
-                if self.input.keydown_right.0 {
-                    self.das_countdown = DAS_THRESHOLD_BIG;
-                    self.waiting_to_shift = false;
-                }
-                self.input.keydown_right = (false, false);
-                return true;
-            } else if input == k_ctrls.down {
-                self.input.keydown_down = (false, false);
-                return true;
-            } else if input == k_ctrls.rotate_cw {
-                self.input.keydown_rotate_cw = (false, false);
-                return true;
-            } else if input == k_ctrls.rotate_ccw {
-                self.input.keydown_rotate_ccw = (false, false);
-                return true;
             }
         }
 
