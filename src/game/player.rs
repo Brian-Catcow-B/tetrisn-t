@@ -88,9 +88,6 @@ impl Player {
                     self.input.keydown_rotate_ccw = (true, true);
                     return true;
                 }
-            } else if input == k_ctrls.start && !self.input.keydown_start.0 {
-                self.input.keydown_start = (true, true);
-                return true;
             }
         }
 
@@ -123,9 +120,6 @@ impl Player {
                 return true;
             } else if input == k_ctrls.rotate_ccw {
                 self.input.keydown_rotate_ccw = (false, false);
-                return true;
-            } else if input == k_ctrls.start {
-                self.input.keydown_start = (false, false);
                 return true;
             }
         }

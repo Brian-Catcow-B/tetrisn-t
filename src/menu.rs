@@ -211,7 +211,6 @@ impl MenuGameOptions {
                         k_ctrls.4.expect(
                             "[!] attempted to create KeyboardControlScheme with RotateCcw == None",
                         ),
-                        KeyCode::Escape,
                     )),
                     false,
                 );

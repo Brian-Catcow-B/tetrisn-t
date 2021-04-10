@@ -101,7 +101,6 @@ impl From<&MenuGameOptions> for GameOptions {
                         ctrls.down,
                         ctrls.rotate_cw,
                         ctrls.rotate_ccw,
-                        KeyCode::Escape,
                     )),
                     false,
                 ));
@@ -136,7 +135,9 @@ pub struct Game {
     starting_level: u8,
     num_cleared_lines: u16,
     score: u64,
-    pause_flag: (bool, bool),
+    keycode_down_flags: (bool, bool),
+    keycode_escape_flags: (bool, bool),
+    pause_flags: (bool, bool),
     rotate_board_cw: (bool, bool),
     rotate_board_ccw: (bool, bool),
     gravity_direction: Movement,
@@ -305,7 +306,9 @@ impl Game {
             starting_level: game_options.starting_level,
             num_cleared_lines: 0u16,
             score: 0u64,
-            pause_flag: (false, false),
+            keycode_down_flags: (false, false),
+            keycode_escape_flags: (false, false),
+            pause_flags: (false, false),
             rotate_board_cw: (false, false),
             rotate_board_ccw: (false, false),
             gravity_direction: Movement::Down,
@@ -339,40 +342,52 @@ impl Game {
         if self.game_over_flag {
             if self.game_over_delay == 0 {
                 // GAME OVER LOGIC
+                if self.keycode_escape_flags.1 {
+                    return ProgramState::Menu;
+                }
                 for player in &mut self.vec_players {
                     // should we quit to main menu?
                     if player.input.keydown_start.1 {
                         return ProgramState::Menu;
                     }
-                    player.input.was_just_pressed_setfalse();
-                    self.rotate_board_cw.1 = false;
-                    self.rotate_board_ccw.1 = false;
                 }
+                self.was_just_pressed_setfalse_all_players();
             } else {
                 self.game_over_delay -= 1;
             }
-        } else if self.pause_flag.0 {
+        } else if self.pause_flags.0 {
             // PAUSE LOGIC
-            if self.pause_flag.1 {
+            if self.pause_flags.1 {
                 // if the pause flag was just set, reset all inputs to false in case focus was lost or keyboard hardware is acting up somehow or another
-                self.pause_flag.1 = false;
+                self.pause_flags.1 = false;
                 for player in &mut self.vec_players {
                     player.input.reset_all();
                 }
             } else {
+                // down arrow key held and escape key results in quit to menu
+                if self.keycode_escape_flags.1 && self.keycode_down_flags.0 {
+                    return ProgramState::Menu;
+                }
+                // this loop is mostly due to gamepad/keyboard controls meshing together weirdly
                 for player in &mut self.vec_players {
-                    // should we quit to main menu?
-                    if player.input.keydown_down.0 && player.input.keydown_start.1 {
+                    // should we quit to main menu? (down and start, but start on keyboard is Escape and not specific to a player, so check if players holding down are using keyboard)
+                    if player.input.keydown_down.0
+                        && (player.input.keydown_start.1
+                            || ((player.control_scheme.0).is_some() && self.keycode_escape_flags.1))
+                    {
                         return ProgramState::Menu;
                     }
                     // should we resume?
                     if player.input.keydown_start.1 {
-                        self.pause_flag = (false, false);
-                        player.input.was_just_pressed_setfalse();
-                        self.rotate_board_cw.1 = false;
-                        self.rotate_board_ccw.1 = false;
+                        self.pause_flags = (false, false);
+                        break;
                     }
                 }
+                // should we resume because of escape press?
+                if self.keycode_escape_flags.1 {
+                    self.pause_flags = (false, false);
+                }
+                self.was_just_pressed_setfalse_all_players();
             }
         } else {
             // GAME LOGIC
@@ -439,8 +454,8 @@ impl Game {
                     continue;
                 }
 
-                // rotatris
-                // BOARD ROTATION
+                // rotatris specific
+                // board rotations
                 if self.rotate_board_cw.1 {
                     if self.bh.attempt_rotate_board(Movement::RotateCw) {
                         self.gravity_direction =
@@ -454,7 +469,7 @@ impl Game {
                             Movement::from(((self.gravity_direction as u8) + 3) % 4);
                     }
                 }
-                // rotatris end
+                // rotatris specific end
 
                 // piece movement
                 // LEFT / RIGHT
@@ -582,17 +597,15 @@ impl Game {
                 }
 
                 if player.input.keydown_start.1 {
-                    self.pause_flag = (true, true);
-                    player.input.was_just_pressed_setfalse();
-                    self.rotate_board_cw.1 = false;
-                    self.rotate_board_ccw.1 = false;
+                    self.pause_flags = (true, true);
                 }
-
-                // update controls (always do after all player player input for each player)
-                player.input.was_just_pressed_setfalse();
-                self.rotate_board_cw.1 = false;
-                self.rotate_board_ccw.1 = false;
             }
+
+            // update controls so that the logic realizes next frame that the button inputs made were run through the logic
+            if self.keycode_escape_flags.1 {
+                self.pause_flags = (true, true);
+            }
+            self.was_just_pressed_setfalse_all_players();
 
             // attempt to line clear (go through the vector of FullLine's and decrement clear_delay if > 0, clear and return (lines_cleared, score) for <= 0)
             let (returned_lines, returned_score) = self.bh.attempt_clear(self.level);
@@ -622,22 +635,40 @@ impl Game {
         ProgramState::Game
     }
 
+    fn was_just_pressed_setfalse_all_players(&mut self) {
+        for player in self.vec_players.iter_mut() {
+            player.input.was_just_pressed_setfalse();
+        }
+        self.keycode_down_flags.1 = false;
+        self.keycode_escape_flags.1 = false;
+    }
+
     pub fn key_down_event(&mut self, keycode: KeyCode, repeat: bool) {
         if !repeat {
+            if keycode == KeyCode::Escape {
+                self.keycode_escape_flags = (true, true);
+                return;
+            } else if keycode == KeyCode::Down {
+                println!("set down to (true, true)");
+                self.keycode_down_flags = (true, true);
+                return;
+            }
             for player in &mut self.vec_players {
                 if player.update_input_keydown(keycode) {
                     return;
                 }
             }
-            if keycode == KeyCode::Z {
-                self.rotate_board_ccw = (true, true);
-            } else if keycode == KeyCode::X {
-                self.rotate_board_cw = (true, true);
-            }
         }
     }
 
     pub fn key_up_event(&mut self, keycode: KeyCode) {
+        if keycode == KeyCode::Escape {
+            self.keycode_escape_flags = (false, false);
+            return;
+        } else if keycode == KeyCode::Down {
+            self.keycode_down_flags = (false, false);
+            return;
+        }
         for player in &mut self.vec_players {
             if player.update_input_keyup(keycode) {
                 return;
@@ -743,7 +774,7 @@ impl Game {
                 0.55,
                 &(window_width, window_height),
             );
-        } else if self.pause_flag.0 {
+        } else if self.pause_flags.0 {
             // DRAW PAUSE
             self.draw_text(ctx, &self.pause_text, 0.4, &(window_width, window_height));
         } else {
@@ -1060,7 +1091,7 @@ impl Game {
 
     pub fn focus_event(&mut self, gained: bool) {
         if !gained {
-            self.pause_flag = (true, true);
+            self.pause_flags = (true, true);
         }
     }
 }

@@ -16,7 +16,6 @@ use crate::menu::TEXT_SCALE_DOWN;
 use crate::menu::DARK_GRAY;
 use crate::menu::HELP_RED;
 use crate::menu::LIGHT_GRAY;
-use crate::menu::SELECT_GREEN;
 
 static KEY_UNEXPECTEDLY_NONE: &str =
     "[!] KeyCode of most recently pressed key is unexpectedly None";

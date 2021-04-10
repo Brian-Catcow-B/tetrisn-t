@@ -74,7 +74,6 @@ pub struct KeyboardControlScheme {
     pub down: KeyCode,
     pub rotate_cw: KeyCode,
     pub rotate_ccw: KeyCode,
-    pub start: KeyCode,
 }
 
 impl KeyboardControlScheme {
@@ -84,7 +83,6 @@ impl KeyboardControlScheme {
         down: KeyCode,
         rotate_cw: KeyCode,
         rotate_ccw: KeyCode,
-        start: KeyCode,
     ) -> Self {
         Self {
             left,
@@ -92,7 +90,6 @@ impl KeyboardControlScheme {
             down,
             rotate_cw,
             rotate_ccw,
-            start,
         }
     }
 
