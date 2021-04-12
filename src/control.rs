@@ -36,7 +36,7 @@ impl Control {
         }
     }
 
-    pub fn change_state(&mut self, ctx: &mut Context, new_state: ProgramState) {
+    fn change_state(&mut self, ctx: &mut Context, new_state: ProgramState) {
         self.state = match new_state {
             ProgramState::Menu => {
                 self.menu = Some(Menu::new(ctx, &self.game_options));

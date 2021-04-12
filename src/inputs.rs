@@ -69,14 +69,29 @@ impl Input {
 }
 
 pub struct KeyboardControlScheme {
-    pub vec_keycode_movement_pair: Vec<(KeyCode, Movement)>, // pub left: KeyCode,
-                                                             // pub right: KeyCode,
-                                                             // pub down: KeyCode,
-                                                             // pub rotate_cw: KeyCode,
-                                                             // pub rotate_ccw: KeyCode
+    pub vec_keycode_movement_pair: Vec<(KeyCode, Movement)>,
 }
 
 impl KeyboardControlScheme {
+    pub fn copy(&self) -> Self {
+        let mut copy_vec_keycode_movement_pair: Vec<(KeyCode, Movement)> =
+            Vec::with_capacity(self.vec_keycode_movement_pair.capacity());
+        for item in self.vec_keycode_movement_pair.iter() {
+            copy_vec_keycode_movement_pair.push(*item);
+        }
+        Self {
+            vec_keycode_movement_pair: copy_vec_keycode_movement_pair,
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        self.vec_keycode_movement_pair.len()
+    }
+
+    pub fn clear(&mut self) {
+        self.vec_keycode_movement_pair.clear();
+    }
+
     pub fn new_classic(
         left: KeyCode,
         right: KeyCode,
@@ -106,7 +121,7 @@ impl KeyboardControlScheme {
     }
 
     pub fn keycode_from_movement(&self, m: Movement) -> Option<KeyCode> {
-        for (index, pair) in self.vec_keycode_movement_pair.iter().enumerate() {
+        for pair in self.vec_keycode_movement_pair.iter() {
             if pair.1 == m {
                 return Some(pair.0);
             }
@@ -116,13 +131,17 @@ impl KeyboardControlScheme {
     }
 
     pub fn movement_from_keycode(&self, k: KeyCode) -> Option<Movement> {
-        for (index, pair) in self.vec_keycode_movement_pair.iter().enumerate() {
+        for pair in self.vec_keycode_movement_pair.iter() {
             if pair.0 == k {
                 return Some(pair.1);
             }
         }
 
         None
+    }
+
+    pub fn add_pair(&mut self, k: KeyCode, m: Movement) {
+        self.vec_keycode_movement_pair.push((k, m));
     }
 
     // pub fn split(

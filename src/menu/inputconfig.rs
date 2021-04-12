@@ -31,16 +31,7 @@ pub struct InputConfigMenu {
     pub most_recently_pressed_key: Option<KeyCode>,
     vec_used_keycode: Vec<KeyCode>,
     keycode_conflict_flag: bool,
-    pub arr_split_controls: [(
-        Option<(
-            Option<KeyCode>,
-            Option<KeyCode>,
-            Option<KeyCode>,
-            Option<KeyCode>,
-            Option<KeyCode>,
-        )>,
-        bool,
-    ); MAX_NUM_PLAYERS as usize],
+    pub arr_controls: [(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize],
     // text
     vec_menu_items_main: Vec<MenuItem>,
     // subtext
@@ -53,7 +44,9 @@ pub struct InputConfigMenu {
 impl InputConfigMenu {
     pub fn new(
         window_dimensions: (f32, f32),
-        last_used_arr_controls: [(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize],
+        opt_last_used_arr_controls: Option<
+            &[(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize],
+        >,
     ) -> Self {
         let mut vec_used_keycode: Vec<KeyCode> = vec![];
         let mut arr_split_controls: [(
@@ -66,13 +59,15 @@ impl InputConfigMenu {
             )>,
             bool,
         ); MAX_NUM_PLAYERS as usize] = [(None, false); MAX_NUM_PLAYERS as usize];
-        for (idx, ctrls) in last_used_arr_controls.iter().enumerate() {
-            if let Some(k_ctrl_scheme) = &ctrls.0 {
-                for key_move_pair in k_ctrl_scheme.vec_keycode_movement_pair.iter() {
-                    vec_used_keycode.push(key_move_pair.0);
+        if let Some(last_used_arr_controls) = opt_last_used_arr_controls {
+            for (idx, ctrls) in last_used_arr_controls.iter().enumerate() {
+                if let Some(k_ctrl_scheme) = &ctrls.0 {
+                    for key_move_pair in k_ctrl_scheme.vec_keycode_movement_pair.iter() {
+                        vec_used_keycode.push(key_move_pair.0);
+                    }
                 }
+                arr_split_controls[idx].1 = ctrls.1;
             }
-            arr_split_controls[idx].1 = ctrls.1;
         }
         // main MenuItems
         let mut vec_menu_items_main: Vec<MenuItem> = Vec::with_capacity(2);
@@ -104,34 +99,38 @@ impl InputConfigMenu {
             Option<KeyCode>,
             Option<KeyCode>,
         );
-        if let Some(ctrls) = &last_used_arr_controls[0].0 {
-            first_player_previous_controls = (
-                Some(
-                    ctrls
-                        .keycode_from_movement(Movement::Left)
-                        .expect(INVALID_LAST_USED_CONTROLS),
-                ),
-                Some(
-                    ctrls
-                        .keycode_from_movement(Movement::Right)
-                        .expect(INVALID_LAST_USED_CONTROLS),
-                ),
-                Some(
-                    ctrls
-                        .keycode_from_movement(Movement::Down)
-                        .expect(INVALID_LAST_USED_CONTROLS),
-                ),
-                Some(
-                    ctrls
-                        .keycode_from_movement(Movement::RotateCw)
-                        .expect(INVALID_LAST_USED_CONTROLS),
-                ),
-                Some(
-                    ctrls
-                        .keycode_from_movement(Movement::RotateCcw)
-                        .expect(INVALID_LAST_USED_CONTROLS),
-                ),
-            );
+        if let Some(last_used_arr_controls) = opt_last_used_arr_controls {
+            if let Some(ctrls) = &last_used_arr_controls[0].0 {
+                first_player_previous_controls = (
+                    Some(
+                        ctrls
+                            .keycode_from_movement(Movement::Left)
+                            .expect(INVALID_LAST_USED_CONTROLS),
+                    ),
+                    Some(
+                        ctrls
+                            .keycode_from_movement(Movement::Right)
+                            .expect(INVALID_LAST_USED_CONTROLS),
+                    ),
+                    Some(
+                        ctrls
+                            .keycode_from_movement(Movement::Down)
+                            .expect(INVALID_LAST_USED_CONTROLS),
+                    ),
+                    Some(
+                        ctrls
+                            .keycode_from_movement(Movement::RotateCw)
+                            .expect(INVALID_LAST_USED_CONTROLS),
+                    ),
+                    Some(
+                        ctrls
+                            .keycode_from_movement(Movement::RotateCcw)
+                            .expect(INVALID_LAST_USED_CONTROLS),
+                    ),
+                );
+            } else {
+                first_player_previous_controls = (None, None, None, None, None);
+            }
         } else {
             first_player_previous_controls = (None, None, None, None, None);
         }
@@ -189,7 +188,7 @@ impl InputConfigMenu {
             most_recently_pressed_key: None,
             vec_used_keycode,
             keycode_conflict_flag: false,
-            arr_split_controls,
+            arr_controls,
             // text
             vec_menu_items_main,
             // subtext
@@ -244,10 +243,10 @@ impl InputConfigMenu {
             if input.keydown_rotate_cw.1
                 && self.vec_menu_items_main[self.selection].trigger == MenuItemTrigger::SubSelection
             {
-                self.arr_split_controls[self.player_num as usize].1 = true;
-                if let Some(ctrls) = self.arr_split_controls[self.player_num as usize].0 {
-                    self.remove_from_used_keycodes(&ctrls);
-                    self.arr_split_controls[self.player_num as usize].0 = None;
+                self.arr_controls[self.player_num as usize].1 = true;
+                if let Some(k_ctrl_scheme) = self.arr_controls[self.player_num as usize].0 {
+                    self.remove_from_used_keycodes(&k_ctrl_scheme);
+                    self.arr_controls[self.player_num as usize].0 = None;
                 }
             }
 
@@ -260,13 +259,11 @@ impl InputConfigMenu {
                     == MenuItemTrigger::SubSelection
                 {
                     self.most_recently_pressed_key = None;
-                    if let Some(ctrls) = self.arr_split_controls[self.player_num as usize].0 {
-                        self.remove_from_used_keycodes(&ctrls);
+                    if let Some(k_ctrl_scheme) = self.arr_controls[self.player_num as usize].0 {
+                        self.remove_from_used_keycodes(&k_ctrl_scheme);
                     }
-                    self.arr_split_controls[self.player_num as usize].0 = None;
-
-                    self.arr_split_controls[self.player_num as usize].0 =
-                        Some((None, None, None, None, None));
+                    self.arr_controls[self.player_num as usize].0 =
+                        Some(KeyboardControlScheme::default());
                     self.update_sub_text_strings();
                     self.sub_selection_keyboard_flag = true;
                     self.vec_menu_items_main[self.selection].set_select(true);
@@ -278,11 +275,11 @@ impl InputConfigMenu {
                 if self.vec_menu_items_main[self.selection].trigger == MenuItemTrigger::SubSelection
                 {
                     // remove input stuff from selection if we are on the SubSelection option
-                    if let Some(ctrls) = self.arr_split_controls[self.player_num as usize].0 {
-                        self.remove_from_used_keycodes(&ctrls);
-                        self.arr_split_controls[self.player_num as usize].0 = None;
+                    if let Some(k_ctrl_scheme) = self.arr_controls[self.player_num as usize].0 {
+                        self.remove_from_used_keycodes(&k_ctrl_scheme);
+                        self.arr_controls[self.player_num as usize].0 = None;
                     }
-                    self.arr_split_controls[self.player_num as usize].1 = false;
+                    self.arr_controls[self.player_num as usize].1 = false;
                     self.most_recently_pressed_key = None;
                 } else {
                     return true;
@@ -297,24 +294,12 @@ impl InputConfigMenu {
                 self.sub_selection_keyboard = 0;
                 self.sub_selection_keyboard_flag = false;
                 // the user was in the middle of creating keyboard controls when they hit 'Escape', so pop however many KeyCode's off vec_used_keycode that the user set up
-                if let Some(ctrls) = self.arr_split_controls[self.player_num as usize].0 {
-                    if (ctrls.3).is_some() {
-                        for _ in 1..=4 {
-                            self.vec_used_keycode.pop();
-                        }
-                    } else if (ctrls.2).is_some() {
-                        for _ in 1..=3 {
-                            self.vec_used_keycode.pop();
-                        }
-                    } else if (ctrls.1).is_some() {
-                        for _ in 1..=2 {
-                            self.vec_used_keycode.pop();
-                        }
-                    } else if (ctrls.0).is_some() {
+                if let Some(k_ctrl_scheme) = self.arr_controls[self.player_num as usize].0 {
+                    for _ in 0..k_ctrl_scheme.len() {
                         self.vec_used_keycode.pop();
                     }
                 }
-                self.arr_split_controls[self.player_num as usize].0 = None;
+                self.arr_controls[self.player_num as usize].0 = None;
                 self.most_recently_pressed_key = None;
             } else if self
                 .vec_used_keycode
@@ -325,43 +310,16 @@ impl InputConfigMenu {
             } else {
                 // no conflict, enter KeyCode of key pressed
                 self.keycode_conflict_flag = false;
-                match (self.arr_split_controls[self.player_num as usize].0).as_mut() {
-                    Some(mut ctrls) => match self.vec_menu_items_keycode
-                        [self.sub_selection_keyboard]
-                        .trigger
-                    {
-                        MenuItemTrigger::KeyLeft => {
-                            ctrls.0 = self.most_recently_pressed_key;
-                            self.vec_used_keycode
-                                .push(self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE));
-                        }
-                        MenuItemTrigger::KeyRight => {
-                            ctrls.1 = self.most_recently_pressed_key;
-                            self.vec_used_keycode
-                                .push(self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE));
-                        }
-                        MenuItemTrigger::KeyDown => {
-                            ctrls.2 = self.most_recently_pressed_key;
-                            self.vec_used_keycode
-                                .push(self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE));
-                        }
-                        MenuItemTrigger::KeyRotateCw => {
-                            ctrls.3 = self.most_recently_pressed_key;
-                            self.vec_used_keycode
-                                .push(self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE));
-                        }
-                        MenuItemTrigger::KeyRotateCcw => {
-                            ctrls.4 = self.most_recently_pressed_key;
-                            self.vec_used_keycode
-                                .push(self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE));
-                        }
-                        _ => println!("[!] weird MenuItemTrigger in vec_menu_items_keycode item"),
-                    },
-                    None => {
-                        println!(
-                            "[!] arr_split_controls[{}].0 was unexpectedly None",
-                            self.player_num
+                match (self.arr_controls[self.player_num as usize].0).as_mut() {
+                    Some(mut k_ctrl_scheme) => {
+                        k_ctrl_scheme.add_pair(
+                            self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE),
+                            Movement::from(
+                                self.vec_menu_items_keycode[self.sub_selection_keyboard].trigger,
+                            ),
                         );
+                        self.vec_used_keycode
+                            .push(self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE));
                     }
                 }
                 self.vec_menu_items_keycode[self.sub_selection_keyboard].set_select(false);
@@ -377,29 +335,17 @@ impl InputConfigMenu {
         false
     }
 
-    fn remove_from_used_keycodes(
-        &mut self,
-        ctrls: &(
-            Option<KeyCode>,
-            Option<KeyCode>,
-            Option<KeyCode>,
-            Option<KeyCode>,
-            Option<KeyCode>,
-        ),
-    ) {
+    fn remove_from_used_keycodes(&mut self, k_ctrl_scheme: &KeyboardControlScheme) {
         let mut items_removed = 0;
         for used_key_idx in 0..self.vec_used_keycode.len() {
-            if Some(self.vec_used_keycode[used_key_idx - items_removed]) == ctrls.0
-                || Some(self.vec_used_keycode[used_key_idx - items_removed]) == ctrls.1
-                || Some(self.vec_used_keycode[used_key_idx - items_removed]) == ctrls.2
-                || Some(self.vec_used_keycode[used_key_idx - items_removed]) == ctrls.3
-                || Some(self.vec_used_keycode[used_key_idx - items_removed]) == ctrls.4
-            {
-                self.vec_used_keycode.remove(used_key_idx - items_removed);
-                items_removed += 1;
-                // we only need to get rid of self.vec_menu_items_keycode.len()
-                if items_removed >= self.vec_menu_items_keycode.len() {
-                    return;
+            for k_m_pair in k_ctrl_scheme.vec_keycode_movement_pair.iter() {
+                if k_m_pair.0 == self.vec_used_keycode[used_key_idx - items_removed] {
+                    self.vec_used_keycode.remove(used_key_idx - items_removed);
+                    items_removed += 1;
+                    // we only need to get rid of k_ctrl_scheme.len()
+                    if items_removed >= k_ctrl_scheme.len() {
+                        return;
+                    }
                 }
             }
         }
@@ -467,7 +413,7 @@ impl InputConfigMenu {
                     self.draw_text(ctx, &self.keycode_conflict_text, 0.43, &window_dimensions);
                 }
 
-                if (self.arr_split_controls[self.player_num as usize].0).is_some() {
+                if (self.arr_controls[self.player_num as usize].0).is_some() {
                     for (index, item) in self.vec_menu_items_keycode.iter().enumerate() {
                         self.draw_text(
                             ctx,
@@ -476,7 +422,7 @@ impl InputConfigMenu {
                             &window_dimensions,
                         );
                     }
-                } else if self.arr_split_controls[self.player_num as usize].1 {
+                } else if self.arr_controls[self.player_num as usize].1 {
                     self.draw_text(ctx, &self.is_gamepad_text, 0.63, &window_dimensions);
                 } else {
                     self.draw_text(ctx, &self.input_uninitialized_text, 0.5, &window_dimensions);

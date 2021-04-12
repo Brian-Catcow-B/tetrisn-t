@@ -60,7 +60,7 @@ impl Player {
     }
 
     pub fn update_input_keydown(&mut self, input: KeyCode) -> bool {
-        if let Some(k_ctrl_scheme) = self.control_scheme.0 {
+        if let Some(k_ctrl_scheme) = &self.control_scheme.0 {
             let movement_opt = k_ctrl_scheme.movement_from_keycode(input);
             if let Some(movement) = movement_opt {
                 match movement {
@@ -113,7 +113,7 @@ impl Player {
     }
 
     pub fn update_input_keyup(&mut self, input: KeyCode) -> bool {
-        if let Some(k_ctrl_scheme) = self.control_scheme.0 {
+        if let Some(k_ctrl_scheme) = &self.control_scheme.0 {
             let movement_opt = k_ctrl_scheme.movement_from_keycode(input);
             if let Some(movement) = movement_opt {
                 match movement {

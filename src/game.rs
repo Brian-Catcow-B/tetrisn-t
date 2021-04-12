@@ -96,7 +96,7 @@ impl From<&MenuGameOptions> for GameOptions {
             Vec::with_capacity(menu_game_options.arr_controls.len());
         let mut counted_active_controls: u8 = 0;
         for controls in menu_game_options.arr_controls.iter() {
-            if let Some(ctrls) = controls.0 {
+            if let Some(ctrls) = &controls.0 {
                 vec_controls.push((
                     Some(KeyboardControlScheme::new_classic(
                         ctrls
@@ -181,40 +181,64 @@ impl Game {
             Modes::Rotatris => ROTATRIS_BOARD_SIDE_LENGTH,
         };
         let mut vec_players: Vec<Player> = Vec::with_capacity(game_options.num_players as usize);
-        // spawn columns
-        // first half, not including middle player if there's an odd number of players
-        for player in 0..(game_options.num_players) / 2 {
-            vec_players.push(Player::new(
-                player,
-                game_options.vec_controls[player as usize],
+        for player in 0..game_options.num_players {
+            // spawn_column
+            let spawn_column: u8 = if player < game_options.num_players / 2 {
+                // first half, not including middle player if there's an odd number of players
                 (player as f32 * (board_width as f32 / game_options.num_players as f32)
                     + board_width as f32 / (2.0 * game_options.num_players as f32))
                     as u8
-                    + 1,
-            ));
-        }
-        // middle player, for an odd number of players
-        if game_options.num_players % 2 == 1 {
-            let player = game_options.num_players / 2;
-            vec_players.push(Player::new(
-                player,
-                game_options.vec_controls[player as usize],
-                board_width / 2,
-            ));
-        }
-        // second half, not including the middle player if there's an odd number of players
-        for player in (game_options.num_players + 1) / 2..game_options.num_players {
-            vec_players.push(Player::new(
-                player,
-                game_options.vec_controls[player as usize],
+                    + 1
+            } else if player == game_options.num_players && game_options.num_players % 2 == 1 {
+                // middle player, for an odd number of players
+                board_width / 2
+            } else {
+                // second half, not including the middle player if there's an odd number of players
                 board_width
                     - 1
                     - ((game_options.num_players - 1 - player) as f32
                         * (board_width as f32 / game_options.num_players as f32)
                         + board_width as f32 / (2.0 * game_options.num_players as f32))
-                        as u8,
-            ));
+                        as u8
+            };
+            // control_scheme; we need to create a copy of game_options.vec_controls, but to do that, we must "manually" copy the keyboard controls for the player if they exist (since that has a vector)
+            let control_scheme = match &game_options.vec_controls[player as usize].0 {
+                Some(k_ctrl_scheme) => (Some(k_ctrl_scheme.copy()), false),
+                None => (None, true),
+            };
+
+            vec_players.push(Player::new(player, control_scheme, spawn_column));
         }
+        // for player in 0..(game_options.num_players) / 2 {
+        //     vec_players.push(Player::new(
+        //         player,
+        //         game_options.vec_controls[player as usize],
+        //         (player as f32 * (board_width as f32 / game_options.num_players as f32)
+        //             + board_width as f32 / (2.0 * game_options.num_players as f32))
+        //             as u8
+        //             + 1,
+        //     ));
+        // }
+        // if game_options.num_players % 2 == 1 {
+        //     let player = game_options.num_players / 2;
+        //     vec_players.push(Player::new(
+        //         player,
+        //         game_options.vec_controls[player as usize],
+        //         board_width / 2,
+        //     ));
+        // }
+        // for player in (game_options.num_players + 1) / 2..game_options.num_players {
+        //     vec_players.push(Player::new(
+        //         player,
+        //         game_options.vec_controls[player as usize],
+        //         board_width
+        //             - 1
+        //             - ((game_options.num_players - 1 - player) as f32
+        //                 * (board_width as f32 / game_options.num_players as f32)
+        //                 + board_width as f32 / (2.0 * game_options.num_players as f32))
+        //                 as u8,
+        //     ));
+        // }
         let mut batch_empty_tile = spritebatch::SpriteBatch::new(TileGraphic::new_empty(ctx).image);
         // the emtpy tile batch will be constant once the game starts with the player tile batches drawing on top of it, so just set that up here
         for x in 0..board_width {

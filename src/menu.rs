@@ -31,7 +31,7 @@ pub enum MenuItemValueType {
     KeyCode,
 }
 
-#[derive(Eq, PartialEq, Copy, Clone)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum MenuItemTrigger {
     None,
     StartGame,
@@ -179,19 +179,9 @@ impl MenuGameOptions {
     fn new(
         num_players: u8,
         starting_level: u8,
-        arr_split_controls: [(
-            Option<(
-                Option<KeyCode>,
-                Option<KeyCode>,
-                Option<KeyCode>,
-                Option<KeyCode>,
-                Option<KeyCode>,
-            )>,
-            bool,
-        ); MAX_NUM_PLAYERS as usize],
+        arr_controls: &[(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize],
     ) -> Self {
-        let mut arr_controls: [(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize] =
-            [(None, false); MAX_NUM_PLAYERS as usize];
+        let arr_controls: [(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize];
         for (idx, ctrls) in arr_split_controls.iter().enumerate() {
             if let Some(k_ctrls) = ctrls.0 {
                 arr_controls[idx] = (
@@ -216,6 +206,8 @@ impl MenuGameOptions {
                 );
             } else if ctrls.1 {
                 arr_controls[idx] = (None, true);
+            } else {
+                arr_controls[idx] = (None, false);
             }
         }
         Self {
@@ -258,7 +250,7 @@ impl Menu {
                 ),
                 input_config_menu: InputConfigMenu::new(
                     window_dimensions,
-                    menu_game_options.arr_controls,
+                    Some(&menu_game_options.arr_controls),
                 ),
             }
         } else {
@@ -267,10 +259,7 @@ impl Menu {
                 input: Input::new(),
                 state: MenuState::Start,
                 start_menu: StartMenu::new(window_dimensions, 1, 0),
-                input_config_menu: InputConfigMenu::new(
-                    window_dimensions,
-                    [(None, false); MAX_NUM_PLAYERS as usize],
-                ),
+                input_config_menu: InputConfigMenu::new(window_dimensions, None),
             }
         }
     }

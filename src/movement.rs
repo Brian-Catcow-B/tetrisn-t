@@ -1,3 +1,5 @@
+use crate::menu::MenuItemTrigger;
+
 #[repr(u8)]
 #[derive(PartialEq, Eq, Copy, Clone)]
 pub enum Movement {
@@ -23,6 +25,22 @@ impl From<u8> for Movement {
             6 => Movement::DoubleRotate,
             7 => Movement::None,
             _ => panic!("[!] Unknown Movement value: {}", value),
+        }
+    }
+}
+
+impl From<MenuItemTrigger> for Movement {
+    fn from(value: MenuItemTrigger) -> Movement {
+        match value {
+            MenuItemTrigger::KeyLeft => Movement::Left,
+            MenuItemTrigger::KeyRight => Movement::Right,
+            MenuItemTrigger::KeyDown => Movement::Down,
+            MenuItemTrigger::KeyRotateCw => Movement::RotateCw,
+            MenuItemTrigger::KeyRotateCcw => Movement::RotateCcw,
+            _ => panic!(
+                "[!] Unexpected value converting MenuItemTrigger to Movement: {:?}",
+                value
+            ),
         }
     }
 }
