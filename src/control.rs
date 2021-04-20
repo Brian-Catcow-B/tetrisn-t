@@ -23,16 +23,17 @@ pub struct Control {
     state: ProgramState,
     menu: Option<Menu>,
     game: Option<Game>,
-    game_options: Option<MenuGameOptions>,
+    game_options: MenuGameOptions,
 }
 
 impl Control {
     pub fn new(ctx: &mut Context) -> Control {
+        let menu_game_options = MenuGameOptions::new();
         Self {
             state: ProgramState::Menu,
-            menu: Some(Menu::new(ctx, &None)),
+            menu: Some(Menu::new(ctx, &menu_game_options)),
             game: None,
-            game_options: None,
+            game_options: menu_game_options,
         }
     }
 
@@ -43,14 +44,7 @@ impl Control {
                 ProgramState::Menu
             }
             ProgramState::Game => {
-                self.game = Some(Game::new(
-                    ctx,
-                    &GameOptions::from(
-                        self.game_options
-                            .as_ref()
-                            .expect("[!] attempted to start Game with no GameOptions"),
-                    ),
-                ));
+                self.game = Some(Game::new(ctx, &GameOptions::from(&self.game_options)));
                 ProgramState::Game
             }
         };
@@ -66,12 +60,14 @@ impl EventHandler for Control {
             match self.state {
                 ProgramState::Menu => {
                     // update the menu and get the state with GameOptions if ProgramState is changing
-                    if let Some(state_and_gameoptions) =
-                        self.menu.as_mut().expect(STATE_MENU_BUT_MENU_NONE).update()
+                    if let Some(new_state) = self
+                        .menu
+                        .as_mut()
+                        .expect(STATE_MENU_BUT_MENU_NONE)
+                        .update(&mut self.game_options)
                     {
                         self.menu = None;
-                        self.game_options = Some(state_and_gameoptions.1);
-                        self.change_state(ctx, state_and_gameoptions.0);
+                        self.change_state(ctx, new_state);
                     }
                 }
                 ProgramState::Game => {
@@ -165,7 +161,7 @@ impl EventHandler for Control {
                 .menu
                 .as_mut()
                 .expect(STATE_MENU_BUT_MENU_NONE)
-                .draw(ctx),
+                .draw(ctx, &self.game_options),
             ProgramState::Game => self
                 .game
                 .as_mut()

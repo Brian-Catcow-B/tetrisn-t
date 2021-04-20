@@ -172,48 +172,15 @@ impl MenuItem {
 pub struct MenuGameOptions {
     pub num_players: u8,
     pub starting_level: u8,
-    pub arr_controls: [(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize],
+    pub arr_controls: Box<[(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize]>,
 }
 
 impl MenuGameOptions {
-    fn new(
-        num_players: u8,
-        starting_level: u8,
-        arr_controls: &[(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize],
-    ) -> Self {
-        let arr_controls: [(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize];
-        for (idx, ctrls) in arr_split_controls.iter().enumerate() {
-            if let Some(k_ctrls) = ctrls.0 {
-                arr_controls[idx] = (
-                    Some(KeyboardControlScheme::new_classic(
-                        k_ctrls.0.expect(
-                            "[!] attempted to create KeyboardControlScheme with Left == None",
-                        ),
-                        k_ctrls.1.expect(
-                            "[!] attempted to create KeyboardControlScheme with Right == None",
-                        ),
-                        k_ctrls.2.expect(
-                            "[!] attempted to create KeyboardControlScheme with Down == None",
-                        ),
-                        k_ctrls.3.expect(
-                            "[!] attempted to create KeyboardControlScheme with RotateCw == None",
-                        ),
-                        k_ctrls.4.expect(
-                            "[!] attempted to create KeyboardControlScheme with RotateCcw == None",
-                        ),
-                    )),
-                    false,
-                );
-            } else if ctrls.1 {
-                arr_controls[idx] = (None, true);
-            } else {
-                arr_controls[idx] = (None, false);
-            }
-        }
+    pub fn new() -> Self {
         Self {
-            num_players,
-            starting_level,
-            arr_controls,
+            num_players: 1,
+            starting_level: 0,
+            arr_controls: vec![(None, false); MAX_NUM_PLAYERS as usize].into_boxed_slice(),
         }
     }
 }
@@ -229,6 +196,7 @@ enum MenuState {
 pub struct Menu {
     // logic
     input: Input,
+    num_required_keycode_movement_pairs: usize,
     // states
     state: MenuState,
     start_menu: start::StartMenu,
@@ -236,51 +204,31 @@ pub struct Menu {
 }
 
 impl Menu {
-    pub fn new(ctx: &mut Context, last_used_game_options: &Option<MenuGameOptions>) -> Self {
+    pub fn new(ctx: &mut Context, game_options: &MenuGameOptions) -> Self {
         let window_dimensions = graphics::size(ctx);
-        if let Some(menu_game_options) = last_used_game_options {
-            // previously used
-            Self {
-                input: Input::new(),
-                state: MenuState::Start,
-                start_menu: StartMenu::new(
-                    window_dimensions,
-                    menu_game_options.num_players,
-                    menu_game_options.starting_level,
-                ),
-                input_config_menu: InputConfigMenu::new(
-                    window_dimensions,
-                    Some(&menu_game_options.arr_controls),
-                ),
-            }
-        } else {
-            // defaults
-            Self {
-                input: Input::new(),
-                state: MenuState::Start,
-                start_menu: StartMenu::new(window_dimensions, 1, 0),
-                input_config_menu: InputConfigMenu::new(window_dimensions, None),
-            }
+        Self {
+            input: Input::new(),
+            num_required_keycode_movement_pairs: 5, // TODO
+            state: MenuState::Start,
+            start_menu: StartMenu::new(
+                window_dimensions,
+                game_options.num_players,
+                game_options.starting_level,
+            ),
+            input_config_menu: InputConfigMenu::new(window_dimensions, game_options),
         }
     }
 
-    pub fn update(&mut self) -> Option<(ProgramState, MenuGameOptions)> {
+    pub fn update(&mut self, game_options: &mut MenuGameOptions) -> Option<ProgramState> {
         match self.state {
             MenuState::Start => {
                 let trigger: MenuItemTrigger = self.start_menu.update(&self.input);
                 match trigger {
                     MenuItemTrigger::StartGame => {
-                        if self.ensure_enough_controls() {
+                        if self.ensure_enough_controls(game_options) {
                             let (num_players, starting_level) =
                                 self.start_menu.find_important_values();
-                            return Some((
-                                ProgramState::Game,
-                                MenuGameOptions::new(
-                                    num_players,
-                                    starting_level,
-                                    self.input_config_menu.arr_split_controls,
-                                ),
-                            ));
+                            return Some(ProgramState::Game);
                         } else {
                             self.start_menu.not_enough_controls_flag = true;
                         }
@@ -298,7 +246,7 @@ impl Menu {
                 }
             }
             MenuState::InputConfig => {
-                if self.input_config_menu.update(&self.input) {
+                if self.input_config_menu.update(&self.input, game_options) {
                     self.state = MenuState::Start;
                 }
             }
@@ -308,11 +256,19 @@ impl Menu {
         None
     }
 
-    fn ensure_enough_controls(&self) -> bool {
+    fn ensure_enough_controls(&self, game_options: &MenuGameOptions) -> bool {
         let mut ctrls_count = 0;
-        for ctrls in self.input_config_menu.arr_split_controls.iter() {
-            if ctrls.0.is_some() || ctrls.1 {
+        for ctrls in game_options.arr_controls.iter() {
+            if ctrls.1 {
                 ctrls_count += 1;
+            } else {
+                if let Some(k_ctrl_scheme) = &ctrls.0 {
+                    if k_ctrl_scheme.vec_keycode_movement_pair.len()
+                        <= self.num_required_keycode_movement_pairs
+                    {
+                        ctrls_count += 1;
+                    }
+                }
             }
         }
         ctrls_count >= self.start_menu.find_important_values().0
@@ -374,12 +330,12 @@ impl Menu {
         }
     }
 
-    pub fn draw(&mut self, ctx: &mut Context) {
+    pub fn draw(&mut self, ctx: &mut Context, game_options: &MenuGameOptions) {
         graphics::clear(ctx, GRAY);
 
         match self.state {
             MenuState::Start => self.start_menu.draw(ctx),
-            MenuState::InputConfig => self.input_config_menu.draw(ctx),
+            MenuState::InputConfig => self.input_config_menu.draw(ctx, game_options),
         }
     }
 
