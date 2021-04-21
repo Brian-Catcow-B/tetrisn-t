@@ -68,6 +68,7 @@ impl Input {
     }
 }
 
+#[derive(Clone)]
 pub struct KeyboardControlScheme {
     pub vec_keycode_movement_pair: Vec<(KeyCode, Movement)>,
 }
@@ -86,6 +87,10 @@ impl KeyboardControlScheme {
 
     pub fn len(&self) -> usize {
         self.vec_keycode_movement_pair.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.vec_keycode_movement_pair.is_empty()
     }
 
     pub fn clear(&mut self) {
@@ -171,3 +176,9 @@ impl Default for KeyboardControlScheme {
         }
     }
 }
+
+// impl Clone for KeyboardControlScheme {
+//     fn clone(&self) -> KeyboardControlScheme {
+//         *self
+//     }
+// }

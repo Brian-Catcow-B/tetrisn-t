@@ -172,15 +172,18 @@ impl MenuItem {
 pub struct MenuGameOptions {
     pub num_players: u8,
     pub starting_level: u8,
-    pub arr_controls: Box<[(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize]>,
+    pub arr_controls: Vec<(KeyboardControlScheme, bool)>,
 }
 
 impl MenuGameOptions {
     pub fn new() -> Self {
+        let mut arr_controls: Vec<(KeyboardControlScheme, bool)> =
+            vec![(KeyboardControlScheme::default(), false); MAX_NUM_PLAYERS as usize];
+        // arr_controls.append(&vec![);
         Self {
             num_players: 1,
             starting_level: 0,
-            arr_controls: vec![(None, false); MAX_NUM_PLAYERS as usize].into_boxed_slice(),
+            arr_controls,
         }
     }
 }
@@ -261,14 +264,8 @@ impl Menu {
         for ctrls in game_options.arr_controls.iter() {
             if ctrls.1 {
                 ctrls_count += 1;
-            } else {
-                if let Some(k_ctrl_scheme) = &ctrls.0 {
-                    if k_ctrl_scheme.vec_keycode_movement_pair.len()
-                        <= self.num_required_keycode_movement_pairs
-                    {
-                        ctrls_count += 1;
-                    }
-                }
+            } else if (ctrls.0).len() >= self.num_required_keycode_movement_pairs {
+                ctrls_count += 1;
             }
         }
         ctrls_count >= self.start_menu.find_important_values().0

@@ -46,10 +46,8 @@ impl InputConfigMenu {
         let arr_controls: [(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize];
         // gather what the starting used keycodes should be
         for (idx, ctrls) in game_options.arr_controls.iter().enumerate() {
-            if let Some(k_ctrl_scheme) = &ctrls.0 {
-                for key_move_pair in k_ctrl_scheme.vec_keycode_movement_pair.iter() {
-                    vec_used_keycode.push(key_move_pair.0);
-                }
+            for key_move_pair in (ctrls.0).vec_keycode_movement_pair.iter() {
+                vec_used_keycode.push(key_move_pair.0);
             }
         }
         // main MenuItems
@@ -80,10 +78,7 @@ impl InputConfigMenu {
             "Left:     ",
             MenuItemValueType::KeyCode,
             0,
-            match &game_options.arr_controls[0].0 {
-                Some(k_ctrl_scheme) => k_ctrl_scheme.keycode_from_movement(Movement::Left),
-                None => None,
-            },
+            (game_options.arr_controls[0].0).keycode_from_movement(Movement::Left),
             window_dimensions.1,
             TEXT_SCALE_DOWN,
             MenuItemTrigger::KeyLeft,
@@ -92,10 +87,7 @@ impl InputConfigMenu {
             "Right:    ",
             MenuItemValueType::KeyCode,
             0,
-            match &game_options.arr_controls[0].0 {
-                Some(k_ctrl_scheme) => k_ctrl_scheme.keycode_from_movement(Movement::Right),
-                None => None,
-            },
+            (game_options.arr_controls[0].0).keycode_from_movement(Movement::Right),
             window_dimensions.1,
             TEXT_SCALE_DOWN,
             MenuItemTrigger::KeyRight,
@@ -104,10 +96,7 @@ impl InputConfigMenu {
             "Down:     ",
             MenuItemValueType::KeyCode,
             0,
-            match &game_options.arr_controls[0].0 {
-                Some(k_ctrl_scheme) => k_ctrl_scheme.keycode_from_movement(Movement::Down),
-                None => None,
-            },
+            (game_options.arr_controls[0].0).keycode_from_movement(Movement::Down),
             window_dimensions.1,
             TEXT_SCALE_DOWN,
             MenuItemTrigger::KeyDown,
@@ -116,10 +105,7 @@ impl InputConfigMenu {
             "RotateCw:  ",
             MenuItemValueType::KeyCode,
             0,
-            match &game_options.arr_controls[0].0 {
-                Some(k_ctrl_scheme) => k_ctrl_scheme.keycode_from_movement(Movement::RotateCw),
-                None => None,
-            },
+            (game_options.arr_controls[0].0).keycode_from_movement(Movement::RotateCw),
             window_dimensions.1,
             TEXT_SCALE_DOWN,
             MenuItemTrigger::KeyRotateCw,
@@ -128,10 +114,7 @@ impl InputConfigMenu {
             "RotateCcw: ",
             MenuItemValueType::KeyCode,
             0,
-            match &game_options.arr_controls[0].0 {
-                Some(k_ctrl_scheme) => k_ctrl_scheme.keycode_from_movement(Movement::RotateCcw),
-                None => None,
-            },
+            (game_options.arr_controls[0].0).keycode_from_movement(Movement::RotateCcw),
             window_dimensions.1,
             TEXT_SCALE_DOWN,
             MenuItemTrigger::KeyRotateCcw,
@@ -199,11 +182,11 @@ impl InputConfigMenu {
                 && self.vec_menu_items_main[self.selection].trigger == MenuItemTrigger::SubSelection
             {
                 game_options.arr_controls[self.player_num as usize].1 = true;
-                if let Some(k_ctrl_scheme) = &game_options.arr_controls[self.player_num as usize].0
-                {
-                    self.remove_from_used_keycodes(&k_ctrl_scheme);
-                    game_options.arr_controls[self.player_num as usize].0 = None;
-                }
+                self.remove_from_used_keycodes(
+                    &game_options.arr_controls[self.player_num as usize].0,
+                );
+                game_options.arr_controls[self.player_num as usize].0 =
+                    KeyboardControlScheme::default();
             }
 
             // 'Space' or 'Return' was pressed
@@ -215,13 +198,11 @@ impl InputConfigMenu {
                     == MenuItemTrigger::SubSelection
                 {
                     self.most_recently_pressed_key = None;
-                    if let Some(k_ctrl_scheme) =
-                        &game_options.arr_controls[self.player_num as usize].0
-                    {
-                        self.remove_from_used_keycodes(&k_ctrl_scheme);
-                    }
+                    self.remove_from_used_keycodes(
+                        &game_options.arr_controls[self.player_num as usize].0,
+                    );
                     game_options.arr_controls[self.player_num as usize].0 =
-                        Some(KeyboardControlScheme::default());
+                        KeyboardControlScheme::default();
                     self.update_sub_text_strings();
                     self.sub_selection_keyboard_flag = true;
                     self.vec_menu_items_main[self.selection].set_select(true);
@@ -233,12 +214,11 @@ impl InputConfigMenu {
                 if self.vec_menu_items_main[self.selection].trigger == MenuItemTrigger::SubSelection
                 {
                     // remove input stuff from selection if we are on the SubSelection option
-                    if let Some(k_ctrl_scheme) =
-                        &game_options.arr_controls[self.player_num as usize].0
-                    {
-                        self.remove_from_used_keycodes(&k_ctrl_scheme);
-                        game_options.arr_controls[self.player_num as usize].0 = None;
-                    }
+                    self.remove_from_used_keycodes(
+                        &game_options.arr_controls[self.player_num as usize].0,
+                    );
+                    game_options.arr_controls[self.player_num as usize].0 =
+                        KeyboardControlScheme::default();
                     game_options.arr_controls[self.player_num as usize].1 = false;
                     self.most_recently_pressed_key = None;
                 } else {
@@ -254,13 +234,11 @@ impl InputConfigMenu {
                 self.sub_selection_keyboard = 0;
                 self.sub_selection_keyboard_flag = false;
                 // the user was in the middle of creating keyboard controls when they hit 'Escape', so pop however many KeyCode's off vec_used_keycode that the user set up
-                if let Some(k_ctrl_scheme) = &game_options.arr_controls[self.player_num as usize].0
-                {
-                    for _ in 0..k_ctrl_scheme.len() {
-                        self.vec_used_keycode.pop();
-                    }
+                for _ in 0..(game_options.arr_controls[self.player_num as usize].0).len() {
+                    self.vec_used_keycode.pop();
                 }
-                game_options.arr_controls[self.player_num as usize].0 = None;
+                game_options.arr_controls[self.player_num as usize].0 =
+                    KeyboardControlScheme::default();
                 self.most_recently_pressed_key = None;
             } else if self
                 .vec_used_keycode
@@ -271,18 +249,14 @@ impl InputConfigMenu {
             } else {
                 // no conflict, enter KeyCode of key pressed
                 self.keycode_conflict_flag = false;
-                match (game_options.arr_controls[self.player_num as usize].0).as_mut() {
-                    Some(k_ctrl_scheme) => {
-                        k_ctrl_scheme.add_pair(
-                            self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE),
-                            Movement::from(
-                                self.vec_menu_items_keycode[self.sub_selection_keyboard].trigger,
-                            ),
-                        );
-                        self.vec_used_keycode
-                            .push(self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE));
-                    }
-                }
+                (game_options.arr_controls[self.player_num as usize].0).add_pair(
+                    self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE),
+                    Movement::from(
+                        self.vec_menu_items_keycode[self.sub_selection_keyboard].trigger,
+                    ),
+                );
+                self.vec_used_keycode
+                    .push(self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE));
                 self.vec_menu_items_keycode[self.sub_selection_keyboard].set_select(false);
                 if self.sub_selection_keyboard < self.vec_menu_items_keycode.len() - 1 {
                     self.sub_selection_keyboard += 1;
@@ -297,15 +271,17 @@ impl InputConfigMenu {
     }
 
     fn remove_from_used_keycodes(&mut self, k_ctrl_scheme: &KeyboardControlScheme) {
-        let mut items_removed = 0;
-        for used_key_idx in 0..self.vec_used_keycode.len() {
-            for k_m_pair in k_ctrl_scheme.vec_keycode_movement_pair.iter() {
+        for k_m_pair in k_ctrl_scheme.vec_keycode_movement_pair.iter() {
+            let mut items_removed = 0;
+            for used_key_idx in 0..self.vec_used_keycode.len() {
                 if k_m_pair.0 == self.vec_used_keycode[used_key_idx - items_removed] {
                     self.vec_used_keycode.remove(used_key_idx - items_removed);
                     items_removed += 1;
                     // we only need to get rid of k_ctrl_scheme.len()
                     if items_removed >= k_ctrl_scheme.len() {
                         return;
+                    } else {
+                        break;
                     }
                 }
             }
@@ -374,7 +350,7 @@ impl InputConfigMenu {
                     self.draw_text(ctx, &self.keycode_conflict_text, 0.43, &window_dimensions);
                 }
 
-                if (game_options.arr_controls[self.player_num as usize].0).is_some() {
+                if !(game_options.arr_controls[self.player_num as usize].0).is_empty() {
                     for (index, item) in self.vec_menu_items_keycode.iter().enumerate() {
                         self.draw_text(
                             ctx,

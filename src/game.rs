@@ -76,7 +76,7 @@ pub const INITIAL_HANG_FRAMES: u8 = 180;
 pub const DETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.5;
 pub const UNDETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.2;
 
-static INVALID_LAST_USED_CONTROLS: &str = "[!] last used controls was Some() but invalid data";
+static INVALID_MENU_CONTROLS: &str = "[!] last used controls was Some() but invalid data";
 
 pub enum Modes {
     Classic,
@@ -95,30 +95,30 @@ impl From<&MenuGameOptions> for GameOptions {
         let mut vec_controls: Vec<(Option<KeyboardControlScheme>, bool)> =
             Vec::with_capacity(menu_game_options.arr_controls.len());
         let mut counted_active_controls: u8 = 0;
-        for controls in menu_game_options.arr_controls.iter() {
-            if let Some(ctrls) = &controls.0 {
+        for ctrls in menu_game_options.arr_controls.iter() {
+            if !(ctrls.0).is_empty() {
                 vec_controls.push((
                     Some(KeyboardControlScheme::new_classic(
-                        ctrls
+                        (ctrls.0)
                             .keycode_from_movement(Movement::Left)
-                            .expect(INVALID_LAST_USED_CONTROLS),
-                        ctrls
+                            .expect(INVALID_MENU_CONTROLS),
+                        (ctrls.0)
                             .keycode_from_movement(Movement::Right)
-                            .expect(INVALID_LAST_USED_CONTROLS),
-                        ctrls
+                            .expect(INVALID_MENU_CONTROLS),
+                        (ctrls.0)
                             .keycode_from_movement(Movement::Down)
-                            .expect(INVALID_LAST_USED_CONTROLS),
-                        ctrls
+                            .expect(INVALID_MENU_CONTROLS),
+                        (ctrls.0)
                             .keycode_from_movement(Movement::RotateCw)
-                            .expect(INVALID_LAST_USED_CONTROLS),
-                        ctrls
+                            .expect(INVALID_MENU_CONTROLS),
+                        (ctrls.0)
                             .keycode_from_movement(Movement::RotateCcw)
-                            .expect(INVALID_LAST_USED_CONTROLS),
+                            .expect(INVALID_MENU_CONTROLS),
                     )),
                     false,
                 ));
                 counted_active_controls += 1;
-            } else if controls.1 {
+            } else if ctrls.1 {
                 vec_controls.push((None, true));
                 counted_active_controls += 1;
             }
