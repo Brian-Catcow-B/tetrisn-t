@@ -4,7 +4,7 @@ use ggez::Context;
 
 use crate::control::ProgramState;
 use crate::inputs::{Input, KeyboardControlScheme};
-use crate::movement::Movement;
+// use crate::movement::Movement;
 
 pub const MAX_STARTING_LEVEL: u8 = 29; // this is just the fastest speed, so yeah
 pub const MAX_NUM_PLAYERS: u8 = 62; // currently held back by board width being a u8 equal to 6 + 4 * num_players
@@ -45,6 +45,8 @@ pub enum MenuItemTrigger {
     KeyDown,
     KeyRotateCw,
     KeyRotateCcw,
+    KeyBoardCw,
+    KeyBoardCcw,
 }
 
 pub struct MenuItem {
@@ -53,7 +55,6 @@ pub struct MenuItem {
     max_value: u8,
     pub value: u8,
     pub keycode: Option<KeyCode>,
-    pub movement: Movement,
     value_show_increase: u8,
     text_scale_down: f32,
     pub trigger: MenuItemTrigger,
@@ -114,7 +115,6 @@ impl MenuItem {
             max_value,
             value,
             keycode,
-            movement: Movement::None,
             value_show_increase,
             text_scale_down,
             trigger,
@@ -170,10 +170,6 @@ impl MenuItem {
             Some(key) => self.text.fragments_mut()[1].text = format!("{:?}", key),
             None => self.text.fragments_mut()[1].text = "None".to_string(),
         };
-    }
-
-    pub fn set_movement(&mut self, movement: Movement) {
-        self.movement = movement;
     }
 
     pub fn resize(&mut self, window_height: f32) {

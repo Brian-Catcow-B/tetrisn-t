@@ -16,6 +16,8 @@ use crate::menu::DARK_GRAY;
 use crate::menu::HELP_RED;
 use crate::menu::LIGHT_GRAY;
 
+const MAX_NON_START_INPUTS_PER_PLAYER: usize = 8;
+
 static KEY_UNEXPECTEDLY_NONE: &str =
     "[!] KeyCode of most recently pressed key is unexpectedly None";
 
@@ -69,62 +71,14 @@ impl InputConfigMenu {
         vec_menu_items_main[0].set_select(true);
 
         // keycode MenuItems
-        let mut vec_menu_items_keycode: Vec<MenuItem> = Vec::with_capacity(6);
-        let mut items_pushed: usize = 0;
-        vec_menu_items_keycode.push(MenuItem::new(
-            "Left:     ",
-            MenuItemValueType::KeyCode,
-            0,
-            (game_options.arr_controls[0].0).keycode_from_movement(Movement::Left),
-            window_dimensions.1,
-            SUB_TEXT_SCALE_DOWN,
-            MenuItemTrigger::KeyLeft,
-        ));
-        vec_menu_items_keycode[items_pushed].set_movement(Movement::Left);
-        items_pushed += 1;
-        vec_menu_items_keycode.push(MenuItem::new(
-            "Right:    ",
-            MenuItemValueType::KeyCode,
-            0,
-            (game_options.arr_controls[0].0).keycode_from_movement(Movement::Right),
-            window_dimensions.1,
-            SUB_TEXT_SCALE_DOWN,
-            MenuItemTrigger::KeyRight,
-        ));
-        vec_menu_items_keycode[items_pushed].set_movement(Movement::Right);
-        items_pushed += 1;
-        vec_menu_items_keycode.push(MenuItem::new(
-            "Down:     ",
-            MenuItemValueType::KeyCode,
-            0,
-            (game_options.arr_controls[0].0).keycode_from_movement(Movement::Down),
-            window_dimensions.1,
-            SUB_TEXT_SCALE_DOWN,
-            MenuItemTrigger::KeyDown,
-        ));
-        vec_menu_items_keycode[items_pushed].set_movement(Movement::Down);
-        items_pushed += 1;
-        vec_menu_items_keycode.push(MenuItem::new(
-            "RotateCw:  ",
-            MenuItemValueType::KeyCode,
-            0,
-            (game_options.arr_controls[0].0).keycode_from_movement(Movement::RotateCw),
-            window_dimensions.1,
-            SUB_TEXT_SCALE_DOWN,
-            MenuItemTrigger::KeyRotateCw,
-        ));
-        vec_menu_items_keycode[items_pushed].set_movement(Movement::RotateCw);
-        items_pushed += 1;
-        vec_menu_items_keycode.push(MenuItem::new(
-            "RotateCcw: ",
-            MenuItemValueType::KeyCode,
-            0,
-            (game_options.arr_controls[0].0).keycode_from_movement(Movement::RotateCcw),
-            window_dimensions.1,
-            SUB_TEXT_SCALE_DOWN,
-            MenuItemTrigger::KeyRotateCcw,
-        ));
-        vec_menu_items_keycode[items_pushed].set_movement(Movement::RotateCcw);
+        let mut vec_menu_items_keycode: Vec<MenuItem> =
+            Vec::with_capacity(MAX_NON_START_INPUTS_PER_PLAYER);
+        Self::setup_classic_mode_subtext(
+            &mut vec_menu_items_keycode,
+            game_options,
+            window_dimensions,
+        );
+        // Self::setup_rotatris_mode_subtext(&mut vec_menu_items_keycode, game_options, window_dimensions);
         Self {
             selection: 0,
             player_num: 0,
@@ -153,6 +107,109 @@ impl InputConfigMenu {
                     .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
             ),
         }
+    }
+
+    fn setup_classic_mode_subtext(
+        vec_to_add_to: &mut Vec<MenuItem>,
+        game_options: &MenuGameOptions,
+        window_dimensions: (f32, f32),
+    ) {
+        Self::setup_left_right_down_subtext(vec_to_add_to, game_options, window_dimensions);
+        Self::setup_rotate_piece_subtext(vec_to_add_to, game_options, window_dimensions);
+    }
+
+    fn setup_rotatris_mode_subtext(
+        vec_to_add_to: &mut Vec<MenuItem>,
+        game_options: &MenuGameOptions,
+        window_dimensions: (f32, f32),
+    ) {
+        Self::setup_left_right_down_subtext(vec_to_add_to, game_options, window_dimensions);
+        Self::setup_rotate_piece_subtext(vec_to_add_to, game_options, window_dimensions);
+        Self::setup_rotate_board_subtext(vec_to_add_to, game_options, window_dimensions);
+    }
+
+    fn setup_left_right_down_subtext(
+        vec_to_add_to: &mut Vec<MenuItem>,
+        game_options: &MenuGameOptions,
+        window_dimensions: (f32, f32),
+    ) {
+        vec_to_add_to.push(MenuItem::new(
+            "Left:     ",
+            MenuItemValueType::KeyCode,
+            0,
+            (game_options.arr_controls[0].0).keycode_from_movement(Movement::Left),
+            window_dimensions.1,
+            SUB_TEXT_SCALE_DOWN,
+            MenuItemTrigger::KeyLeft,
+        ));
+        vec_to_add_to.push(MenuItem::new(
+            "Right:    ",
+            MenuItemValueType::KeyCode,
+            0,
+            (game_options.arr_controls[0].0).keycode_from_movement(Movement::Right),
+            window_dimensions.1,
+            SUB_TEXT_SCALE_DOWN,
+            MenuItemTrigger::KeyRight,
+        ));
+        vec_to_add_to.push(MenuItem::new(
+            "Down:     ",
+            MenuItemValueType::KeyCode,
+            0,
+            (game_options.arr_controls[0].0).keycode_from_movement(Movement::Down),
+            window_dimensions.1,
+            SUB_TEXT_SCALE_DOWN,
+            MenuItemTrigger::KeyDown,
+        ));
+    }
+
+    fn setup_rotate_piece_subtext(
+        vec_to_add_to: &mut Vec<MenuItem>,
+        game_options: &MenuGameOptions,
+        window_dimensions: (f32, f32),
+    ) {
+        vec_to_add_to.push(MenuItem::new(
+            "RotateCw:  ",
+            MenuItemValueType::KeyCode,
+            0,
+            (game_options.arr_controls[0].0).keycode_from_movement(Movement::RotateCw),
+            window_dimensions.1,
+            SUB_TEXT_SCALE_DOWN,
+            MenuItemTrigger::KeyRotateCw,
+        ));
+        vec_to_add_to.push(MenuItem::new(
+            "RotateCcw: ",
+            MenuItemValueType::KeyCode,
+            0,
+            (game_options.arr_controls[0].0).keycode_from_movement(Movement::RotateCcw),
+            window_dimensions.1,
+            SUB_TEXT_SCALE_DOWN,
+            MenuItemTrigger::KeyRotateCcw,
+        ));
+    }
+
+    fn setup_rotate_board_subtext(
+        vec_to_add_to: &mut Vec<MenuItem>,
+        game_options: &MenuGameOptions,
+        window_dimensions: (f32, f32),
+    ) {
+        vec_to_add_to.push(MenuItem::new(
+            "BoardCw:  ",
+            MenuItemValueType::KeyCode,
+            0,
+            (game_options.arr_controls[0].0).keycode_from_movement(Movement::RotateCw),
+            window_dimensions.1,
+            SUB_TEXT_SCALE_DOWN,
+            MenuItemTrigger::KeyBoardCw,
+        ));
+        vec_to_add_to.push(MenuItem::new(
+            "BoardCcw: ",
+            MenuItemValueType::KeyCode,
+            0,
+            (game_options.arr_controls[0].0).keycode_from_movement(Movement::RotateCcw),
+            window_dimensions.1,
+            SUB_TEXT_SCALE_DOWN,
+            MenuItemTrigger::KeyBoardCcw,
+        ));
     }
 
     pub fn update(&mut self, input: &Input, game_options: &mut MenuGameOptions) -> bool {
@@ -315,12 +372,13 @@ impl InputConfigMenu {
 
     fn update_all_sub_text_strings(&mut self, game_options: &MenuGameOptions) {
         for item in self.vec_menu_items_keycode.iter_mut() {
+            let desired_movement = Movement::from(item.trigger);
             item.set_keycode(None);
             for kmp in (game_options.arr_controls[self.player_num as usize].0)
                 .vec_keycode_movement_pair
                 .iter()
             {
-                if kmp.1 == item.movement {
+                if kmp.1 == desired_movement {
                     item.set_keycode(Some(kmp.0));
                     break;
                 }

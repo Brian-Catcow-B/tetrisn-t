@@ -37,6 +37,8 @@ impl From<MenuItemTrigger> for Movement {
             MenuItemTrigger::KeyDown => Movement::Down,
             MenuItemTrigger::KeyRotateCw => Movement::RotateCw,
             MenuItemTrigger::KeyRotateCcw => Movement::RotateCcw,
+            MenuItemTrigger::KeyBoardCw => Movement::None,
+            MenuItemTrigger::KeyBoardCcw => Movement::None,
             _ => panic!(
                 "[!] Unexpected value converting MenuItemTrigger to Movement: {:?}",
                 value
