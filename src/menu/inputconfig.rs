@@ -9,8 +9,6 @@ use crate::movement::Movement;
 
 use crate::menu::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuItemValueType};
 
-use crate::menu::MAX_NUM_PLAYERS;
-
 use crate::menu::SUB_TEXT_SCALE_DOWN;
 use crate::menu::TEXT_SCALE_DOWN;
 
@@ -18,7 +16,6 @@ use crate::menu::DARK_GRAY;
 use crate::menu::HELP_RED;
 use crate::menu::LIGHT_GRAY;
 
-static INVALID_LAST_USED_CONTROLS: &str = "[!] last used controls was Some() but invalid data";
 static KEY_UNEXPECTEDLY_NONE: &str =
     "[!] KeyCode of most recently pressed key is unexpectedly None";
 
@@ -43,9 +40,8 @@ pub struct InputConfigMenu {
 impl InputConfigMenu {
     pub fn new(window_dimensions: (f32, f32), game_options: &MenuGameOptions) -> Self {
         let mut vec_used_keycode: Vec<KeyCode> = vec![];
-        let arr_controls: [(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize];
         // gather what the starting used keycodes should be
-        for (idx, ctrls) in game_options.arr_controls.iter().enumerate() {
+        for ctrls in game_options.arr_controls.iter() {
             for key_move_pair in (ctrls.0).vec_keycode_movement_pair.iter() {
                 vec_used_keycode.push(key_move_pair.0);
             }
@@ -74,51 +70,61 @@ impl InputConfigMenu {
 
         // keycode MenuItems
         let mut vec_menu_items_keycode: Vec<MenuItem> = Vec::with_capacity(6);
+        let mut items_pushed: usize = 0;
         vec_menu_items_keycode.push(MenuItem::new(
             "Left:     ",
             MenuItemValueType::KeyCode,
             0,
             (game_options.arr_controls[0].0).keycode_from_movement(Movement::Left),
             window_dimensions.1,
-            TEXT_SCALE_DOWN,
+            SUB_TEXT_SCALE_DOWN,
             MenuItemTrigger::KeyLeft,
         ));
+        vec_menu_items_keycode[items_pushed].set_movement(Movement::Left);
+        items_pushed += 1;
         vec_menu_items_keycode.push(MenuItem::new(
             "Right:    ",
             MenuItemValueType::KeyCode,
             0,
             (game_options.arr_controls[0].0).keycode_from_movement(Movement::Right),
             window_dimensions.1,
-            TEXT_SCALE_DOWN,
+            SUB_TEXT_SCALE_DOWN,
             MenuItemTrigger::KeyRight,
         ));
+        vec_menu_items_keycode[items_pushed].set_movement(Movement::Right);
+        items_pushed += 1;
         vec_menu_items_keycode.push(MenuItem::new(
             "Down:     ",
             MenuItemValueType::KeyCode,
             0,
             (game_options.arr_controls[0].0).keycode_from_movement(Movement::Down),
             window_dimensions.1,
-            TEXT_SCALE_DOWN,
+            SUB_TEXT_SCALE_DOWN,
             MenuItemTrigger::KeyDown,
         ));
+        vec_menu_items_keycode[items_pushed].set_movement(Movement::Down);
+        items_pushed += 1;
         vec_menu_items_keycode.push(MenuItem::new(
             "RotateCw:  ",
             MenuItemValueType::KeyCode,
             0,
             (game_options.arr_controls[0].0).keycode_from_movement(Movement::RotateCw),
             window_dimensions.1,
-            TEXT_SCALE_DOWN,
+            SUB_TEXT_SCALE_DOWN,
             MenuItemTrigger::KeyRotateCw,
         ));
+        vec_menu_items_keycode[items_pushed].set_movement(Movement::RotateCw);
+        items_pushed += 1;
         vec_menu_items_keycode.push(MenuItem::new(
             "RotateCcw: ",
             MenuItemValueType::KeyCode,
             0,
             (game_options.arr_controls[0].0).keycode_from_movement(Movement::RotateCcw),
             window_dimensions.1,
-            TEXT_SCALE_DOWN,
+            SUB_TEXT_SCALE_DOWN,
             MenuItemTrigger::KeyRotateCcw,
         ));
+        vec_menu_items_keycode[items_pushed].set_movement(Movement::RotateCcw);
         Self {
             selection: 0,
             player_num: 0,
@@ -151,12 +157,18 @@ impl InputConfigMenu {
 
     pub fn update(&mut self, input: &Input, game_options: &mut MenuGameOptions) -> bool {
         if !self.sub_selection_keyboard_flag {
+            // NOT the input box
+
             if input.keydown_right.1 {
                 self.vec_menu_items_main[self.selection].inc_or_dec(true);
+                self.player_num = self.get_player_num();
+                self.update_all_sub_text_strings(game_options);
             }
 
             if input.keydown_left.1 {
                 self.vec_menu_items_main[self.selection].inc_or_dec(false);
+                self.player_num = self.get_player_num();
+                self.update_all_sub_text_strings(game_options);
             }
 
             if input.keydown_down.1 {
@@ -203,9 +215,9 @@ impl InputConfigMenu {
                     );
                     game_options.arr_controls[self.player_num as usize].0 =
                         KeyboardControlScheme::default();
-                    self.update_sub_text_strings();
+                    self.update_all_sub_text_strings(game_options);
                     self.sub_selection_keyboard_flag = true;
-                    self.vec_menu_items_main[self.selection].set_select(true);
+                    self.vec_menu_items_keycode[self.sub_selection_keyboard].set_select(true);
                 }
             }
 
@@ -226,9 +238,12 @@ impl InputConfigMenu {
                 }
             }
         } else if self.sub_selection_keyboard_flag && self.most_recently_pressed_key.is_some() {
+            // input box with some key press
+
             // first check if the KeyCode is 'Escape', and if it is, just delete the layout entry and go out of the subselection section
             // second check if the KeyCode was already used. If it was, set the error message flag to true
             if input.keydown_rotate_ccw.1 {
+                // escape
                 self.vec_menu_items_keycode[self.sub_selection_keyboard].set_select(false);
                 self.keycode_conflict_flag = false;
                 self.sub_selection_keyboard = 0;
@@ -239,7 +254,6 @@ impl InputConfigMenu {
                 }
                 game_options.arr_controls[self.player_num as usize].0 =
                     KeyboardControlScheme::default();
-                self.most_recently_pressed_key = None;
             } else if self
                 .vec_used_keycode
                 .contains(&self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE))
@@ -249,14 +263,15 @@ impl InputConfigMenu {
             } else {
                 // no conflict, enter KeyCode of key pressed
                 self.keycode_conflict_flag = false;
+                let key: KeyCode = self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE);
                 (game_options.arr_controls[self.player_num as usize].0).add_pair(
-                    self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE),
+                    key,
                     Movement::from(
                         self.vec_menu_items_keycode[self.sub_selection_keyboard].trigger,
                     ),
                 );
-                self.vec_used_keycode
-                    .push(self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE));
+                self.vec_menu_items_keycode[self.sub_selection_keyboard].set_keycode(Some(key));
+                self.vec_used_keycode.push(key);
                 self.vec_menu_items_keycode[self.sub_selection_keyboard].set_select(false);
                 if self.sub_selection_keyboard < self.vec_menu_items_keycode.len() - 1 {
                     self.sub_selection_keyboard += 1;
@@ -266,8 +281,18 @@ impl InputConfigMenu {
                     self.sub_selection_keyboard_flag = false;
                 }
             }
+            self.most_recently_pressed_key = None;
         }
         false
+    }
+
+    fn get_player_num(&self) -> u8 {
+        for item in self.vec_menu_items_main.iter() {
+            if item.value_type == MenuItemValueType::PlayerNum {
+                return item.value;
+            }
+        }
+        0u8
     }
 
     fn remove_from_used_keycodes(&mut self, k_ctrl_scheme: &KeyboardControlScheme) {
@@ -288,12 +313,25 @@ impl InputConfigMenu {
         }
     }
 
-    fn update_sub_text_strings(&mut self) {
-        // TODO
+    fn update_all_sub_text_strings(&mut self, game_options: &MenuGameOptions) {
+        for item in self.vec_menu_items_keycode.iter_mut() {
+            item.set_keycode(None);
+            for kmp in (game_options.arr_controls[self.player_num as usize].0)
+                .vec_keycode_movement_pair
+                .iter()
+            {
+                if kmp.1 == item.movement {
+                    item.set_keycode(Some(kmp.0));
+                    break;
+                }
+            }
+        }
     }
 
     pub fn draw(&mut self, ctx: &mut Context, game_options: &MenuGameOptions) {
         let window_dimensions = graphics::size(ctx);
+
+        // always drawn stuff
 
         for (index, item) in self.vec_menu_items_main.iter().enumerate() {
             self.draw_text(
@@ -303,8 +341,6 @@ impl InputConfigMenu {
                 &window_dimensions,
             );
         }
-        // self.draw_text(ctx, &self.back_text, 0.1, &window_dimensions);
-        // self.draw_text(ctx, &self.player_num_text, 0.3, &window_dimensions);
 
         // display nothing special on InputConfigMenuOption::Back, so just draw the extra stuff when it's not on InputConfigMenuOption::Back
         // and then later determine which of the other InputConfigMenuOption's it is for the specifics
@@ -345,12 +381,14 @@ impl InputConfigMenu {
             }
             graphics::draw(ctx, &editing_indicator_rectangle, (Point2::new(0.0, 0.0),)).unwrap();
 
-            if self.vec_menu_items_main[self.selection].trigger != MenuItemTrigger::SubSelection {
+            if self.vec_menu_items_main[self.selection].trigger == MenuItemTrigger::SubSelection {
                 if self.keycode_conflict_flag {
                     self.draw_text(ctx, &self.keycode_conflict_text, 0.43, &window_dimensions);
                 }
 
-                if !(game_options.arr_controls[self.player_num as usize].0).is_empty() {
+                if self.sub_selection_keyboard_flag
+                    || !(game_options.arr_controls[self.player_num as usize].0).is_empty()
+                {
                     for (index, item) in self.vec_menu_items_keycode.iter().enumerate() {
                         self.draw_text(
                             ctx,

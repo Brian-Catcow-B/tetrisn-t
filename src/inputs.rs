@@ -93,10 +93,6 @@ impl KeyboardControlScheme {
         self.vec_keycode_movement_pair.is_empty()
     }
 
-    pub fn clear(&mut self) {
-        self.vec_keycode_movement_pair.clear();
-    }
-
     pub fn new_classic(
         left: KeyCode,
         right: KeyCode,
@@ -113,16 +109,6 @@ impl KeyboardControlScheme {
         Self {
             vec_keycode_movement_pair,
         }
-    }
-
-    pub fn index_from_movement(&self, m: Movement) -> Option<usize> {
-        for (index, pair) in self.vec_keycode_movement_pair.iter().enumerate() {
-            if pair.1 == m {
-                return Some(index);
-            }
-        }
-
-        None
     }
 
     pub fn keycode_from_movement(&self, m: Movement) -> Option<KeyCode> {
@@ -148,24 +134,6 @@ impl KeyboardControlScheme {
     pub fn add_pair(&mut self, k: KeyCode, m: Movement) {
         self.vec_keycode_movement_pair.push((k, m));
     }
-
-    // pub fn split(
-    //     &self,
-    // ) -> (
-    //     Option<KeyCode>,
-    //     Option<KeyCode>,
-    //     Option<KeyCode>,
-    //     Option<KeyCode>,
-    //     Option<KeyCode>,
-    // ) {
-    //     (
-    //         Some(self.left),
-    //         Some(self.right),
-    //         Some(self.down),
-    //         Some(self.rotate_cw),
-    //         Some(self.rotate_ccw),
-    //     )
-    // }
 }
 
 impl Default for KeyboardControlScheme {
@@ -176,9 +144,3 @@ impl Default for KeyboardControlScheme {
         }
     }
 }
-
-// impl Clone for KeyboardControlScheme {
-//     fn clone(&self) -> KeyboardControlScheme {
-//         *self
-//     }
-// }

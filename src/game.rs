@@ -189,7 +189,7 @@ impl Game {
                     + board_width as f32 / (2.0 * game_options.num_players as f32))
                     as u8
                     + 1
-            } else if player == game_options.num_players && game_options.num_players % 2 == 1 {
+            } else if player == game_options.num_players / 2 && game_options.num_players % 2 == 1 {
                 // middle player, for an odd number of players
                 board_width / 2
             } else {
@@ -209,36 +209,6 @@ impl Game {
 
             vec_players.push(Player::new(player, control_scheme, spawn_column));
         }
-        // for player in 0..(game_options.num_players) / 2 {
-        //     vec_players.push(Player::new(
-        //         player,
-        //         game_options.vec_controls[player as usize],
-        //         (player as f32 * (board_width as f32 / game_options.num_players as f32)
-        //             + board_width as f32 / (2.0 * game_options.num_players as f32))
-        //             as u8
-        //             + 1,
-        //     ));
-        // }
-        // if game_options.num_players % 2 == 1 {
-        //     let player = game_options.num_players / 2;
-        //     vec_players.push(Player::new(
-        //         player,
-        //         game_options.vec_controls[player as usize],
-        //         board_width / 2,
-        //     ));
-        // }
-        // for player in (game_options.num_players + 1) / 2..game_options.num_players {
-        //     vec_players.push(Player::new(
-        //         player,
-        //         game_options.vec_controls[player as usize],
-        //         board_width
-        //             - 1
-        //             - ((game_options.num_players - 1 - player) as f32
-        //                 * (board_width as f32 / game_options.num_players as f32)
-        //                 + board_width as f32 / (2.0 * game_options.num_players as f32))
-        //                 as u8,
-        //     ));
-        // }
         let mut batch_empty_tile = spritebatch::SpriteBatch::new(TileGraphic::new_empty(ctx).image);
         // the emtpy tile batch will be constant once the game starts with the player tile batches drawing on top of it, so just set that up here
         for x in 0..board_width {
@@ -686,7 +656,6 @@ impl Game {
                 self.keycode_escape_flags = (true, true);
                 return;
             } else if keycode == KeyCode::Down {
-                println!("set down to (true, true)");
                 self.keycode_down_flags = (true, true);
                 return;
             }

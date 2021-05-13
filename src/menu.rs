@@ -4,6 +4,7 @@ use ggez::Context;
 
 use crate::control::ProgramState;
 use crate::inputs::{Input, KeyboardControlScheme};
+use crate::movement::Movement;
 
 pub const MAX_STARTING_LEVEL: u8 = 29; // this is just the fastest speed, so yeah
 pub const MAX_NUM_PLAYERS: u8 = 62; // currently held back by board width being a u8 equal to 6 + 4 * num_players
@@ -52,6 +53,7 @@ pub struct MenuItem {
     max_value: u8,
     pub value: u8,
     pub keycode: Option<KeyCode>,
+    pub movement: Movement,
     value_show_increase: u8,
     text_scale_down: f32,
     pub trigger: MenuItemTrigger,
@@ -94,7 +96,12 @@ impl MenuItem {
                 );
             }
             MenuItemValueType::KeyCode => {
-                text.add(TextFragment::new(format!("{:?}", keycode)).color(graphics::BLACK));
+                match keycode {
+                    Some(key) => {
+                        text.add(TextFragment::new(format!("{:?}", key)).color(graphics::BLACK))
+                    }
+                    None => text.add(TextFragment::new("None".to_string()).color(graphics::BLACK)),
+                };
             }
         }
         text.set_font(
@@ -107,6 +114,7 @@ impl MenuItem {
             max_value,
             value,
             keycode,
+            movement: Movement::None,
             value_show_increase,
             text_scale_down,
             trigger,
@@ -158,7 +166,14 @@ impl MenuItem {
 
     pub fn set_keycode(&mut self, keycode: Option<KeyCode>) {
         self.keycode = keycode;
-        self.text.fragments_mut()[1].text = format!("{:?}", keycode);
+        match self.keycode {
+            Some(key) => self.text.fragments_mut()[1].text = format!("{:?}", key),
+            None => self.text.fragments_mut()[1].text = "None".to_string(),
+        };
+    }
+
+    pub fn set_movement(&mut self, movement: Movement) {
+        self.movement = movement;
     }
 
     pub fn resize(&mut self, window_height: f32) {
@@ -177,9 +192,8 @@ pub struct MenuGameOptions {
 
 impl MenuGameOptions {
     pub fn new() -> Self {
-        let mut arr_controls: Vec<(KeyboardControlScheme, bool)> =
+        let arr_controls: Vec<(KeyboardControlScheme, bool)> =
             vec![(KeyboardControlScheme::default(), false); MAX_NUM_PLAYERS as usize];
-        // arr_controls.append(&vec![);
         Self {
             num_players: 1,
             starting_level: 0,
@@ -225,12 +239,10 @@ impl Menu {
     pub fn update(&mut self, game_options: &mut MenuGameOptions) -> Option<ProgramState> {
         match self.state {
             MenuState::Start => {
-                let trigger: MenuItemTrigger = self.start_menu.update(&self.input);
+                let trigger: MenuItemTrigger = self.start_menu.update(&self.input, game_options);
                 match trigger {
                     MenuItemTrigger::StartGame => {
                         if self.ensure_enough_controls(game_options) {
-                            let (num_players, starting_level) =
-                                self.start_menu.find_important_values();
                             return Some(ProgramState::Game);
                         } else {
                             self.start_menu.not_enough_controls_flag = true;
@@ -268,7 +280,7 @@ impl Menu {
                 ctrls_count += 1;
             }
         }
-        ctrls_count >= self.start_menu.find_important_values().0
+        ctrls_count >= game_options.num_players
     }
 
     pub fn key_down_event(&mut self, keycode: KeyCode, _repeat: bool) {

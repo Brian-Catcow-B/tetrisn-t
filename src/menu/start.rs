@@ -4,7 +4,7 @@ use ggez::nalgebra::Point2;
 use ggez::Context;
 
 use crate::inputs::Input;
-use crate::menu::{MenuItem, MenuItemTrigger, MenuItemValueType};
+use crate::menu::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuItemValueType};
 
 use crate::menu::TEXT_SCALE_DOWN;
 
@@ -71,7 +71,7 @@ impl StartMenu {
         }
     }
 
-    pub fn update(&mut self, input: &Input) -> MenuItemTrigger {
+    pub fn update(&mut self, input: &Input, game_options: &mut MenuGameOptions) -> MenuItemTrigger {
         if input.keydown_right.1 {
             self.vec_menu_items[self.selection].inc_or_dec(true);
         }
@@ -79,6 +79,9 @@ impl StartMenu {
         if input.keydown_left.1 {
             self.vec_menu_items[self.selection].inc_or_dec(false);
         }
+
+        game_options.num_players = self.get_num_players() + 1;
+        game_options.starting_level = self.get_starting_level();
 
         if input.keydown_down.1 {
             self.vec_menu_items[self.selection].set_select(false);
@@ -103,19 +106,22 @@ impl StartMenu {
         MenuItemTrigger::None
     }
 
-    // searches through self.vec_menu_items and gets the important values; returns (num_players, starting_level)
-    pub fn find_important_values(&self) -> (u8, u8) {
-        let mut num_players = 0;
-        let mut starting_level = 0;
+    fn get_num_players(&self) -> u8 {
         for item in self.vec_menu_items.iter() {
-            match item.value_type {
-                MenuItemValueType::NumPlayers => num_players = item.value + 1,
-                MenuItemValueType::StartingLevel => starting_level = item.value,
-                _ => {}
+            if item.value_type == MenuItemValueType::NumPlayers {
+                return item.value;
             }
         }
+        0u8
+    }
 
-        (num_players, starting_level)
+    fn get_starting_level(&self) -> u8 {
+        for item in self.vec_menu_items.iter() {
+            if item.value_type == MenuItemValueType::StartingLevel {
+                return item.value;
+            }
+        }
+        0u8
     }
 
     pub fn draw(&mut self, ctx: &mut Context) {
