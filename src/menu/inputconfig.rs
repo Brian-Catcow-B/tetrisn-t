@@ -7,14 +7,9 @@ use ggez::Context;
 use crate::inputs::{Input, KeyboardControlScheme};
 use crate::movement::Movement;
 
-use crate::menu::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuItemValueType};
-
-use crate::menu::SUB_TEXT_SCALE_DOWN;
-use crate::menu::TEXT_SCALE_DOWN;
-
-use crate::menu::DARK_GRAY;
-use crate::menu::HELP_RED;
-use crate::menu::LIGHT_GRAY;
+use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuItemValueType};
+use crate::menu::menuhelpers::{DARK_GRAY, HELP_RED, LIGHT_GRAY};
+use crate::menu::menuhelpers::{SUB_TEXT_SCALE_DOWN, TEXT_SCALE_DOWN};
 
 const MAX_NON_START_INPUTS_PER_PLAYER: usize = 8;
 

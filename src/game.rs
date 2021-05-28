@@ -23,7 +23,7 @@ mod board;
 use crate::game::board::BoardHandler;
 
 use crate::inputs::KeyboardControlScheme;
-use crate::menu::MenuGameOptions;
+use crate::menu::menuhelpers::MenuGameOptions;
 
 const BOARD_HEIGHT: u8 = 20u8;
 

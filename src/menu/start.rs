@@ -4,11 +4,9 @@ use ggez::nalgebra::Point2;
 use ggez::Context;
 
 use crate::inputs::Input;
-use crate::menu::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuItemValueType};
-
-use crate::menu::TEXT_SCALE_DOWN;
-
-use crate::menu::HELP_RED;
+use crate::menu::menuhelpers::HELP_RED;
+use crate::menu::menuhelpers::TEXT_SCALE_DOWN;
+use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuItemValueType};
 
 pub struct StartMenu {
     // logic

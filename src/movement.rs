@@ -1,4 +1,4 @@
-use crate::menu::MenuItemTrigger;
+use crate::menu::menuhelpers::MenuItemTrigger;
 
 #[repr(u8)]
 #[derive(PartialEq, Eq, Copy, Clone)]

@@ -5,7 +5,7 @@ use ggez::timer;
 use ggez::{Context, GameResult};
 
 use crate::game::{Game, GameOptions};
-use crate::menu::{Menu, MenuGameOptions};
+use crate::menu::{menuhelpers::MenuGameOptions, Menu};
 
 static STATE_MENU_BUT_MENU_NONE: &str =
     "[!] control.state == ProgramState::Menu but control.menu == None";
