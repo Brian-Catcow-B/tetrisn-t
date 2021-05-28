@@ -1,6 +1,5 @@
 use ggez::event::KeyCode;
-use ggez::graphics::{self, DrawParam};
-use ggez::graphics::{Scale, Text, TextFragment};
+use ggez::graphics::{self, DrawParam, Scale, Text, TextFragment};
 use ggez::nalgebra::Point2;
 use ggez::Context;
 

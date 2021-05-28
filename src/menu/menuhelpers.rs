@@ -22,6 +22,7 @@ pub enum MenuItemValueType {
     StartingLevel,
     PlayerNum,
     KeyCode,
+    Custom,
 }
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
@@ -44,7 +45,7 @@ pub enum MenuItemTrigger {
 pub struct MenuItem {
     pub text: Text,
     pub value_type: MenuItemValueType,
-    max_value: u8,
+    num_values: u8,
     pub value: u8,
     pub keycode: Option<KeyCode>,
     value_show_increase: u8,
@@ -64,12 +65,12 @@ impl MenuItem {
         trigger: MenuItemTrigger,
     ) -> Self {
         let mut text = Text::new(TextFragment::new(item_start_str).color(graphics::BLACK));
-        let mut max_value = 0;
+        let mut num_values = 0;
         let mut value_show_increase = 0;
         match value_type {
             MenuItemValueType::None => {}
             MenuItemValueType::NumPlayers => {
-                max_value = MAX_NUM_PLAYERS;
+                num_values = MAX_NUM_PLAYERS;
                 value_show_increase = 1;
                 text.add(
                     TextFragment::new(format!(" {}", value + value_show_increase))
@@ -77,11 +78,11 @@ impl MenuItem {
                 );
             }
             MenuItemValueType::StartingLevel => {
-                max_value = MAX_STARTING_LEVEL;
+                num_values = MAX_STARTING_LEVEL + 1; // level indexes by 0, so we have one more than max starting level
                 text.add(TextFragment::new(format!(" {}", value)).color(graphics::BLACK));
             }
             MenuItemValueType::PlayerNum => {
-                max_value = MAX_NUM_PLAYERS;
+                num_values = MAX_NUM_PLAYERS;
                 value_show_increase = 1;
                 text.add(
                     TextFragment::new(format!(" {}", value + value_show_increase))
@@ -96,6 +97,9 @@ impl MenuItem {
                     None => text.add(TextFragment::new("None".to_string()).color(graphics::BLACK)),
                 };
             }
+            MenuItemValueType::Custom => {
+                text.add(TextFragment::new("".to_string()).color(graphics::BLACK));
+            }
         }
         text.set_font(
             Font::default(),
@@ -104,7 +108,7 @@ impl MenuItem {
         Self {
             text,
             value_type,
-            max_value,
+            num_values,
             value,
             keycode,
             value_show_increase,
@@ -144,11 +148,12 @@ impl MenuItem {
         if self.value_type == MenuItemValueType::NumPlayers
             || self.value_type == MenuItemValueType::StartingLevel
             || self.value_type == MenuItemValueType::PlayerNum
+            || self.value_type == MenuItemValueType::Custom
         {
             self.value = if inc {
-                (self.value + 1) % self.max_value
+                (self.value + 1) % self.num_values
             } else {
-                (self.value - 1 + self.max_value) % self.max_value
+                (self.value - 1 + self.num_values) % self.num_values
             };
             // assume it's selected because it's being incremented/decremented
             self.text.fragments_mut()[1].text =
@@ -169,6 +174,10 @@ impl MenuItem {
             Font::default(),
             Scale::uniform(window_height / self.text_scale_down),
         );
+    }
+
+    pub fn set_num_values(&mut self, num_vals: u8) {
+        self.num_values = num_vals;
     }
 }
 

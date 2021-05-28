@@ -1,12 +1,10 @@
-use ggez::graphics::{self, DrawParam};
-use ggez::graphics::{Text, TextFragment};
+use ggez::graphics::{self, DrawParam, Text, TextFragment};
 use ggez::nalgebra::Point2;
 use ggez::Context;
 
 use crate::inputs::Input;
-use crate::menu::menuhelpers::HELP_RED;
-use crate::menu::menuhelpers::TEXT_SCALE_DOWN;
 use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuItemValueType};
+use crate::menu::menuhelpers::{HELP_RED, TEXT_SCALE_DOWN};
 
 pub struct StartMenu {
     // logic
