@@ -606,13 +606,16 @@ impl Game {
                 if player.input.keydown_start.1 {
                     self.pause_flags = (true, true);
                 }
+                
+                // reset player controls in memory for next frame consistency
+                player.input.was_just_pressed_setfalse();
             }
 
             // update controls so that the logic realizes next frame that the button inputs made were run through the logic
             if self.keycode_escape_flags.1 {
                 self.pause_flags = (true, true);
             }
-            self.was_just_pressed_setfalse_all_players();
+            self.was_just_pressed_setfalse_common();
 
             // attempt to line clear (go through the vector of FullLine's and decrement clear_delay if > 0, clear and return (lines_cleared, score) for <= 0)
             let (returned_lines, returned_score) = self.bh.attempt_clear(self.level);
@@ -646,6 +649,10 @@ impl Game {
         for player in self.vec_players.iter_mut() {
             player.input.was_just_pressed_setfalse();
         }
+        self.was_just_pressed_setfalse_common();
+    }
+
+    fn was_just_pressed_setfalse_common(&mut self) {
         self.keycode_down_flags.1 = false;
         self.keycode_escape_flags.1 = false;
     }
