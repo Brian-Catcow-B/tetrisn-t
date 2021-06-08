@@ -59,6 +59,17 @@ impl Player {
         }
     }
 
+    pub fn tick_das_countdown(&mut self) -> bool {
+        if self.das_countdown > 0 {
+            self.das_countdown -= 1;
+        }
+        if self.das_countdown == 0 || self.waiting_to_shift {
+            return true;
+        }
+
+        false
+    }
+
     pub fn update_input_keydown(&mut self, input: KeyCode) -> bool {
         if let Some(k_ctrl_scheme) = &self.control_scheme.0 {
             let movement_opt = k_ctrl_scheme.movement_from_keycode(input);
