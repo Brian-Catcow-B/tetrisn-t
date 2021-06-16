@@ -182,7 +182,7 @@ impl EventHandler for Control {
                 .menu
                 .as_mut()
                 .expect(STATE_MENU_BUT_MENU_NONE)
-                .resize_event(height),
+                .resize_event((width, height)),
             ProgramState::Game => self
                 .game
                 .as_mut()

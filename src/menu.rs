@@ -3,11 +3,14 @@ use ggez::graphics;
 use ggez::Context;
 
 use crate::control::ProgramState;
+use crate::game::GameMode;
 use crate::inputs::Input;
 
+mod choosemode;
 mod inputconfig;
 pub mod menuhelpers;
 mod start;
+use choosemode::ChooseModeMenu;
 use inputconfig::InputConfigMenu;
 use menuhelpers::GRAY;
 use menuhelpers::{MenuGameOptions, MenuItemTrigger};
@@ -16,6 +19,7 @@ use start::StartMenu;
 #[repr(u8)]
 #[derive(PartialEq, Eq)]
 enum MenuState {
+    ChooseMode,
     Start,
     InputConfig,
 }
@@ -27,8 +31,11 @@ pub struct Menu {
     num_required_keycode_movement_pairs: usize,
     // states
     state: MenuState,
-    start_menu: start::StartMenu,
-    input_config_menu: inputconfig::InputConfigMenu,
+    choose_mode_menu: ChooseModeMenu,
+    start_menu: StartMenu,
+    input_config_menu: InputConfigMenu,
+    // window size
+    window_dimensions: (f32, f32),
 }
 
 impl Menu {
@@ -36,19 +43,33 @@ impl Menu {
         let window_dimensions = graphics::size(ctx);
         Self {
             input: Input::new(),
-            num_required_keycode_movement_pairs: 5, // TODO
-            state: MenuState::Start,
+            num_required_keycode_movement_pairs: GameMode::num_required_inputs_from(
+                GameMode::Classic,
+            ),
+            state: MenuState::ChooseMode,
+            choose_mode_menu: ChooseModeMenu::new(window_dimensions),
             start_menu: StartMenu::new(
                 window_dimensions,
                 game_options.num_players,
                 game_options.starting_level,
             ),
             input_config_menu: InputConfigMenu::new(window_dimensions, game_options),
+            window_dimensions,
         }
     }
 
     pub fn update(&mut self, game_options: &mut MenuGameOptions) -> Option<ProgramState> {
         match self.state {
+            MenuState::ChooseMode => {
+                if self.choose_mode_menu.update(&self.input) == MenuItemTrigger::SubMenu1 {
+                    self.state = MenuState::Start;
+                    self.start_menu.set_game_mode(
+                        self.choose_mode_menu.game_mode,
+                        game_options,
+                        self.window_dimensions,
+                    );
+                }
+            }
             MenuState::Start => {
                 let trigger: MenuItemTrigger = self.start_menu.update(&self.input, game_options);
                 match trigger {
@@ -154,14 +175,17 @@ impl Menu {
         graphics::clear(ctx, GRAY);
 
         match self.state {
+            MenuState::ChooseMode => self.choose_mode_menu.draw(ctx),
             MenuState::Start => self.start_menu.draw(ctx),
             MenuState::InputConfig => self.input_config_menu.draw(ctx, game_options),
         }
     }
 
-    pub fn resize_event(&mut self, height: f32) {
+    pub fn resize_event(&mut self, window_dims: (f32, f32)) {
+        self.window_dimensions = window_dims;
         match self.state {
-            MenuState::Start => self.start_menu.resize_event(height),
+            MenuState::ChooseMode => {}
+            MenuState::Start => self.start_menu.resize_event(window_dims.1),
             MenuState::InputConfig => {}
         }
     }

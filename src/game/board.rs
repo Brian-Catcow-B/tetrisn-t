@@ -1,6 +1,6 @@
 use crate::game::piece::{Piece, Shapes};
 use crate::game::tile::Tile;
-use crate::game::Modes;
+use crate::game::GameMode;
 use crate::game::{
     CLEAR_DELAY_CLASSIC, FALL_DELAY_VALUES_CLASSIC, FALL_DELAY_VALUES_ROTATRIS, SCORE_DOUBLE_BASE,
     SCORE_QUADRUPLE_BASE, SCORE_SINGLE_BASE, SCORE_TRIPLE_BASE,
@@ -45,25 +45,25 @@ impl From<Movement> for Gravity {
 
 // abstract the board and the possible gamemodes into one struct
 pub struct BoardHandler {
-    pub mode: Modes,
+    pub mode: GameMode,
     pub classic: Option<BoardClassic>,
     pub rotatris: Option<BoardRotatris>,
 }
 
 impl BoardHandler {
-    pub fn new(board_width: u8, board_height: u8, num_players: u8, mode: Modes) -> Self {
+    pub fn new(board_width: u8, board_height: u8, num_players: u8, mode: GameMode) -> Self {
         // determine some rules based on gamemode
         let (board_height_buffer, spawn_row) = match mode {
-            Modes::Rotatris => (0, (board_height - 1) / 2),
-            Modes::Classic => (2, 0),
+            GameMode::Rotatris => (0, (board_height - 1) / 2),
+            GameMode::Classic => (2, 0),
         };
         let mut classic: Option<BoardClassic> = None;
         let mut rotatris: Option<BoardRotatris> = None;
         match mode {
-            Modes::Rotatris => {
+            GameMode::Rotatris => {
                 rotatris = Some(BoardRotatris::new(board_width, spawn_row, num_players))
             }
-            Modes::Classic => {
+            GameMode::Classic => {
                 classic = Some(BoardClassic::new(
                     board_width,
                     board_height,
@@ -83,31 +83,31 @@ impl BoardHandler {
     // get...
     pub fn get_width(&mut self) -> u8 {
         match self.mode {
-            Modes::Classic => self.classic.as_mut().expect(BH_WRONG_MODE).width,
-            Modes::Rotatris => self.rotatris.as_mut().expect(BH_WRONG_MODE).board_size,
+            GameMode::Classic => self.classic.as_mut().expect(BH_WRONG_MODE).width,
+            GameMode::Rotatris => self.rotatris.as_mut().expect(BH_WRONG_MODE).board_size,
         }
     }
 
     pub fn get_height(&mut self) -> u8 {
         match self.mode {
-            Modes::Classic => self.classic.as_mut().expect(BH_WRONG_MODE).height,
-            Modes::Rotatris => self.rotatris.as_mut().expect(BH_WRONG_MODE).board_size,
+            GameMode::Classic => self.classic.as_mut().expect(BH_WRONG_MODE).height,
+            GameMode::Rotatris => self.rotatris.as_mut().expect(BH_WRONG_MODE).board_size,
         }
     }
 
     pub fn get_height_buffer(&mut self) -> u8 {
         match self.mode {
-            Modes::Classic => self.classic.as_mut().expect(BH_WRONG_MODE).height_buffer,
-            Modes::Rotatris => 0u8,
+            GameMode::Classic => self.classic.as_mut().expect(BH_WRONG_MODE).height_buffer,
+            GameMode::Rotatris => 0u8,
         }
     }
 
     pub fn get_active_from_pos(&mut self, y: u8, x: u8) -> bool {
         match self.mode {
-            Modes::Classic => {
+            GameMode::Classic => {
                 self.classic.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].active
             }
-            Modes::Rotatris => {
+            GameMode::Rotatris => {
                 self.rotatris.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].active
             }
         }
@@ -115,10 +115,10 @@ impl BoardHandler {
 
     pub fn get_empty_from_pos(&mut self, y: u8, x: u8) -> bool {
         match self.mode {
-            Modes::Classic => {
+            GameMode::Classic => {
                 self.classic.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].empty
             }
-            Modes::Rotatris => {
+            GameMode::Rotatris => {
                 self.rotatris.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].empty
             }
         }
@@ -126,10 +126,10 @@ impl BoardHandler {
 
     pub fn get_player_from_pos(&mut self, y: u8, x: u8) -> u8 {
         match self.mode {
-            Modes::Classic => {
+            GameMode::Classic => {
                 self.classic.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].player
             }
-            Modes::Rotatris => {
+            GameMode::Rotatris => {
                 self.rotatris.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].player
             }
         }
@@ -137,10 +137,10 @@ impl BoardHandler {
 
     pub fn get_shape_from_pos(&mut self, y: u8, x: u8) -> Shapes {
         match self.mode {
-            Modes::Classic => {
+            GameMode::Classic => {
                 self.classic.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].shape
             }
-            Modes::Rotatris => {
+            GameMode::Rotatris => {
                 self.rotatris.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].shape
             }
         }
@@ -148,10 +148,10 @@ impl BoardHandler {
 
     pub fn get_shape_from_player(&mut self, player: u8) -> Shapes {
         match self.mode {
-            Modes::Classic => {
+            GameMode::Classic => {
                 self.classic.as_mut().expect(BH_WRONG_MODE).vec_active_piece[player as usize].shape
             }
-            Modes::Rotatris => {
+            GameMode::Rotatris => {
                 self.rotatris
                     .as_mut()
                     .expect(BH_WRONG_MODE)
@@ -163,8 +163,8 @@ impl BoardHandler {
 
     pub fn get_fall_delay_from_level(&mut self, level: u8) -> u8 {
         match self.mode {
-            Modes::Classic => FALL_DELAY_VALUES_CLASSIC[level as usize],
-            Modes::Rotatris => FALL_DELAY_VALUES_ROTATRIS[level as usize],
+            GameMode::Classic => FALL_DELAY_VALUES_CLASSIC[level as usize],
+            GameMode::Rotatris => FALL_DELAY_VALUES_ROTATRIS[level as usize],
         }
     }
 
@@ -176,12 +176,12 @@ impl BoardHandler {
         spawn_piece_shape: Shapes,
     ) -> (bool, bool) {
         match self.mode {
-            Modes::Classic => self
+            GameMode::Classic => self
                 .classic
                 .as_mut()
                 .expect(BH_WRONG_MODE)
                 .attempt_piece_spawn(player, spawn_col, spawn_piece_shape),
-            Modes::Rotatris => self
+            GameMode::Rotatris => self
                 .rotatris
                 .as_mut()
                 .expect(BH_WRONG_MODE)
@@ -191,12 +191,12 @@ impl BoardHandler {
 
     pub fn attempt_clear(&mut self, level: u8) -> (u8, u32) {
         match self.mode {
-            Modes::Classic => self
+            GameMode::Classic => self
                 .classic
                 .as_mut()
                 .expect(BH_WRONG_MODE)
                 .attempt_clear_lines(level),
-            Modes::Rotatris => self
+            GameMode::Rotatris => self
                 .rotatris
                 .as_mut()
                 .expect(BH_WRONG_MODE)
@@ -206,12 +206,12 @@ impl BoardHandler {
 
     pub fn attempt_piece_movement(&mut self, m: Movement, p: u8) -> (bool, bool) {
         match self.mode {
-            Modes::Classic => self
+            GameMode::Classic => self
                 .classic
                 .as_mut()
                 .expect(BH_WRONG_MODE)
                 .attempt_piece_movement(m, p),
-            Modes::Rotatris => self
+            GameMode::Rotatris => self
                 .rotatris
                 .as_mut()
                 .expect(BH_WRONG_MODE)
@@ -221,11 +221,11 @@ impl BoardHandler {
 
     pub fn attempt_rotate_board(&mut self, rd: Movement) -> bool {
         match self.mode {
-            Modes::Classic => {
-                println!("[!] `attempt_rotate_board` called but mode is Modes::Classic");
+            GameMode::Classic => {
+                println!("[!] `attempt_rotate_board` called but mode is GameMode::Classic");
                 false
             }
-            Modes::Rotatris => self
+            GameMode::Rotatris => self
                 .rotatris
                 .as_mut()
                 .expect(BH_WRONG_MODE)
@@ -235,12 +235,12 @@ impl BoardHandler {
 
     pub fn playerify_piece(&mut self, player: u8) {
         match self.mode {
-            Modes::Classic => self
+            GameMode::Classic => self
                 .classic
                 .as_mut()
                 .expect(BH_WRONG_MODE)
                 .playerify_piece(player),
-            Modes::Rotatris => self
+            GameMode::Rotatris => self
                 .rotatris
                 .as_mut()
                 .expect(BH_WRONG_MODE)

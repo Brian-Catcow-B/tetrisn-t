@@ -78,9 +78,30 @@ pub const UNDETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.2;
 
 static INVALID_MENU_CONTROLS: &str = "[!] last used controls was Some() but invalid data";
 
-pub enum Modes {
+#[derive(PartialEq, Eq, Copy, Clone)]
+pub enum GameMode {
     Classic,
     Rotatris,
+}
+
+impl GameMode {
+    pub fn num_required_inputs_from(mode: Self) -> usize {
+        match mode {
+            Self::Classic => 5,
+            Self::Rotatris => 7,
+        }
+    }
+
+    pub fn from_usize(num: usize) -> Self {
+        match num {
+            0 => Self::Classic,
+            1 => Self::Rotatris,
+            _ => {
+                println!("[!] Invalid conversion attempt usize({}) -> GameMode", num);
+                Self::Classic
+            }
+        }
+    }
 }
 
 // this struct is for the Menu class so that it can return what game options to start the game with
@@ -171,14 +192,14 @@ pub struct Game {
 
 impl Game {
     pub fn new(ctx: &mut Context, game_options: &GameOptions) -> Game {
-        let mode = Modes::Classic;
+        let mode = GameMode::Classic;
         let board_width = match mode {
-            Modes::Classic => 6 + 4 * game_options.num_players,
-            Modes::Rotatris => ROTATRIS_BOARD_SIDE_LENGTH,
+            GameMode::Classic => 6 + 4 * game_options.num_players,
+            GameMode::Rotatris => ROTATRIS_BOARD_SIDE_LENGTH,
         };
         let board_height = match mode {
-            Modes::Classic => BOARD_HEIGHT,
-            Modes::Rotatris => ROTATRIS_BOARD_SIDE_LENGTH,
+            GameMode::Classic => BOARD_HEIGHT,
+            GameMode::Rotatris => ROTATRIS_BOARD_SIDE_LENGTH,
         };
         let mut vec_players: Vec<Player> = Vec::with_capacity(game_options.num_players as usize);
         for player in 0..game_options.num_players {
@@ -253,12 +274,12 @@ impl Game {
             ));
         }
         let mut game_info_text = match mode {
-            Modes::Classic => Text::new(
+            GameMode::Classic => Text::new(
                 TextFragment::new("Lines: ")
                     .color(graphics::WHITE)
                     .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
             ),
-            Modes::Rotatris => Text::new(
+            GameMode::Rotatris => Text::new(
                 TextFragment::new("Rings: ")
                     .color(graphics::WHITE)
                     .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
@@ -509,16 +530,20 @@ impl Game {
                     println!("setting das threshold to big");
                     player.das_countdown = DAS_THRESHOLD_BIG;
                 }
-                if (player.input.keydown_left.0 && !player.input.keydown_left.1) || (player.input.keydown_right.0 && !player.input.keydown_right.1) {
-                    let movement: Movement = if player.input.keydown_left.0 {Movement::Left} else {Movement::Right};
+                if (player.input.keydown_left.0 && !player.input.keydown_left.1)
+                    || (player.input.keydown_right.0 && !player.input.keydown_right.1)
+                {
+                    let movement: Movement = if player.input.keydown_left.0 {
+                        Movement::Left
+                    } else {
+                        Movement::Right
+                    };
                     if player.tick_das_countdown() {
                         // if the das countdown hit zero, we try to move the piece
                         if self
                             .bh
                             .attempt_piece_movement(
-                                Movement::from(
-                                    (movement as u8 + self.gravity_direction as u8) % 4,
-                                ),
+                                Movement::from((movement as u8 + self.gravity_direction as u8) % 4),
                                 player.player_num,
                             )
                             .0
@@ -588,7 +613,7 @@ impl Game {
                 if player.input.keydown_start.1 {
                     self.pause_flags = (true, true);
                 }
-                
+
                 // reset player controls in memory for next frame consistency
                 player.input.was_just_pressed_setfalse();
             }

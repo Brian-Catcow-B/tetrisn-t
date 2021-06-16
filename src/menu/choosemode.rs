@@ -1,14 +1,23 @@
+use ggez::event::KeyCode;
+use ggez::graphics::{self, DrawParam, Scale, Text, TextFragment};
+use ggez::nalgebra::Point2;
+use ggez::Context;
 
+use crate::game::GameMode;
+use crate::inputs::Input;
+use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuItemValueType};
+use crate::menu::menuhelpers::{HELP_RED, TEXT_SCALE_DOWN};
 
-struct ChooseModeMenu {
+pub struct ChooseModeMenu {
     // logic
     selection: usize,
+    pub game_mode: GameMode,
     // drawing
     vec_menu_items: Vec<MenuItem>,
 }
 
-impl StartMenu {
-    pub fn new(window_dimensions: (f32, f32), num_players: u8, starting_level: u8) -> Self {
+impl ChooseModeMenu {
+    pub fn new(window_dimensions: (f32, f32)) -> Self {
         let mut vec_menu_items: Vec<MenuItem> = Vec::with_capacity(1);
         vec_menu_items.push(MenuItem::new(
             "Mode: ",
@@ -24,16 +33,12 @@ impl StartMenu {
         Self {
             // logic
             selection: 0,
-            not_enough_controls_flag: false,
+            game_mode: GameMode::from_usize(0),
             vec_menu_items,
-            // drawing
-            not_enough_controls_text: Text::new(
-                TextFragment::new("[!] Not enough Controls Setup to Start").color(HELP_RED),
-            ),
         }
     }
 
-    pub fn update(&mut self, input: &Input, game_options: &mut MenuGameOptions) -> MenuItemTrigger {
+    pub fn update(&mut self, input: &Input) -> MenuItemTrigger {
         if input.keydown_right.1 {
             self.vec_menu_items[self.selection].inc_or_dec(true);
         }
@@ -41,9 +46,6 @@ impl StartMenu {
         if input.keydown_left.1 {
             self.vec_menu_items[self.selection].inc_or_dec(false);
         }
-
-        game_options.num_players = self.get_num_players() + 1;
-        game_options.starting_level = self.get_starting_level();
 
         if input.keydown_down.1 {
             self.vec_menu_items[self.selection].set_select(false);
@@ -72,9 +74,6 @@ impl StartMenu {
         let window_dimensions = graphics::size(ctx);
         let num_menu_items_to_draw = self.vec_menu_items.len();
 
-        if self.not_enough_controls_flag {
-            self.draw_text(ctx, &self.not_enough_controls_text, 0.1, &window_dimensions);
-        }
         for (index, item) in self.vec_menu_items.iter().enumerate() {
             self.draw_text(
                 ctx,
