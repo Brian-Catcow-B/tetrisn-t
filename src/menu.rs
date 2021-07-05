@@ -86,7 +86,7 @@ impl Menu {
                         self.state = MenuState::InputConfig;
                     }
                     MenuItemTrigger::Back => {
-                        println!("[!] what? 1");
+                        self.state = MenuState::ChooseMode;
                     }
                     MenuItemTrigger::None => {}
                     _ => println!("[!] Wrong menu?"),
@@ -184,7 +184,7 @@ impl Menu {
     pub fn resize_event(&mut self, window_dims: (f32, f32)) {
         self.window_dimensions = window_dims;
         match self.state {
-            MenuState::ChooseMode => {}
+            MenuState::ChooseMode => self.choose_mode_menu.resize_event(window_dims.1),
             MenuState::Start => self.start_menu.resize_event(window_dims.1),
             MenuState::InputConfig => {}
         }

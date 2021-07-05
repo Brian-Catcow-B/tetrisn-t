@@ -1,6 +1,7 @@
 use ggez::event::KeyCode;
 use ggez::graphics::{self, Color, Font, Scale, Text, TextFragment};
 
+use crate::game::GameMode;
 use crate::inputs::KeyboardControlScheme;
 
 pub const MAX_STARTING_LEVEL: u8 = 29; // this is just the fastest speed, so yeah
@@ -155,9 +156,11 @@ impl MenuItem {
             } else {
                 (self.value - 1 + self.num_values) % self.num_values
             };
-            // assume it's selected because it's being incremented/decremented
-            self.text.fragments_mut()[1].text =
-                format!("<{}>", self.value + self.value_show_increase);
+            if self.value_type != MenuItemValueType::Custom {
+                // assume it's selected because it's being incremented/decremented
+                self.text.fragments_mut()[1].text =
+                    format!("<{}>", self.value + self.value_show_increase);
+            }
         }
     }
 

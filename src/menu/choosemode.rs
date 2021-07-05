@@ -1,12 +1,11 @@
-use ggez::event::KeyCode;
-use ggez::graphics::{self, DrawParam, Scale, Text, TextFragment};
+use ggez::graphics::{self, DrawParam, Text};
 use ggez::nalgebra::Point2;
 use ggez::Context;
 
 use crate::game::GameMode;
 use crate::inputs::Input;
-use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuItemValueType};
-use crate::menu::menuhelpers::{HELP_RED, TEXT_SCALE_DOWN};
+use crate::menu::menuhelpers::TEXT_SCALE_DOWN;
+use crate::menu::menuhelpers::{MenuItem, MenuItemTrigger, MenuItemValueType};
 
 pub struct ChooseModeMenu {
     // logic
@@ -26,41 +25,29 @@ impl ChooseModeMenu {
             None,
             window_dimensions.1,
             TEXT_SCALE_DOWN,
-            MenuItemTrigger::StartGame,
+            MenuItemTrigger::SubMenu1,
         ));
         vec_menu_items[0].set_num_values(2);
+        vec_menu_items[0].text.fragments_mut()[1].text = format!("{:?}", GameMode::Classic);
         vec_menu_items[0].set_select(true);
         Self {
             // logic
             selection: 0,
-            game_mode: GameMode::from_usize(0),
+            game_mode: GameMode::Classic,
             vec_menu_items,
         }
     }
 
     pub fn update(&mut self, input: &Input) -> MenuItemTrigger {
-        if input.keydown_right.1 {
+        if input.keydown_left.1
+            || input.keydown_right.1
+            || input.keydown_down.1
+            || input.keydown_up.1
+        {
             self.vec_menu_items[self.selection].inc_or_dec(true);
-        }
-
-        if input.keydown_left.1 {
-            self.vec_menu_items[self.selection].inc_or_dec(false);
-        }
-
-        if input.keydown_down.1 {
-            self.vec_menu_items[self.selection].set_select(false);
-            self.selection = (self.selection + 1) % self.vec_menu_items.len();
-            self.vec_menu_items[self.selection].set_select(true);
-        }
-
-        if input.keydown_up.1 {
-            self.vec_menu_items[self.selection].set_select(false);
-            self.selection = if self.selection == 0 {
-                self.vec_menu_items.len() - 1
-            } else {
-                self.selection - 1
-            };
-            self.vec_menu_items[self.selection].set_select(true);
+            self.game_mode = GameMode::from(self.vec_menu_items[self.selection].value as usize);
+            self.vec_menu_items[self.selection].text.fragments_mut()[1].text =
+                format!("{:?}", self.game_mode);
         }
 
         if input.keydown_start.1 {

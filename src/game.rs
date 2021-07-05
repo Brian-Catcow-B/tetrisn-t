@@ -78,7 +78,7 @@ pub const UNDETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.2;
 
 static INVALID_MENU_CONTROLS: &str = "[!] last used controls was Some() but invalid data";
 
-#[derive(PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum GameMode {
     Classic,
     Rotatris,
@@ -91,8 +91,10 @@ impl GameMode {
             Self::Rotatris => 7,
         }
     }
+}
 
-    pub fn from_usize(num: usize) -> Self {
+impl From<usize> for GameMode {
+    fn from(num: usize) -> Self {
         match num {
             0 => Self::Classic,
             1 => Self::Rotatris,
