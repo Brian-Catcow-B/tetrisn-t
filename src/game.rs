@@ -451,7 +451,6 @@ impl Game {
                             player.spawn_piece_flag = false;
                             // set das_countdown to the smaller das value if input left or right is pressed as the piece spawns in
                             if player.input.keydown_left.0 || player.input.keydown_right.0 {
-                                println!("setting das threshold to little");
                                 player.das_countdown = DAS_THRESHOLD_LITTLE;
                             }
                             // set next piece to random; reroll once if it chooses the same piece as it just was
@@ -515,7 +514,6 @@ impl Game {
                             player.player_num,
                         )
                         .0;
-                    println!("setting das threshold to big");
                     player.das_countdown = DAS_THRESHOLD_BIG;
                 }
                 if player.input.keydown_right.1 {
@@ -529,7 +527,6 @@ impl Game {
                             player.player_num,
                         )
                         .0;
-                    println!("setting das threshold to big");
                     player.das_countdown = DAS_THRESHOLD_BIG;
                 }
                 if (player.input.keydown_left.0 && !player.input.keydown_left.1)
@@ -551,7 +548,6 @@ impl Game {
                             .0
                         {
                             // if the piece moved, set variables accordingly
-                            println!("setting das threshold to max of little ({}) and player.das_countdown ({})", DAS_THRESHOLD_LITTLE, player.das_countdown);
                             player.das_countdown =
                                 std::cmp::max(DAS_THRESHOLD_LITTLE, player.das_countdown);
                             player.waiting_to_shift = false;
