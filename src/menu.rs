@@ -53,7 +53,7 @@ impl Menu {
                 game_options.num_players,
                 game_options.starting_level,
             ),
-            input_config_menu: InputConfigMenu::new(window_dimensions, game_options),
+            input_config_menu: InputConfigMenu::new(game_options, window_dimensions),
             window_dimensions,
         }
     }
@@ -68,6 +68,11 @@ impl Menu {
                         game_options,
                         self.window_dimensions,
                     );
+                    if game_options.game_mode != self.choose_mode_menu.game_mode {
+                        game_options.game_mode = self.choose_mode_menu.game_mode;
+                        self.input_config_menu
+                            .set_game_mode(game_options.game_mode, self.window_dimensions);
+                    }
                 }
             }
             MenuState::Start => {

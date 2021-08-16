@@ -187,16 +187,18 @@ impl MenuItem {
 pub struct MenuGameOptions {
     pub num_players: u8,
     pub starting_level: u8,
+    pub game_mode: GameMode,
     pub arr_controls: Vec<(KeyboardControlScheme, bool)>,
 }
 
-impl MenuGameOptions {
-    pub fn new() -> Self {
+impl Default for MenuGameOptions {
+    fn default() -> Self {
         let arr_controls: Vec<(KeyboardControlScheme, bool)> =
             vec![(KeyboardControlScheme::default(), false); MAX_NUM_PLAYERS as usize];
         Self {
             num_players: 1,
             starting_level: 0,
+            game_mode: GameMode::Classic,
             arr_controls,
         }
     }

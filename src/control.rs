@@ -28,7 +28,7 @@ pub struct Control {
 
 impl Control {
     pub fn new(ctx: &mut Context) -> Control {
-        let menu_game_options = MenuGameOptions::new();
+        let menu_game_options = MenuGameOptions::default();
         Self {
             state: ProgramState::Menu,
             menu: Some(Menu::new(ctx, &menu_game_options)),

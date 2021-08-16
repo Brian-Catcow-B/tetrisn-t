@@ -3,6 +3,7 @@ use ggez::graphics::{self, DrawParam, Scale, Text, TextFragment};
 use ggez::nalgebra::Point2;
 use ggez::Context;
 
+use crate::game::GameMode;
 use crate::inputs::{Input, KeyboardControlScheme};
 use crate::movement::Movement;
 
@@ -34,7 +35,7 @@ pub struct InputConfigMenu {
 }
 
 impl InputConfigMenu {
-    pub fn new(window_dimensions: (f32, f32), game_options: &MenuGameOptions) -> Self {
+    pub fn new(game_options: &MenuGameOptions, window_dimensions: (f32, f32)) -> Self {
         let mut vec_used_keycode: Vec<KeyCode> = vec![];
         // gather what the starting used keycodes should be
         for ctrls in game_options.arr_controls.iter() {
@@ -99,6 +100,23 @@ impl InputConfigMenu {
                 TextFragment::new("Set to Gamepad\n\n\nSee README for help")
                     .color(graphics::BLACK)
                     .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+            ),
+        }
+    }
+
+    pub fn set_game_mode(&mut self, game_mode: GameMode, window_dimensions: (f32, f32)) {
+        self.vec_menu_items_keycode.clear();
+        let game_options = MenuGameOptions::default();
+        match game_mode {
+            GameMode::Classic => Self::setup_classic_mode_subtext(
+                &mut self.vec_menu_items_keycode,
+                &game_options,
+                window_dimensions,
+            ),
+            GameMode::Rotatris => Self::setup_rotatris_mode_subtext(
+                &mut self.vec_menu_items_keycode,
+                &game_options,
+                window_dimensions,
             ),
         }
     }
