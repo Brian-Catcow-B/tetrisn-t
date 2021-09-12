@@ -63,13 +63,13 @@ impl Menu {
             MenuState::ChooseMode => {
                 if self.choose_mode_menu.update(&self.input) == MenuItemTrigger::SubMenu1 {
                     self.state = MenuState::Start;
-                    self.start_menu.set_game_mode(
-                        self.choose_mode_menu.game_mode,
-                        game_options,
-                        self.window_dimensions,
-                    );
                     if game_options.game_mode != self.choose_mode_menu.game_mode {
                         game_options.game_mode = self.choose_mode_menu.game_mode;
+                        self.start_menu.set_game_mode(
+                            self.choose_mode_menu.game_mode,
+                            game_options,
+                            self.window_dimensions,
+                        );
                         self.input_config_menu
                             .set_game_mode(game_options.game_mode, self.window_dimensions);
                     }

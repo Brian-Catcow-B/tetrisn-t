@@ -110,6 +110,7 @@ impl From<usize> for GameMode {
 pub struct GameOptions {
     pub num_players: u8,
     pub starting_level: u8,
+    pub game_mode: GameMode,
     pub vec_controls: Vec<(Option<KeyboardControlScheme>, bool)>,
 }
 
@@ -118,41 +119,85 @@ impl From<&MenuGameOptions> for GameOptions {
         let mut vec_controls: Vec<(Option<KeyboardControlScheme>, bool)> =
             Vec::with_capacity(menu_game_options.arr_controls.len());
         let mut counted_active_controls: u8 = 0;
-        for ctrls in menu_game_options.arr_controls.iter() {
-            if !(ctrls.0).is_empty() {
-                vec_controls.push((
-                    Some(KeyboardControlScheme::new_classic(
-                        (ctrls.0)
-                            .keycode_from_movement(Movement::Left)
-                            .expect(INVALID_MENU_CONTROLS),
-                        (ctrls.0)
-                            .keycode_from_movement(Movement::Right)
-                            .expect(INVALID_MENU_CONTROLS),
-                        (ctrls.0)
-                            .keycode_from_movement(Movement::Down)
-                            .expect(INVALID_MENU_CONTROLS),
-                        (ctrls.0)
-                            .keycode_from_movement(Movement::RotateCw)
-                            .expect(INVALID_MENU_CONTROLS),
-                        (ctrls.0)
-                            .keycode_from_movement(Movement::RotateCcw)
-                            .expect(INVALID_MENU_CONTROLS),
-                    )),
-                    false,
-                ));
-                counted_active_controls += 1;
-            } else if ctrls.1 {
-                vec_controls.push((None, true));
-                counted_active_controls += 1;
+        match menu_game_options.game_mode {
+            GameMode::Classic => {
+                for ctrls in menu_game_options.arr_controls.iter() {
+                    if !(ctrls.0).is_empty() {
+                        vec_controls.push((
+                            Some(KeyboardControlScheme::new_classic(
+                                (ctrls.0)
+                                    .keycode_from_movement(Movement::Left)
+                                    .expect(INVALID_MENU_CONTROLS),
+                                (ctrls.0)
+                                    .keycode_from_movement(Movement::Right)
+                                    .expect(INVALID_MENU_CONTROLS),
+                                (ctrls.0)
+                                    .keycode_from_movement(Movement::Down)
+                                    .expect(INVALID_MENU_CONTROLS),
+                                (ctrls.0)
+                                    .keycode_from_movement(Movement::RotateCw)
+                                    .expect(INVALID_MENU_CONTROLS),
+                                (ctrls.0)
+                                    .keycode_from_movement(Movement::RotateCcw)
+                                    .expect(INVALID_MENU_CONTROLS),
+                            )),
+                            false,
+                        ));
+                        counted_active_controls += 1;
+                    } else if ctrls.1 {
+                        vec_controls.push((None, true));
+                        counted_active_controls += 1;
+                    }
+                    if counted_active_controls == menu_game_options.num_players {
+                        break;
+                    }
+                }
             }
-            if counted_active_controls == menu_game_options.num_players {
-                break;
+            GameMode::Rotatris => {
+                for ctrls in menu_game_options.arr_controls.iter() {
+                    if !(ctrls.0).is_empty() {
+                        vec_controls.push((
+                            Some(KeyboardControlScheme::new_rotatris(
+                                (ctrls.0)
+                                    .keycode_from_movement(Movement::Left)
+                                    .expect(INVALID_MENU_CONTROLS),
+                                (ctrls.0)
+                                    .keycode_from_movement(Movement::Right)
+                                    .expect(INVALID_MENU_CONTROLS),
+                                (ctrls.0)
+                                    .keycode_from_movement(Movement::Down)
+                                    .expect(INVALID_MENU_CONTROLS),
+                                (ctrls.0)
+                                    .keycode_from_movement(Movement::RotateCw)
+                                    .expect(INVALID_MENU_CONTROLS),
+                                (ctrls.0)
+                                    .keycode_from_movement(Movement::RotateCcw)
+                                    .expect(INVALID_MENU_CONTROLS),
+                                (ctrls.0)
+                                    .keycode_from_movement(Movement::BoardCw)
+                                    .expect(INVALID_MENU_CONTROLS),
+                                (ctrls.0)
+                                    .keycode_from_movement(Movement::BoardCcw)
+                                    .expect(INVALID_MENU_CONTROLS),
+                            )),
+                            false,
+                        ));
+                        counted_active_controls += 1;
+                    } else if ctrls.1 {
+                        vec_controls.push((None, true));
+                        counted_active_controls += 1;
+                    }
+                    if counted_active_controls == menu_game_options.num_players {
+                        break;
+                    }
+                }
             }
         }
 
         Self {
             num_players: menu_game_options.num_players,
             starting_level: menu_game_options.starting_level,
+            game_mode: menu_game_options.game_mode,
             vec_controls,
         }
     }
@@ -194,7 +239,7 @@ pub struct Game {
 
 impl Game {
     pub fn new(ctx: &mut Context, game_options: &GameOptions) -> Game {
-        let mode = GameMode::Classic;
+        let mode = game_options.game_mode;
         let board_width = match mode {
             GameMode::Classic => 6 + 4 * game_options.num_players,
             GameMode::Rotatris => ROTATRIS_BOARD_SIDE_LENGTH,

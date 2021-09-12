@@ -10,6 +10,8 @@ pub enum Movement {
     RotateCw,
     RotateCcw,
     DoubleRotate,
+    BoardCw,
+    BoardCcw,
     None,
 }
 
@@ -23,7 +25,9 @@ impl From<u8> for Movement {
             4 => Movement::RotateCw,
             5 => Movement::RotateCcw,
             6 => Movement::DoubleRotate,
-            7 => Movement::None,
+            7 => Movement::BoardCw,
+            8 => Movement::BoardCcw,
+            9 => Movement::None,
             _ => panic!("[!] Unknown Movement value: {}", value),
         }
     }
@@ -37,8 +41,8 @@ impl From<MenuItemTrigger> for Movement {
             MenuItemTrigger::KeyDown => Movement::Down,
             MenuItemTrigger::KeyRotateCw => Movement::RotateCw,
             MenuItemTrigger::KeyRotateCcw => Movement::RotateCcw,
-            MenuItemTrigger::KeyBoardCw => Movement::None,
-            MenuItemTrigger::KeyBoardCcw => Movement::None,
+            MenuItemTrigger::KeyBoardCw => Movement::BoardCw,
+            MenuItemTrigger::KeyBoardCcw => Movement::BoardCcw,
             _ => panic!(
                 "[!] Unexpected value converting MenuItemTrigger to Movement: {:?}",
                 value

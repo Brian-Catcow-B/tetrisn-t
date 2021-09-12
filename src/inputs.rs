@@ -111,6 +111,28 @@ impl KeyboardControlScheme {
         }
     }
 
+    pub fn new_rotatris(
+        left: KeyCode,
+        right: KeyCode,
+        down: KeyCode,
+        rotate_cw: KeyCode,
+        rotate_ccw: KeyCode,
+        rotate_board_cw: KeyCode,
+        rotate_board_ccw: KeyCode,
+    ) -> Self {
+        let mut vec_keycode_movement_pair: Vec<(KeyCode, Movement)> = Vec::with_capacity(7);
+        vec_keycode_movement_pair.push((left, Movement::Left));
+        vec_keycode_movement_pair.push((right, Movement::Right));
+        vec_keycode_movement_pair.push((down, Movement::Down));
+        vec_keycode_movement_pair.push((rotate_cw, Movement::RotateCw));
+        vec_keycode_movement_pair.push((rotate_ccw, Movement::RotateCcw));
+        vec_keycode_movement_pair.push((rotate_board_cw, Movement::BoardCw));
+        vec_keycode_movement_pair.push((rotate_board_ccw, Movement::BoardCcw));
+        Self {
+            vec_keycode_movement_pair,
+        }
+    }
+
     pub fn keycode_from_movement(&self, m: Movement) -> Option<KeyCode> {
         for pair in self.vec_keycode_movement_pair.iter() {
             if pair.1 == m {
