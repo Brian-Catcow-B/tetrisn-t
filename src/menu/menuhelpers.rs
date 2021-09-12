@@ -30,8 +30,7 @@ pub enum MenuItemValueType {
 pub enum MenuItemTrigger {
     None,
     StartGame,
-    SubMenu1,
-    SubMenu2,
+    SubMenu,
     Back,
     SubSelection,
     KeyLeft,

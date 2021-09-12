@@ -16,24 +16,27 @@ pub struct ChooseModeMenu {
 }
 
 impl ChooseModeMenu {
-    pub fn new(window_dimensions: (f32, f32)) -> Self {
+    pub fn new(game_mode: GameMode, window_dimensions: (f32, f32)) -> Self {
         let mut vec_menu_items: Vec<MenuItem> = Vec::with_capacity(1);
         vec_menu_items.push(MenuItem::new(
             "Mode: ",
             MenuItemValueType::Custom,
-            0,
+            match game_mode {
+                GameMode::Classic => 0,
+                GameMode::Rotatris => 1,
+            },
             None,
             window_dimensions.1,
             TEXT_SCALE_DOWN,
-            MenuItemTrigger::SubMenu1,
+            MenuItemTrigger::SubMenu,
         ));
         vec_menu_items[0].set_num_values(2);
-        vec_menu_items[0].text.fragments_mut()[1].text = format!("{:?}", GameMode::Classic);
+        vec_menu_items[0].text.fragments_mut()[1].text = format!("{:?}", game_mode);
         vec_menu_items[0].set_select(true);
         Self {
             // logic
             selection: 0,
-            game_mode: GameMode::Classic,
+            game_mode: game_mode,
             vec_menu_items,
         }
     }

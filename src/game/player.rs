@@ -115,6 +115,18 @@ impl Player {
                             return true;
                         }
                     }
+                    Movement::BoardCw => {
+                        if !self.input.keydown_board_cw.0 {
+                            self.input.keydown_board_cw = (true, true);
+                            return true;
+                        }
+                    }
+                    Movement::BoardCcw => {
+                        if !self.input.keydown_board_ccw.0 {
+                            self.input.keydown_board_ccw = (true, true);
+                            return true;
+                        }
+                    }
                     _ => {}
                 }
             }
@@ -160,6 +172,14 @@ impl Player {
                     }
                     Movement::RotateCcw => {
                         self.input.keydown_rotate_ccw = (false, false);
+                        return true;
+                    }
+                    Movement::BoardCw => {
+                        self.input.keydown_board_cw = (false, false);
+                        return true;
+                    }
+                    Movement::BoardCcw => {
+                        self.input.keydown_board_ccw = (false, false);
                         return true;
                     }
                     _ => {}

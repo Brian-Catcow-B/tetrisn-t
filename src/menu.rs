@@ -3,7 +3,6 @@ use ggez::graphics;
 use ggez::Context;
 
 use crate::control::ProgramState;
-use crate::game::GameMode;
 use crate::inputs::Input;
 
 mod choosemode;
@@ -43,15 +42,14 @@ impl Menu {
         let window_dimensions = graphics::size(ctx);
         Self {
             input: Input::new(),
-            num_required_keycode_movement_pairs: GameMode::num_required_inputs_from(
-                GameMode::Classic,
-            ),
+            num_required_keycode_movement_pairs: game_options.game_mode.num_required_inputs(),
             state: MenuState::ChooseMode,
-            choose_mode_menu: ChooseModeMenu::new(window_dimensions),
+            choose_mode_menu: ChooseModeMenu::new(game_options.game_mode, window_dimensions),
             start_menu: StartMenu::new(
                 window_dimensions,
                 game_options.num_players,
                 game_options.starting_level,
+                game_options.game_mode,
             ),
             input_config_menu: InputConfigMenu::new(game_options, window_dimensions),
             window_dimensions,
@@ -61,17 +59,19 @@ impl Menu {
     pub fn update(&mut self, game_options: &mut MenuGameOptions) -> Option<ProgramState> {
         match self.state {
             MenuState::ChooseMode => {
-                if self.choose_mode_menu.update(&self.input) == MenuItemTrigger::SubMenu1 {
+                if self.choose_mode_menu.update(&self.input) == MenuItemTrigger::SubMenu {
                     self.state = MenuState::Start;
                     if game_options.game_mode != self.choose_mode_menu.game_mode {
                         game_options.game_mode = self.choose_mode_menu.game_mode;
+                        self.num_required_keycode_movement_pairs =
+                            game_options.game_mode.num_required_inputs();
                         self.start_menu.set_game_mode(
                             self.choose_mode_menu.game_mode,
                             game_options,
                             self.window_dimensions,
                         );
                         self.input_config_menu
-                            .set_game_mode(game_options.game_mode, self.window_dimensions);
+                            .update_game_mode(self.window_dimensions, game_options);
                     }
                 }
             }
@@ -85,7 +85,7 @@ impl Menu {
                             self.start_menu.not_enough_controls_flag = true;
                         }
                     }
-                    MenuItemTrigger::SubMenu1 => {
+                    MenuItemTrigger::SubMenu => {
                         // InputConfig menu
                         self.start_menu.not_enough_controls_flag = false;
                         self.state = MenuState::InputConfig;

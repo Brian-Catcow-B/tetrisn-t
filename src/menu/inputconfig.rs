@@ -68,11 +68,18 @@ impl InputConfigMenu {
         // keycode MenuItems
         let mut vec_menu_items_keycode: Vec<MenuItem> =
             Vec::with_capacity(MAX_NON_START_INPUTS_PER_PLAYER);
-        Self::setup_classic_mode_subtext(
-            &mut vec_menu_items_keycode,
-            game_options,
-            window_dimensions,
-        );
+        match game_options.game_mode {
+            GameMode::Classic => Self::setup_classic_mode_subtext(
+                &mut vec_menu_items_keycode,
+                &game_options,
+                window_dimensions,
+            ),
+            GameMode::Rotatris => Self::setup_rotatris_mode_subtext(
+                &mut vec_menu_items_keycode,
+                &game_options,
+                window_dimensions,
+            ),
+        }
         // Self::setup_rotatris_mode_subtext(&mut vec_menu_items_keycode, game_options, window_dimensions);
         Self {
             selection: 0,
@@ -104,9 +111,14 @@ impl InputConfigMenu {
         }
     }
 
-    pub fn set_game_mode(&mut self, game_mode: GameMode, window_dimensions: (f32, f32)) {
+    pub fn update_game_mode(
+        &mut self,
+        window_dimensions: (f32, f32),
+        game_options: &mut MenuGameOptions,
+    ) {
         self.vec_menu_items_keycode.clear();
-        let game_options = MenuGameOptions::default();
+        let game_mode = game_options.game_mode;
+        *game_options = MenuGameOptions::default();
         match game_mode {
             GameMode::Classic => Self::setup_classic_mode_subtext(
                 &mut self.vec_menu_items_keycode,

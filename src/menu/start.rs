@@ -18,9 +18,13 @@ pub struct StartMenu {
 }
 
 impl StartMenu {
-    pub fn new(window_dimensions: (f32, f32), num_players: u8, starting_level: u8) -> Self {
+    pub fn new(
+        window_dimensions: (f32, f32),
+        num_players: u8,
+        starting_level: u8,
+        game_mode: GameMode,
+    ) -> Self {
         let mut vec_menu_items: Vec<MenuItem> = Vec::with_capacity(4);
-        let game_mode = GameMode::Classic;
         let mut selection = 0;
         Self::fill_vec_menu_items(
             &mut vec_menu_items,
@@ -150,7 +154,7 @@ impl StartMenu {
             None,
             window_dimensions.1,
             TEXT_SCALE_DOWN,
-            MenuItemTrigger::SubMenu1,
+            MenuItemTrigger::SubMenu,
         ));
         *selection = 0;
         vec_menu_items[0].set_select(true);

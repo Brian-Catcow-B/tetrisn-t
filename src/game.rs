@@ -85,8 +85,8 @@ pub enum GameMode {
 }
 
 impl GameMode {
-    pub fn num_required_inputs_from(mode: Self) -> usize {
-        match mode {
+    pub fn num_required_inputs(&self) -> usize {
+        match self {
             Self::Classic => 5,
             Self::Rotatris => 7,
         }
@@ -531,14 +531,14 @@ impl Game {
 
                 // rotatris specific
                 // board rotations
-                if self.rotate_board_cw.1 {
+                if player.input.keydown_board_cw.1 {
                     if self.bh.attempt_rotate_board(Movement::RotateCw) {
                         self.gravity_direction =
                             Movement::from(((self.gravity_direction as u8) + 1) % 4);
                     }
                 }
 
-                if self.rotate_board_ccw.1 {
+                if player.input.keydown_board_ccw.1 {
                     if self.bh.attempt_rotate_board(Movement::RotateCcw) {
                         self.gravity_direction =
                             Movement::from(((self.gravity_direction as u8) + 3) % 4);
@@ -714,7 +714,6 @@ impl Game {
                 return;
             } else if keycode == KeyCode::Down {
                 self.keycode_down_flags = (true, true);
-                return;
             }
             for player in &mut self.vec_players {
                 if player.update_input_keydown(keycode) {

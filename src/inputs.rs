@@ -9,6 +9,8 @@ pub struct Input {
     pub keydown_up: (bool, bool),
     pub keydown_rotate_cw: (bool, bool),
     pub keydown_rotate_ccw: (bool, bool),
+    pub keydown_board_cw: (bool, bool),
+    pub keydown_board_ccw: (bool, bool),
     pub keydown_start: (bool, bool),
 }
 
@@ -21,6 +23,8 @@ impl Input {
             keydown_up: (false, false),
             keydown_rotate_cw: (false, false),
             keydown_rotate_ccw: (false, false),
+            keydown_board_cw: (false, false),
+            keydown_board_ccw: (false, false),
             keydown_start: (false, false),
         }
     }
@@ -32,6 +36,8 @@ impl Input {
         self.keydown_up.1 = false;
         self.keydown_rotate_cw.1 = false;
         self.keydown_rotate_ccw.1 = false;
+        self.keydown_board_cw.1 = false;
+        self.keydown_board_ccw.1 = false;
         self.keydown_start.1 = false;
     }
 
@@ -42,6 +48,8 @@ impl Input {
         self.keydown_up = (false, false);
         self.keydown_rotate_cw = (false, false);
         self.keydown_rotate_ccw = (false, false);
+        self.keydown_board_cw = (false, false);
+        self.keydown_board_ccw = (false, false);
         self.keydown_start = (false, false);
     }
 
@@ -54,12 +62,20 @@ impl Input {
         println!("Down:  ({}, {})", self.keydown_down.0, self.keydown_down.1);
         println!("Up:    ({}, {})", self.keydown_up.0, self.keydown_up.1);
         println!(
-            "Cw:    ({}, {})",
+            "RotateCw:    ({}, {})",
             self.keydown_rotate_cw.0, self.keydown_rotate_cw.1
         );
         println!(
-            "Ccw:   ({}, {})",
+            "RotateCcw:   ({}, {})",
             self.keydown_rotate_ccw.0, self.keydown_rotate_ccw.1
+        );
+        println!(
+            "BoardCw:    ({}, {})",
+            self.keydown_board_cw.0, self.keydown_board_cw.1
+        );
+        println!(
+            "BoardCcw:   ({}, {})",
+            self.keydown_board_ccw.0, self.keydown_board_ccw.1
         );
         println!(
             "Start: ({}, {})",
