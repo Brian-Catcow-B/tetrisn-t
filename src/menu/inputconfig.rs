@@ -7,6 +7,7 @@ use crate::game::GameMode;
 use crate::inputs::{Input, KeyboardControlScheme};
 use crate::movement::Movement;
 
+use crate::menu::menuhelpers::GAME_MODE_UNEXPECTEDLY_NONE;
 use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuItemValueType};
 use crate::menu::menuhelpers::{DARK_GRAY, HELP_RED, LIGHT_GRAY};
 use crate::menu::menuhelpers::{SUB_TEXT_SCALE_DOWN, TEXT_SCALE_DOWN};
@@ -68,7 +69,9 @@ impl InputConfigMenu {
         // keycode MenuItems
         let mut vec_menu_items_keycode: Vec<MenuItem> =
             Vec::with_capacity(MAX_NON_START_INPUTS_PER_PLAYER);
+
         match game_options.game_mode {
+            GameMode::None => {}
             GameMode::Classic => Self::setup_classic_mode_subtext(
                 &mut vec_menu_items_keycode,
                 &game_options,
@@ -121,6 +124,7 @@ impl InputConfigMenu {
         game_options.reset_controls();
         self.vec_used_keycode.clear();
         match game_mode {
+            GameMode::None => panic!(GAME_MODE_UNEXPECTEDLY_NONE),
             GameMode::Classic => Self::setup_classic_mode_subtext(
                 &mut self.vec_menu_items_keycode,
                 &game_options,

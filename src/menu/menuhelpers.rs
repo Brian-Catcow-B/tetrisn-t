@@ -16,6 +16,8 @@ pub const HELP_RED: Color = Color::new(0.9, 0.11, 0.11, 1.0);
 pub const TEXT_SCALE_DOWN: f32 = 15.0;
 pub const SUB_TEXT_SCALE_DOWN: f32 = 25.0;
 
+pub static GAME_MODE_UNEXPECTEDLY_NONE: &str = "[!] GameMode unexpectedly None";
+
 #[derive(Eq, PartialEq)]
 pub enum MenuItemValueType {
     None,
@@ -197,7 +199,7 @@ impl Default for MenuGameOptions {
         Self {
             num_players: 1,
             starting_level: 0,
-            game_mode: GameMode::Classic,
+            game_mode: GameMode::None,
             arr_controls,
         }
     }

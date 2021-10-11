@@ -7,7 +7,8 @@ use crate::game::{
 };
 use crate::movement::Movement;
 
-static BH_WRONG_MODE: &str = "[!] BoardHandler has wrong option";
+static BH_WRONG_MODE: &str = "[!] BoardHandler has wrong GameMode setup";
+static BH_MODE_NONE: &str = "[!] BoardHandler has GameMode None";
 
 #[repr(u8)]
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -54,12 +55,14 @@ impl BoardHandler {
     pub fn new(board_width: u8, board_height: u8, num_players: u8, mode: GameMode) -> Self {
         // determine some rules based on gamemode
         let (board_height_buffer, spawn_row) = match mode {
+            GameMode::None => panic!(BH_MODE_NONE),
             GameMode::Rotatris => (0, (board_height - 1) / 2),
             GameMode::Classic => (2, 0),
         };
         let mut classic: Option<BoardClassic> = None;
         let mut rotatris: Option<BoardRotatris> = None;
         match mode {
+            GameMode::None => panic!(BH_MODE_NONE),
             GameMode::Rotatris => {
                 rotatris = Some(BoardRotatris::new(board_width, spawn_row, num_players))
             }
@@ -83,6 +86,7 @@ impl BoardHandler {
     // get...
     pub fn get_width(&mut self) -> u8 {
         match self.mode {
+            GameMode::None => panic!(BH_MODE_NONE),
             GameMode::Classic => self.classic.as_mut().expect(BH_WRONG_MODE).width,
             GameMode::Rotatris => self.rotatris.as_mut().expect(BH_WRONG_MODE).board_size,
         }
@@ -90,6 +94,7 @@ impl BoardHandler {
 
     pub fn get_height(&mut self) -> u8 {
         match self.mode {
+            GameMode::None => panic!(BH_MODE_NONE),
             GameMode::Classic => self.classic.as_mut().expect(BH_WRONG_MODE).height,
             GameMode::Rotatris => self.rotatris.as_mut().expect(BH_WRONG_MODE).board_size,
         }
@@ -97,6 +102,7 @@ impl BoardHandler {
 
     pub fn get_height_buffer(&mut self) -> u8 {
         match self.mode {
+            GameMode::None => panic!(BH_MODE_NONE),
             GameMode::Classic => self.classic.as_mut().expect(BH_WRONG_MODE).height_buffer,
             GameMode::Rotatris => 0u8,
         }
@@ -104,6 +110,7 @@ impl BoardHandler {
 
     pub fn get_active_from_pos(&mut self, y: u8, x: u8) -> bool {
         match self.mode {
+            GameMode::None => panic!(BH_MODE_NONE),
             GameMode::Classic => {
                 self.classic.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].active
             }
@@ -115,6 +122,7 @@ impl BoardHandler {
 
     pub fn get_empty_from_pos(&mut self, y: u8, x: u8) -> bool {
         match self.mode {
+            GameMode::None => panic!(BH_MODE_NONE),
             GameMode::Classic => {
                 self.classic.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].empty
             }
@@ -126,6 +134,7 @@ impl BoardHandler {
 
     pub fn get_player_from_pos(&mut self, y: u8, x: u8) -> u8 {
         match self.mode {
+            GameMode::None => panic!(BH_MODE_NONE),
             GameMode::Classic => {
                 self.classic.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].player
             }
@@ -137,6 +146,7 @@ impl BoardHandler {
 
     pub fn get_shape_from_pos(&mut self, y: u8, x: u8) -> Shapes {
         match self.mode {
+            GameMode::None => panic!(BH_MODE_NONE),
             GameMode::Classic => {
                 self.classic.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].shape
             }
@@ -148,6 +158,7 @@ impl BoardHandler {
 
     pub fn get_shape_from_player(&mut self, player: u8) -> Shapes {
         match self.mode {
+            GameMode::None => panic!(BH_MODE_NONE),
             GameMode::Classic => {
                 self.classic.as_mut().expect(BH_WRONG_MODE).vec_active_piece[player as usize].shape
             }
@@ -163,6 +174,7 @@ impl BoardHandler {
 
     pub fn get_fall_delay_from_level(&mut self, level: u8) -> u8 {
         match self.mode {
+            GameMode::None => panic!(BH_MODE_NONE),
             GameMode::Classic => FALL_DELAY_VALUES_CLASSIC[level as usize],
             GameMode::Rotatris => FALL_DELAY_VALUES_ROTATRIS[level as usize],
         }
@@ -176,6 +188,7 @@ impl BoardHandler {
         spawn_piece_shape: Shapes,
     ) -> (bool, bool) {
         match self.mode {
+            GameMode::None => panic!(BH_MODE_NONE),
             GameMode::Classic => self
                 .classic
                 .as_mut()
@@ -191,6 +204,7 @@ impl BoardHandler {
 
     pub fn attempt_clear(&mut self, level: u8) -> (u8, u32) {
         match self.mode {
+            GameMode::None => panic!(BH_MODE_NONE),
             GameMode::Classic => self
                 .classic
                 .as_mut()
@@ -206,6 +220,7 @@ impl BoardHandler {
 
     pub fn attempt_piece_movement(&mut self, m: Movement, p: u8) -> (bool, bool) {
         match self.mode {
+            GameMode::None => panic!(BH_MODE_NONE),
             GameMode::Classic => self
                 .classic
                 .as_mut()
@@ -221,6 +236,7 @@ impl BoardHandler {
 
     pub fn attempt_rotate_board(&mut self, rd: Movement) -> bool {
         match self.mode {
+            GameMode::None => panic!(BH_MODE_NONE),
             GameMode::Classic => {
                 println!("[!] `attempt_rotate_board` called but mode is GameMode::Classic");
                 false
@@ -235,6 +251,7 @@ impl BoardHandler {
 
     pub fn playerify_piece(&mut self, player: u8) {
         match self.mode {
+            GameMode::None => panic!(BH_MODE_NONE),
             GameMode::Classic => self
                 .classic
                 .as_mut()

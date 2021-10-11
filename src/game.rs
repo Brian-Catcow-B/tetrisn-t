@@ -77,9 +77,11 @@ pub const DETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.5;
 pub const UNDETECT_GAMEPAD_AXIS_THRESHOLD: f32 = 0.2;
 
 static INVALID_MENU_CONTROLS: &str = "[!] last used controls was Some() but invalid data";
+static GAME_MODE_NONE: &str = "[!] GameMode unexpectedly None";
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum GameMode {
+    None,
     Classic,
     Rotatris,
 }
@@ -87,6 +89,7 @@ pub enum GameMode {
 impl GameMode {
     pub fn num_required_inputs(&self) -> usize {
         match self {
+            Self::None => 0,
             Self::Classic => 5,
             Self::Rotatris => 7,
         }
@@ -117,6 +120,7 @@ impl From<&MenuGameOptions> for GameOptions {
             Vec::with_capacity(menu_game_options.arr_controls.len());
         let mut counted_active_controls: u8 = 0;
         match menu_game_options.game_mode {
+            GameMode::None => panic!(GAME_MODE_NONE),
             GameMode::Classic => {
                 for ctrls in menu_game_options.arr_controls.iter() {
                     if !(ctrls.0).is_empty() {
@@ -238,10 +242,12 @@ impl Game {
     pub fn new(ctx: &mut Context, game_options: &GameOptions) -> Game {
         let mode = game_options.game_mode;
         let board_width = match mode {
+            GameMode::None => panic!(GAME_MODE_NONE),
             GameMode::Classic => 6 + 4 * game_options.num_players,
             GameMode::Rotatris => ROTATRIS_BOARD_SIDE_LENGTH,
         };
         let board_height = match mode {
+            GameMode::None => panic!(GAME_MODE_NONE),
             GameMode::Classic => BOARD_HEIGHT,
             GameMode::Rotatris => ROTATRIS_BOARD_SIDE_LENGTH,
         };
@@ -318,6 +324,7 @@ impl Game {
             ));
         }
         let mut game_info_text = match mode {
+            GameMode::None => panic!(GAME_MODE_NONE),
             GameMode::Classic => Text::new(
                 TextFragment::new("Lines: ")
                     .color(graphics::WHITE)

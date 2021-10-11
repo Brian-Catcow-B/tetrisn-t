@@ -22,6 +22,7 @@ impl ChooseModeMenu {
             "Mode: ",
             MenuItemValueType::Custom,
             match game_mode {
+                GameMode::None => 0,
                 GameMode::Classic => 0,
                 GameMode::Rotatris => 1,
             },
@@ -31,12 +32,19 @@ impl ChooseModeMenu {
             MenuItemTrigger::SubMenu,
         ));
         vec_menu_items[0].set_num_values(2);
-        vec_menu_items[0].text.fragments_mut()[1].text = format!("{:?}", game_mode);
+        if game_mode == GameMode::None {
+            vec_menu_items[0].text.fragments_mut()[1].text = format!("{:?}", GameMode::Classic);
+        } else {
+            vec_menu_items[0].text.fragments_mut()[1].text = format!("{:?}", game_mode);
+        }
         vec_menu_items[0].set_select(true);
         Self {
             // logic
             selection: 0,
-            game_mode: game_mode,
+            game_mode: match game_mode {
+                GameMode::None => GameMode::Classic,
+                _ => game_mode,
+            },
             vec_menu_items,
         }
     }

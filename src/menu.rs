@@ -3,6 +3,7 @@ use ggez::graphics;
 use ggez::Context;
 
 use crate::control::ProgramState;
+use crate::game::GameMode;
 use crate::inputs::Input;
 
 mod choosemode;
@@ -43,7 +44,10 @@ impl Menu {
         Self {
             input: Input::new(),
             num_required_keycode_movement_pairs: game_options.game_mode.num_required_inputs(),
-            state: MenuState::ChooseMode,
+            state: match game_options.game_mode {
+                GameMode::None => MenuState::ChooseMode,
+                _ => MenuState::Start,
+            },
             choose_mode_menu: ChooseModeMenu::new(game_options.game_mode, window_dimensions),
             start_menu: StartMenu::new(
                 window_dimensions,
