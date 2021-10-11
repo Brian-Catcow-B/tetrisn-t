@@ -536,16 +536,18 @@ impl Game {
                 // rotatris specific
                 // board rotations
                 if player.input.keydown_board_cw.1 {
-                    if self.bh.attempt_rotate_board(Movement::RotateCw) {
+                    // this is flipped because singleplayer and multiplayer will be different someday; TODO
+                    if self.bh.attempt_rotate_board(Movement::RotateCcw) {
                         self.gravity_direction =
-                            Movement::from(((self.gravity_direction as u8) + 1) % 4);
+                            Movement::from(((self.gravity_direction as u8) + 3) % 4);
                     }
                 }
 
                 if player.input.keydown_board_ccw.1 {
-                    if self.bh.attempt_rotate_board(Movement::RotateCcw) {
+                    // this is flipped because singleplayer and multiplayer will be different someday; TODO
+                    if self.bh.attempt_rotate_board(Movement::RotateCw) {
                         self.gravity_direction =
-                            Movement::from(((self.gravity_direction as u8) + 3) % 4);
+                            Movement::from(((self.gravity_direction as u8) + 1) % 4);
                     }
                 }
                 // rotatris specific end

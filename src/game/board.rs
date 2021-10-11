@@ -728,7 +728,7 @@ impl BoardRotatris {
                 }
             }
             _ => {
-                println!("[!] Sent some non-rotation Movement to `attempt_rotate_board()`, a method of `BoardHandler`");
+                println!("[!] Sent some non-rotation Movement to `attempt_rotate_board`, a method of `BoardHandler`");
                 return false;
             }
         }
