@@ -118,7 +118,7 @@ impl InputConfigMenu {
     ) {
         self.vec_menu_items_keycode.clear();
         let game_mode = game_options.game_mode;
-        *game_options = MenuGameOptions::default();
+        // TODO
         match game_mode {
             GameMode::Classic => Self::setup_classic_mode_subtext(
                 &mut self.vec_menu_items_keycode,

@@ -98,10 +98,7 @@ impl From<usize> for GameMode {
         match num {
             0 => Self::Classic,
             1 => Self::Rotatris,
-            _ => {
-                println!("[!] Invalid conversion attempt usize({}) -> GameMode", num);
-                Self::Classic
-            }
+            _ => Self::Classic,
         }
     }
 }
@@ -1102,7 +1099,8 @@ impl Game {
                     .unwrap();
                 }
             }
-            // score text; TODO: perhaps make a separate function for something based on the bottom, or just figure out how to do this better so we don't divide out by the window_height
+            // score text; TODO: perhaps make a separate function for something based on the bottom,
+            // or just figure out how to do this better so we don't divide out by the window_height
             self.draw_text(
                 ctx,
                 &self.game_info_text,

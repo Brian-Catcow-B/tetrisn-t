@@ -168,7 +168,7 @@ impl BoardHandler {
         }
     }
 
-    // board logic functions
+    // board logic...
     pub fn attempt_piece_spawn(
         &mut self,
         player: u8,
@@ -659,8 +659,8 @@ impl BoardRotatris {
         }
         let matrix = vec![vec![Tile::default(); board_size as usize]; board_size as usize];
 
-        // DEBUG
-        // for a in 0..4 {
+        // DEBUG TILES ADDED
+        // for a in 0..10 {
         //     for b in 0..board_size as usize {
         //         matrix[a][b] = Tile::new(false, false, 0, Shapes::I);
         //         matrix[b][a] = Tile::new(false, false, 0, Shapes::I);
@@ -672,6 +672,8 @@ impl BoardRotatris {
         // matrix[board_size as usize / 2][board_size as usize - 2] = Tile::default();
         // matrix[board_size as usize / 2][board_size as usize - 3] = Tile::default();
         // matrix[board_size as usize / 2][board_size as usize - 4] = Tile::default();
+        // matrix[board_size as usize / 2][board_size as usize - 5] = Tile::default();
+        // matrix[board_size as usize / 2][board_size as usize - 6] = Tile::default();
 
         Self {
             gravity: Gravity::Down,
@@ -989,26 +991,24 @@ impl BoardRotatris {
     pub fn attempt_clear_rings(&mut self, level: u8) -> (u8, u32) {
         let mut num_cleared_rings = 0;
         let mut score_from_cleared_rings = 0;
-        let num_rings_to_check = self.board_size / 2 - 2;
+        let num_rings_to_check = self.board_size / 2;
 
-        // go from inner rings to outer rings checking if any ring is full, avoiding the middle 4 rings
+        // go from inner rings to outer rings checking if any ring is full, avoiding the very middle
         for z in (0..num_rings_to_check).rev() {
             if self.rotatris_check_single_ring(z) {
                 num_cleared_rings += 1;
                 // clear and pull inner stuff out
-                for j in (z + 1)..num_rings_to_check {
+                if z == num_rings_to_check - 1 {
+                    self.emptify_single_ring(z);
+                    continue;
+                }
+                for j in (z + 1)..=self.board_size / 2 {
                     self.rotatris_pull_single_ring_out(j);
                 }
-            } else {
             }
         }
 
         if num_cleared_rings > 0 {
-            // get rid of all tiles in the middle area
-            for z in num_rings_to_check..=((self.board_size - 1) / 2) {
-                self.emptify_single_ring(z);
-            }
-
             score_from_cleared_rings += match num_cleared_rings {
                 1 => SCORE_SINGLE_BASE as u32 * (level as u32 + 1),
                 2 => SCORE_DOUBLE_BASE as u32 * (level as u32 + 1),
