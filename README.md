@@ -45,9 +45,9 @@ In case a gamepad is not detected or a different layout is desired, here is a cr
 
 Then the gamepad should be recognized when the program is opened again. When creating a gamepad mapping, consider which buttons the program has set to do which action:
 ```
-Axis::LeftAxisX-/Button::DPadLeft -> Left
+Axis::LeftAxisX-/Button::DPadLeft  -> Left
 Axis::LeftAxisX+/Button::DPadRight -> Right
-Axis::LeftAxisY-/Button::DPadDown -> Down
+Axis::LeftAxisY-/Button::DPadDown  -> Down
 Button::East  -> RotateCw
 Button::South -> RotateCcw
 Button::North -> RotateBoardCw
