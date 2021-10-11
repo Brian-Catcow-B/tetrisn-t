@@ -202,3 +202,12 @@ impl Default for MenuGameOptions {
         }
     }
 }
+
+impl MenuGameOptions {
+    pub fn reset_controls(&mut self) {
+        for ctrls in self.arr_controls.iter_mut() {
+            ctrls.0.clear();
+            ctrls.1 = false;
+        }
+    }
+}

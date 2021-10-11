@@ -101,6 +101,10 @@ impl KeyboardControlScheme {
         }
     }
 
+    pub fn clear(&mut self) {
+        self.vec_keycode_movement_pair.clear();
+    }
+
     pub fn len(&self) -> usize {
         self.vec_keycode_movement_pair.len()
     }
