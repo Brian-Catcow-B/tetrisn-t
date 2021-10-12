@@ -120,14 +120,14 @@ impl KeyboardControlScheme {
         rotate_cw: KeyCode,
         rotate_ccw: KeyCode,
     ) -> Self {
-        let mut vec_keycode_movement_pair: Vec<(KeyCode, Movement)> = Vec::with_capacity(5);
-        vec_keycode_movement_pair.push((left, Movement::Left));
-        vec_keycode_movement_pair.push((right, Movement::Right));
-        vec_keycode_movement_pair.push((down, Movement::Down));
-        vec_keycode_movement_pair.push((rotate_cw, Movement::RotateCw));
-        vec_keycode_movement_pair.push((rotate_ccw, Movement::RotateCcw));
         Self {
-            vec_keycode_movement_pair,
+            vec_keycode_movement_pair: vec![
+                (left, Movement::Left),
+                (right, Movement::Right),
+                (down, Movement::Down),
+                (rotate_cw, Movement::RotateCw),
+                (rotate_ccw, Movement::RotateCcw),
+            ],
         }
     }
 
@@ -140,16 +140,16 @@ impl KeyboardControlScheme {
         rotate_board_cw: KeyCode,
         rotate_board_ccw: KeyCode,
     ) -> Self {
-        let mut vec_keycode_movement_pair: Vec<(KeyCode, Movement)> = Vec::with_capacity(7);
-        vec_keycode_movement_pair.push((left, Movement::Left));
-        vec_keycode_movement_pair.push((right, Movement::Right));
-        vec_keycode_movement_pair.push((down, Movement::Down));
-        vec_keycode_movement_pair.push((rotate_cw, Movement::RotateCw));
-        vec_keycode_movement_pair.push((rotate_ccw, Movement::RotateCcw));
-        vec_keycode_movement_pair.push((rotate_board_cw, Movement::BoardCw));
-        vec_keycode_movement_pair.push((rotate_board_ccw, Movement::BoardCcw));
         Self {
-            vec_keycode_movement_pair,
+            vec_keycode_movement_pair: vec![
+                (left, Movement::Left),
+                (right, Movement::Right),
+                (down, Movement::Down),
+                (rotate_cw, Movement::RotateCw),
+                (rotate_ccw, Movement::RotateCcw),
+                (rotate_board_cw, Movement::BoardCw),
+                (rotate_board_ccw, Movement::BoardCcw),
+            ],
         }
     }
 
