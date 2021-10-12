@@ -32,11 +32,12 @@ impl ChooseModeMenu {
             MenuItemTrigger::SubMenu,
         ));
         vec_menu_items[0].set_num_values(2);
-        if game_mode == GameMode::None {
-            vec_menu_items[0].text.fragments_mut()[1].text = format!("{:?}", GameMode::Classic);
+        let game_mode_for_text = if game_mode == GameMode::None {
+            GameMode::Classic
         } else {
-            vec_menu_items[0].text.fragments_mut()[1].text = format!("{:?}", game_mode);
-        }
+            game_mode
+        };
+        vec_menu_items[0].text.fragments_mut()[1].text = format!("{:?}", game_mode_for_text);
         vec_menu_items[0].set_select(true);
         Self {
             // logic

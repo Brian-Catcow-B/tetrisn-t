@@ -115,9 +115,7 @@ impl Menu {
     fn ensure_enough_controls(&self, game_options: &MenuGameOptions) -> bool {
         let mut ctrls_count = 0;
         for ctrls in game_options.arr_controls.iter() {
-            if ctrls.1 {
-                ctrls_count += 1;
-            } else if (ctrls.0).len() >= self.num_required_keycode_movement_pairs {
+            if ctrls.1 || (ctrls.0).len() >= self.num_required_keycode_movement_pairs {
                 ctrls_count += 1;
             }
         }
