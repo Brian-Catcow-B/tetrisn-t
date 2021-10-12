@@ -84,7 +84,7 @@ impl Input {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct KeyboardControlScheme {
     pub vec_keycode_movement_pair: Vec<(KeyCode, Movement)>,
 }
@@ -175,14 +175,5 @@ impl KeyboardControlScheme {
 
     pub fn add_pair(&mut self, k: KeyCode, m: Movement) {
         self.vec_keycode_movement_pair.push((k, m));
-    }
-}
-
-impl Default for KeyboardControlScheme {
-    fn default() -> Self {
-        let vec_keycode_movement_pair: Vec<(KeyCode, Movement)> = vec![];
-        Self {
-            vec_keycode_movement_pair,
-        }
     }
 }
