@@ -21,13 +21,13 @@ pub enum Gravity {
 }
 
 impl From<u8> for Gravity {
-    fn from(value: u8) -> Gravity {
+    fn from(value: u8) -> Self {
         match value {
             0 => Gravity::Down,
             1 => Gravity::Left,
             2 => Gravity::Up,
             3 => Gravity::Right,
-            _ => panic!("[!] Unknown Gravity value: {}", value),
+            _ => Gravity::Invalid,
         }
     }
 }

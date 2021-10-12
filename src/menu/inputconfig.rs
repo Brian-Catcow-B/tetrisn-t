@@ -6,11 +6,14 @@ use ggez::Context;
 use crate::game::GameMode;
 use crate::inputs::{Input, KeyboardControlScheme};
 use crate::movement::Movement;
+use crate::movement::CONVERSION_FAILED_MOVEMENT_FROM_MENUITEMTRIGGER;
 
 use crate::menu::menuhelpers::GAME_MODE_UNEXPECTEDLY_NONE;
 use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuItemValueType};
 use crate::menu::menuhelpers::{DARK_GRAY, HELP_RED, LIGHT_GRAY};
 use crate::menu::menuhelpers::{SUB_TEXT_SCALE_DOWN, TEXT_SCALE_DOWN};
+
+use std::convert::TryFrom;
 
 const MAX_NON_START_INPUTS_PER_PLAYER: usize = 8;
 
@@ -353,9 +356,10 @@ impl InputConfigMenu {
                 let key: KeyCode = self.most_recently_pressed_key.expect(KEY_UNEXPECTEDLY_NONE);
                 (game_options.arr_controls[self.player_num as usize].0).add_pair(
                     key,
-                    Movement::from(
+                    Movement::try_from(
                         self.vec_menu_items_keycode[self.sub_selection_keyboard].trigger,
-                    ),
+                    )
+                    .expect(CONVERSION_FAILED_MOVEMENT_FROM_MENUITEMTRIGGER),
                 );
                 self.vec_menu_items_keycode[self.sub_selection_keyboard].set_keycode(Some(key));
                 self.vec_used_keycode.push(key);
@@ -402,7 +406,8 @@ impl InputConfigMenu {
 
     fn update_all_sub_text_strings(&mut self, game_options: &MenuGameOptions) {
         for item in self.vec_menu_items_keycode.iter_mut() {
-            let desired_movement = Movement::from(item.trigger);
+            let desired_movement = Movement::try_from(item.trigger)
+                .expect(CONVERSION_FAILED_MOVEMENT_FROM_MENUITEMTRIGGER);
             item.set_keycode(None);
             for kmp in (game_options.arr_controls[self.player_num as usize].0)
                 .vec_keycode_movement_pair

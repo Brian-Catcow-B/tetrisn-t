@@ -1,5 +1,7 @@
 use crate::menu::menuhelpers::MenuItemTrigger;
 
+use std::convert::TryFrom;
+
 #[repr(u8)]
 #[derive(PartialEq, Eq, Copy, Clone)]
 pub enum Movement {
@@ -15,38 +17,44 @@ pub enum Movement {
     None,
 }
 
-impl From<u8> for Movement {
-    fn from(value: u8) -> Movement {
+pub static CONVERSION_FAILED_MOVEMENT_FROM_U8: &str = "[!] Failed to get Movement value from u8";
+
+impl TryFrom<u8> for Movement {
+    type Error = &'static str;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            0 => Movement::Down,
-            1 => Movement::Left,
-            2 => Movement::Up,
-            3 => Movement::Right,
-            4 => Movement::RotateCw,
-            5 => Movement::RotateCcw,
-            6 => Movement::DoubleRotate,
-            7 => Movement::BoardCw,
-            8 => Movement::BoardCcw,
-            9 => Movement::None,
-            _ => panic!("[!] Unknown Movement value: {}", value),
+            0 => Ok(Movement::Down),
+            1 => Ok(Movement::Left),
+            2 => Ok(Movement::Up),
+            3 => Ok(Movement::Right),
+            4 => Ok(Movement::RotateCw),
+            5 => Ok(Movement::RotateCcw),
+            6 => Ok(Movement::DoubleRotate),
+            7 => Ok(Movement::BoardCw),
+            8 => Ok(Movement::BoardCcw),
+            9 => Ok(Movement::None),
+            _ => Err("Invalid u8 value"),
         }
     }
 }
 
-impl From<MenuItemTrigger> for Movement {
-    fn from(value: MenuItemTrigger) -> Movement {
+pub static CONVERSION_FAILED_MOVEMENT_FROM_MENUITEMTRIGGER: &str =
+    "[!] Failed to get Movement value from MenuItemTrigger";
+
+impl TryFrom<MenuItemTrigger> for Movement {
+    type Error = &'static str;
+
+    fn try_from(value: MenuItemTrigger) -> Result<Self, Self::Error> {
         match value {
-            MenuItemTrigger::KeyLeft => Movement::Left,
-            MenuItemTrigger::KeyRight => Movement::Right,
-            MenuItemTrigger::KeyDown => Movement::Down,
-            MenuItemTrigger::KeyRotateCw => Movement::RotateCw,
-            MenuItemTrigger::KeyRotateCcw => Movement::RotateCcw,
-            MenuItemTrigger::KeyBoardCw => Movement::BoardCw,
-            MenuItemTrigger::KeyBoardCcw => Movement::BoardCcw,
-            _ => panic!(
-                "[!] Unexpected value converting MenuItemTrigger to Movement: {:?}",
-                value
-            ),
+            MenuItemTrigger::KeyLeft => Ok(Movement::Left),
+            MenuItemTrigger::KeyRight => Ok(Movement::Right),
+            MenuItemTrigger::KeyDown => Ok(Movement::Down),
+            MenuItemTrigger::KeyRotateCw => Ok(Movement::RotateCw),
+            MenuItemTrigger::KeyRotateCcw => Ok(Movement::RotateCcw),
+            MenuItemTrigger::KeyBoardCw => Ok(Movement::BoardCw),
+            MenuItemTrigger::KeyBoardCcw => Ok(Movement::BoardCcw),
+            _ => Err("Invalid MenuItemTrigger value"),
         }
     }
 }

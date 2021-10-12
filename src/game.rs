@@ -8,6 +8,9 @@ use rand::random;
 
 use crate::control::ProgramState;
 use crate::movement::Movement;
+use crate::movement::CONVERSION_FAILED_MOVEMENT_FROM_U8;
+
+use std::convert::TryFrom;
 
 mod player;
 use crate::game::player::{Player, SPAWN_DELAY};
@@ -539,7 +542,8 @@ impl Game {
                     // this is flipped because singleplayer and multiplayer will be different someday; TODO
                     if self.bh.attempt_rotate_board(Movement::RotateCcw) {
                         self.gravity_direction =
-                            Movement::from(((self.gravity_direction as u8) + 3) % 4);
+                            Movement::try_from(((self.gravity_direction as u8) + 3) % 4)
+                                .expect(CONVERSION_FAILED_MOVEMENT_FROM_U8);
                     }
                 }
 
@@ -547,7 +551,8 @@ impl Game {
                     // this is flipped because singleplayer and multiplayer will be different someday; TODO
                     if self.bh.attempt_rotate_board(Movement::RotateCw) {
                         self.gravity_direction =
-                            Movement::from(((self.gravity_direction as u8) + 1) % 4);
+                            Movement::try_from(((self.gravity_direction as u8) + 1) % 4)
+                                .expect(CONVERSION_FAILED_MOVEMENT_FROM_U8);
                     }
                 }
                 // rotatris specific end
@@ -559,9 +564,10 @@ impl Game {
                     player.waiting_to_shift = !self
                         .bh
                         .attempt_piece_movement(
-                            Movement::from(
+                            Movement::try_from(
                                 (Movement::Left as u8 + self.gravity_direction as u8) % 4,
-                            ),
+                            )
+                            .expect(CONVERSION_FAILED_MOVEMENT_FROM_U8),
                             player.player_num,
                         )
                         .0;
@@ -572,9 +578,10 @@ impl Game {
                     player.waiting_to_shift = !self
                         .bh
                         .attempt_piece_movement(
-                            Movement::from(
+                            Movement::try_from(
                                 (Movement::Right as u8 + self.gravity_direction as u8) % 4,
-                            ),
+                            )
+                            .expect(CONVERSION_FAILED_MOVEMENT_FROM_U8),
                             player.player_num,
                         )
                         .0;
@@ -593,7 +600,10 @@ impl Game {
                         if self
                             .bh
                             .attempt_piece_movement(
-                                Movement::from((movement as u8 + self.gravity_direction as u8) % 4),
+                                Movement::try_from(
+                                    (movement as u8 + self.gravity_direction as u8) % 4,
+                                )
+                                .expect(CONVERSION_FAILED_MOVEMENT_FROM_U8),
                                 player.player_num,
                             )
                             .0
@@ -625,9 +635,10 @@ impl Game {
                 {
                     let (moved_flag, caused_full_line_flag): (bool, bool) =
                         self.bh.attempt_piece_movement(
-                            Movement::from(
+                            Movement::try_from(
                                 (Movement::Down as u8 + self.gravity_direction as u8) % 4,
-                            ),
+                            )
+                            .expect(CONVERSION_FAILED_MOVEMENT_FROM_U8),
                             player.player_num,
                         );
                     // if the piece got locked, piece.shape gets set to Shapes::None, so set the spawn piece flag
