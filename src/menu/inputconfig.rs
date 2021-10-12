@@ -45,25 +45,26 @@ impl InputConfigMenu {
             }
         }
         // main MenuItems
-        let mut vec_menu_items_main: Vec<MenuItem> = Vec::with_capacity(2);
-        vec_menu_items_main.push(MenuItem::new(
-            "Back",
-            MenuItemValueType::None,
-            0,
-            None,
-            window_dimensions.1,
-            TEXT_SCALE_DOWN,
-            MenuItemTrigger::Back,
-        ));
-        vec_menu_items_main.push(MenuItem::new(
-            "Player Number: ",
-            MenuItemValueType::PlayerNum,
-            0,
-            None,
-            window_dimensions.1,
-            TEXT_SCALE_DOWN,
-            MenuItemTrigger::SubSelection,
-        ));
+        let mut vec_menu_items_main: Vec<MenuItem> = vec![
+            MenuItem::new(
+                "Back",
+                MenuItemValueType::None,
+                0,
+                None,
+                window_dimensions.1,
+                TEXT_SCALE_DOWN,
+                MenuItemTrigger::Back,
+            ),
+            MenuItem::new(
+                "Player Number: ",
+                MenuItemValueType::PlayerNum,
+                0,
+                None,
+                window_dimensions.1,
+                TEXT_SCALE_DOWN,
+                MenuItemTrigger::SubSelection,
+            ),
+        ];
         vec_menu_items_main[0].set_select(true);
 
         // keycode MenuItems
