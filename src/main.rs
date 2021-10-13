@@ -16,6 +16,7 @@ mod game;
 mod menu;
 
 mod inputs;
+mod movement;
 
 use ggez::input::gamepad::GilrsGamepadContext;
 
@@ -27,7 +28,6 @@ fn main() {
     if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
         let mut path = path::PathBuf::from(manifest_dir);
         path.push("resources");
-        println!("[+] Adding path {:?}", path);
         context = context.add_resource_path(path);
     }
 

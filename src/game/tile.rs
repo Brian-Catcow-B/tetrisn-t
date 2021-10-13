@@ -1,5 +1,7 @@
 use ggez::{graphics, Context};
 
+use crate::game::Shapes;
+
 pub const NUM_PIXEL_ROWS_PER_TILEGRAPHIC: u16 = 8u16;
 
 const DARK_GRAY: (u8, u8, u8, u8) = (20u8, 20u8, 20u8, 0xffu8);
@@ -80,19 +82,21 @@ const PLAYER_RGBA: [(u8, u8, u8, u8); NUM_PLAYERCOLORS as usize] = [
 
 const BASE_PLAYER_COLOR: (u8, u8, u8, u8) = (20u8, 80u8, 150u8, 0xffu8);
 
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 pub struct Tile {
     pub empty: bool,
     pub active: bool,
     pub player: u8,
+    pub shape: Shapes,
 }
 
 impl Tile {
-    pub fn new(empty: bool, active: bool, player: u8) -> Self {
+    pub fn new(empty: bool, active: bool, player: u8, shape: Shapes) -> Self {
         Self {
             empty,
             active,
             player,
+            shape,
         }
     }
 }
@@ -103,6 +107,7 @@ impl Default for Tile {
             empty: true,
             active: false,
             player: 0xffu8,
+            shape: Shapes::None,
         }
     }
 }
@@ -556,10 +561,15 @@ impl TileGraphic {
         }
     }
 
-    pub fn get_size(ctx: &mut Context, board_width: u8, board_height: u8) -> f32 {
+    pub fn get_size(
+        window_width: f32,
+        window_height: f32,
+        board_width: u8,
+        board_height: u8,
+    ) -> f32 {
         std::cmp::min(
-            graphics::size(ctx).1 as u32 / board_height as u32,
-            graphics::size(ctx).0 as u32 / board_width as u32,
+            window_height as u32 / board_height as u32,
+            window_width as u32 / board_width as u32,
         ) as f32
     }
 

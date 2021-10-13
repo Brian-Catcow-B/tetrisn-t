@@ -1,3 +1,4 @@
+use crate::movement::Movement;
 use ggez::event::KeyCode;
 
 // (is pressed down, was pressed this frame)
@@ -8,6 +9,8 @@ pub struct Input {
     pub keydown_up: (bool, bool),
     pub keydown_rotate_cw: (bool, bool),
     pub keydown_rotate_ccw: (bool, bool),
+    pub keydown_board_cw: (bool, bool),
+    pub keydown_board_ccw: (bool, bool),
     pub keydown_start: (bool, bool),
 }
 
@@ -20,6 +23,8 @@ impl Input {
             keydown_up: (false, false),
             keydown_rotate_cw: (false, false),
             keydown_rotate_ccw: (false, false),
+            keydown_board_cw: (false, false),
+            keydown_board_ccw: (false, false),
             keydown_start: (false, false),
         }
     }
@@ -31,6 +36,8 @@ impl Input {
         self.keydown_up.1 = false;
         self.keydown_rotate_cw.1 = false;
         self.keydown_rotate_ccw.1 = false;
+        self.keydown_board_cw.1 = false;
+        self.keydown_board_ccw.1 = false;
         self.keydown_start.1 = false;
     }
 
@@ -41,10 +48,12 @@ impl Input {
         self.keydown_up = (false, false);
         self.keydown_rotate_cw = (false, false);
         self.keydown_rotate_ccw = (false, false);
+        self.keydown_board_cw = (false, false);
+        self.keydown_board_ccw = (false, false);
         self.keydown_start = (false, false);
     }
 
-    pub fn _print_inputs(&self) {
+    pub fn _debug_print_inputs(&self) {
         println!("Left:  ({}, {})", self.keydown_left.0, self.keydown_left.1);
         println!(
             "Right: ({}, {})",
@@ -53,12 +62,20 @@ impl Input {
         println!("Down:  ({}, {})", self.keydown_down.0, self.keydown_down.1);
         println!("Up:    ({}, {})", self.keydown_up.0, self.keydown_up.1);
         println!(
-            "Cw:    ({}, {})",
+            "RotateCw:    ({}, {})",
             self.keydown_rotate_cw.0, self.keydown_rotate_cw.1
         );
         println!(
-            "Ccw:   ({}, {})",
+            "RotateCcw:   ({}, {})",
             self.keydown_rotate_ccw.0, self.keydown_rotate_ccw.1
+        );
+        println!(
+            "BoardCw:    ({}, {})",
+            self.keydown_board_cw.0, self.keydown_board_cw.1
+        );
+        println!(
+            "BoardCcw:   ({}, {})",
+            self.keydown_board_ccw.0, self.keydown_board_ccw.1
         );
         println!(
             "Start: ({}, {})",
@@ -67,50 +84,96 @@ impl Input {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone, Default)]
 pub struct KeyboardControlScheme {
-    pub left: KeyCode,
-    pub right: KeyCode,
-    pub down: KeyCode,
-    pub rotate_cw: KeyCode,
-    pub rotate_ccw: KeyCode,
-    pub start: KeyCode,
+    pub vec_keycode_movement_pair: Vec<(KeyCode, Movement)>,
 }
 
 impl KeyboardControlScheme {
-    pub fn new(
+    pub fn copy(&self) -> Self {
+        let mut copy_vec_keycode_movement_pair: Vec<(KeyCode, Movement)> =
+            Vec::with_capacity(self.vec_keycode_movement_pair.capacity());
+        for item in self.vec_keycode_movement_pair.iter() {
+            copy_vec_keycode_movement_pair.push(*item);
+        }
+        Self {
+            vec_keycode_movement_pair: copy_vec_keycode_movement_pair,
+        }
+    }
+
+    pub fn clear(&mut self) {
+        self.vec_keycode_movement_pair.clear();
+    }
+
+    pub fn len(&self) -> usize {
+        self.vec_keycode_movement_pair.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.vec_keycode_movement_pair.is_empty()
+    }
+
+    pub fn new_classic(
         left: KeyCode,
         right: KeyCode,
         down: KeyCode,
         rotate_cw: KeyCode,
         rotate_ccw: KeyCode,
-        start: KeyCode,
     ) -> Self {
         Self {
-            left,
-            right,
-            down,
-            rotate_cw,
-            rotate_ccw,
-            start,
+            vec_keycode_movement_pair: vec![
+                (left, Movement::Left),
+                (right, Movement::Right),
+                (down, Movement::Down),
+                (rotate_cw, Movement::RotateCw),
+                (rotate_ccw, Movement::RotateCcw),
+            ],
         }
     }
 
-    pub fn split(
-        &self,
-    ) -> (
-        Option<KeyCode>,
-        Option<KeyCode>,
-        Option<KeyCode>,
-        Option<KeyCode>,
-        Option<KeyCode>,
-    ) {
-        (
-            Some(self.left),
-            Some(self.right),
-            Some(self.down),
-            Some(self.rotate_cw),
-            Some(self.rotate_ccw),
-        )
+    pub fn new_rotatris(
+        left: KeyCode,
+        right: KeyCode,
+        down: KeyCode,
+        rotate_cw: KeyCode,
+        rotate_ccw: KeyCode,
+        rotate_board_cw: KeyCode,
+        rotate_board_ccw: KeyCode,
+    ) -> Self {
+        Self {
+            vec_keycode_movement_pair: vec![
+                (left, Movement::Left),
+                (right, Movement::Right),
+                (down, Movement::Down),
+                (rotate_cw, Movement::RotateCw),
+                (rotate_ccw, Movement::RotateCcw),
+                (rotate_board_cw, Movement::BoardCw),
+                (rotate_board_ccw, Movement::BoardCcw),
+            ],
+        }
+    }
+
+    pub fn keycode_from_movement(&self, m: Movement) -> Option<KeyCode> {
+        for pair in self.vec_keycode_movement_pair.iter() {
+            if pair.1 == m {
+                return Some(pair.0);
+            }
+        }
+
+        None
+    }
+
+    pub fn movement_from_keycode(&self, k: KeyCode) -> Option<Movement> {
+        for pair in self.vec_keycode_movement_pair.iter() {
+            if pair.0 == k {
+                return Some(pair.1);
+            }
+        }
+
+        None
+    }
+
+    pub fn add_pair(&mut self, k: KeyCode, m: Movement) {
+        self.vec_keycode_movement_pair.push((k, m));
     }
 }
