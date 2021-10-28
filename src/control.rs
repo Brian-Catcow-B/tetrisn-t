@@ -52,7 +52,7 @@ impl Control {
 }
 
 // this is run once every frame and passes control off to whichever state the game is in
-impl EventHandler for Control {
+impl EventHandler<ggez::GameError> for Control {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         const DESIRED_FPS: u32 = 60;
 

@@ -1,8 +1,9 @@
 use ggez::event::{Axis, Button, GamepadId, KeyCode};
 use ggez::graphics::{self, spritebatch, DrawParam};
-use ggez::graphics::{Scale, Text, TextFragment};
-use ggez::nalgebra::{Point2, Vector2};
+use ggez::graphics::{PxScale, Text, TextFragment};
 use ggez::Context;
+
+use ggez::mint::{Point2, Vector2};
 
 use rand::random;
 
@@ -288,10 +289,10 @@ impl Game {
         for x in 0..board_width {
             for y in 0..board_height as usize {
                 // empty tiles
-                let empty_tile = graphics::DrawParam::new().dest(Point2::new(
+                let empty_tile = graphics::DrawParam::new().dest(Point2::from_slice(&[
                     x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                     y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                ));
+                ]));
                 batch_empty_tile.add(empty_tile);
             }
         }
@@ -326,53 +327,54 @@ impl Game {
                 TileGraphic::new_player(ctx, player as u8).image,
             ));
         }
+        let little_text_scale = PxScale::from(LITTLE_TEXT_SCALE);
         let mut game_info_text = match mode {
             GameMode::None => panic!(GAME_MODE_NONE),
             GameMode::Classic => Text::new(
                 TextFragment::new("Lines: ")
-                    .color(graphics::WHITE)
-                    .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
+                    .color(graphics::Color::WHITE)
+                    .scale(little_text_scale),
             ),
             GameMode::Rotatris => Text::new(
                 TextFragment::new("Rings: ")
-                    .color(graphics::WHITE)
-                    .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
+                    .color(graphics::Color::WHITE)
+                    .scale(little_text_scale),
             ),
         };
         game_info_text.add(
             TextFragment::new("000")
-                .color(graphics::WHITE)
-                .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
+                .color(graphics::Color::WHITE)
+                .scale(little_text_scale),
         );
         game_info_text.add(
             TextFragment::new("   Score: ")
-                .color(graphics::WHITE)
-                .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
+                .color(graphics::Color::WHITE)
+                .scale(little_text_scale),
         );
         game_info_text.add(
             TextFragment::new("0000000")
-                .color(graphics::WHITE)
-                .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
+                .color(graphics::Color::WHITE)
+                .scale(little_text_scale),
         );
         game_info_text.add(
             TextFragment::new("   Level: ")
-                .color(graphics::WHITE)
-                .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
+                .color(graphics::Color::WHITE)
+                .scale(little_text_scale),
         );
         game_info_text.add(
             TextFragment::new(format!("{:02}", game_options.starting_level))
-                .color(graphics::WHITE)
-                .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
+                .color(graphics::Color::WHITE)
+                .scale(little_text_scale),
         );
         let pause_text = Text::new(
             TextFragment::new("PAUSED\n\nDown + ESC/Start to quit")
-                .color(graphics::WHITE)
-                .scale(Scale::uniform(LITTLE_TEXT_SCALE)),
+                .color(graphics::Color::WHITE)
+                .scale(little_text_scale),
         );
         let game_over_text = Text::new(
             TextFragment::new("Game Over!")
-                .color(graphics::WHITE)
-                .scale(Scale::uniform(LITTLE_TEXT_SCALE * 2.0)),
+                .color(graphics::Color::WHITE)
+                .scale(PxScale::from(LITTLE_TEXT_SCALE * 2.0)),
         );
 
         let (window_width, window_height) = graphics::size(ctx);
@@ -837,7 +839,7 @@ impl Game {
         let height = self.bh.get_height();
 
         // start doing drawing stuff
-        graphics::clear(ctx, graphics::BLACK);
+        graphics::clear(ctx, graphics::Color::BLACK);
         let (window_width, window_height) = graphics::size(ctx);
         if self.game_over_flag && self.game_over_delay == 0 {
             // DRAW GAME OVER
@@ -880,10 +882,10 @@ impl Game {
                             ),
                         };
                         // create the proper DrawParam and add to the spritebatch
-                        let player_tile = graphics::DrawParam::new().dest(Point2::new(
+                        let player_tile = graphics::DrawParam::new().dest(Point2::from_slice(&[
                             x_draw_pos as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                             y_draw_pos as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                        ));
+                        ]));
                         if self.num_players > 1 {
                             let player = self.bh.get_player_from_pos(y + height_buffer, x);
                             self.vec_batch_player_piece[player as usize].add(player_tile);
@@ -914,15 +916,17 @@ impl Game {
                         let board_max_index_remainder_2 = (width - 1) % 2;
                         // go from the middle to the outside and reach the end right before full_line.clear_delay reaches 0
                         for x in (width / 2)..width {
-                            let highlight_pos_right = graphics::DrawParam::new().dest(Point2::new(
-                                x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                                y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                            ));
-                            let highlight_pos_left = graphics::DrawParam::new().dest(Point2::new(
-                                (width as f32 - (x + board_max_index_remainder_2) as f32)
-                                    * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                                y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                            ));
+                            let highlight_pos_right =
+                                graphics::DrawParam::new().dest(Point2::from_slice(&[
+                                    x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                    y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                ]));
+                            let highlight_pos_left =
+                                graphics::DrawParam::new().dest(Point2::from_slice(&[
+                                    (width as f32 - (x + board_max_index_remainder_2) as f32)
+                                        * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                    y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                ]));
 
                             self.batch_highlight_clearing_standard_tile
                                 .add(highlight_pos_right);
@@ -941,15 +945,17 @@ impl Game {
                         let board_max_index_remainder_2 = (width - 1) % 2;
                         // go from the middle to the outside and reach the end right before full_line.clear_delay reaches 0
                         for x in (width / 2)..width {
-                            let highlight_pos_right = graphics::DrawParam::new().dest(Point2::new(
-                                x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                                y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                            ));
-                            let highlight_pos_left = graphics::DrawParam::new().dest(Point2::new(
-                                (width as f32 - (x + board_max_index_remainder_2) as f32)
-                                    * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                                y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                            ));
+                            let highlight_pos_right =
+                                graphics::DrawParam::new().dest(Point2::from_slice(&[
+                                    x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                    y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                ]));
+                            let highlight_pos_left =
+                                graphics::DrawParam::new().dest(Point2::from_slice(&[
+                                    (width as f32 - (x + board_max_index_remainder_2) as f32)
+                                        * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                    y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                ]));
 
                             self.batch_highlight_clearing_tetrisnt_tile
                                 .add(highlight_pos_right);
@@ -984,10 +990,11 @@ impl Game {
                                 if self.vec_next_piece[player.player_num as usize].matrix
                                     [y as usize][x as usize]
                                 {
-                                    let next_tile = graphics::DrawParam::new().dest(Point2::new(
-                                        x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                                        y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                                    ));
+                                    let next_tile =
+                                        graphics::DrawParam::new().dest(Point2::from_slice(&[
+                                            x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                            y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                        ]));
                                     self.vec_batch_next_piece[player.player_num as usize]
                                         .add(next_tile);
                                 }
@@ -1002,10 +1009,11 @@ impl Game {
                                 if self.vec_next_piece[player.player_num as usize].matrix
                                     [y as usize][x as usize]
                                 {
-                                    let next_tile = graphics::DrawParam::new().dest(Point2::new(
-                                        x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                                        y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                                    ));
+                                    let next_tile =
+                                        graphics::DrawParam::new().dest(Point2::from_slice(&[
+                                            x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                            y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                        ]));
                                     self.vec_batch_next_piece[color_number_singleplayer]
                                         .add(next_tile);
                                 }
@@ -1025,11 +1033,11 @@ impl Game {
                 ctx,
                 &self.batch_empty_tile,
                 DrawParam::new()
-                    .dest(Point2::new(
+                    .dest(Point2::from_slice(&[
                         board_top_left_corner,
                         NON_BOARD_SPACE_U as f32 * self.tile_size,
-                    ))
-                    .scale(Vector2::new(scaled_tile_size, scaled_tile_size)),
+                    ]))
+                    .scale(Vector2::from_slice(&[scaled_tile_size, scaled_tile_size])),
             )
             .unwrap();
             // player tiles
@@ -1038,11 +1046,11 @@ impl Game {
                     ctx,
                     &self.vec_batch_player_piece[player as usize],
                     DrawParam::new()
-                        .dest(Point2::new(
+                        .dest(Point2::from_slice(&[
                             board_top_left_corner,
                             NON_BOARD_SPACE_U as f32 * self.tile_size,
-                        ))
-                        .scale(Vector2::new(scaled_tile_size, scaled_tile_size)),
+                        ]))
+                        .scale(Vector2::from_slice(&[scaled_tile_size, scaled_tile_size])),
                 )
                 .unwrap();
             }
@@ -1051,11 +1059,11 @@ impl Game {
                 ctx,
                 &self.batch_highlight_active_tile,
                 DrawParam::new()
-                    .dest(Point2::new(
+                    .dest(Point2::from_slice(&[
                         board_top_left_corner,
                         NON_BOARD_SPACE_U as f32 * self.tile_size,
-                    ))
-                    .scale(Vector2::new(scaled_tile_size, scaled_tile_size)),
+                    ]))
+                    .scale(Vector2::from_slice(&[scaled_tile_size, scaled_tile_size])),
             )
             .unwrap();
             // clearing tile standard highlights
@@ -1063,11 +1071,11 @@ impl Game {
                 ctx,
                 &self.batch_highlight_clearing_standard_tile,
                 DrawParam::new()
-                    .dest(Point2::new(
+                    .dest(Point2::from_slice(&[
                         board_top_left_corner,
                         NON_BOARD_SPACE_U as f32 * self.tile_size,
-                    ))
-                    .scale(Vector2::new(scaled_tile_size, scaled_tile_size)),
+                    ]))
+                    .scale(Vector2::from_slice(&[scaled_tile_size, scaled_tile_size])),
             )
             .unwrap();
             // clearing tile tetrisnt highlights
@@ -1075,11 +1083,11 @@ impl Game {
                 ctx,
                 &self.batch_highlight_clearing_tetrisnt_tile,
                 DrawParam::new()
-                    .dest(Point2::new(
+                    .dest(Point2::from_slice(&[
                         board_top_left_corner,
                         NON_BOARD_SPACE_U as f32 * self.tile_size,
-                    ))
-                    .scale(Vector2::new(scaled_tile_size, scaled_tile_size)),
+                    ]))
+                    .scale(Vector2::from_slice(&[scaled_tile_size, scaled_tile_size])),
             )
             .unwrap();
             // next piece tiles
@@ -1089,15 +1097,15 @@ impl Game {
                         ctx,
                         &self.vec_batch_next_piece[player.player_num as usize],
                         DrawParam::new()
-                            .dest(Point2::new(
+                            .dest(Point2::from_slice(&[
                                 board_top_left_corner
                                     + (player.spawn_column - 2) as f32
                                         * scaled_tile_size
                                         * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                                 (NON_BOARD_SPACE_U - BOARD_NEXT_PIECE_SPACING) as f32
                                     * self.tile_size,
-                            ))
-                            .scale(Vector2::new(scaled_tile_size, scaled_tile_size)),
+                            ]))
+                            .scale(Vector2::from_slice(&[scaled_tile_size, scaled_tile_size])),
                     )
                     .unwrap();
                 } else {
@@ -1106,15 +1114,15 @@ impl Game {
                         ctx,
                         &self.vec_batch_next_piece[color_number_singleplayer],
                         DrawParam::new()
-                            .dest(Point2::new(
+                            .dest(Point2::from_slice(&[
                                 board_top_left_corner
                                     + (spawn_column - 2) as f32
                                         * scaled_tile_size
                                         * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                                 (NON_BOARD_SPACE_U - BOARD_NEXT_PIECE_SPACING) as f32
                                     * self.tile_size,
-                            ))
-                            .scale(Vector2::new(scaled_tile_size, scaled_tile_size)),
+                            ]))
+                            .scale(Vector2::from_slice(&[scaled_tile_size, scaled_tile_size])),
                     )
                     .unwrap();
                 }
@@ -1148,14 +1156,14 @@ impl Game {
         vertical_position: f32,
         window_dimensions: &(f32, f32),
     ) {
-        let (text_width, text_height) = text_var.dimensions(ctx);
+        let text_var_dimensions = text_var.dimensions(ctx);
         graphics::draw(
             ctx,
             text_var,
-            DrawParam::new().dest(Point2::new(
-                (window_dimensions.0 - text_width as f32) / 2.0,
-                (window_dimensions.1 - text_height as f32) * vertical_position,
-            )),
+            DrawParam::new().dest(Point2::from_slice(&[
+                (window_dimensions.0 - text_var_dimensions.w as f32) / 2.0,
+                (window_dimensions.1 - text_var_dimensions.h as f32) * vertical_position,
+            ])),
         )
         .unwrap();
     }

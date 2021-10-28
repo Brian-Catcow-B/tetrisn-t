@@ -1,6 +1,6 @@
 use ggez::event::KeyCode;
-use ggez::graphics::{self, DrawParam, Scale, Text, TextFragment};
-use ggez::nalgebra::Point2;
+use ggez::graphics::{self, DrawParam, PxScale, Text, TextFragment};
+use ggez::mint::Point2;
 use ggez::Context;
 
 use crate::game::GameMode;
@@ -87,7 +87,7 @@ impl InputConfigMenu {
                 window_dimensions,
             ),
         }
-        // Self::setup_rotatris_mode_subtext(&mut vec_menu_items_keycode, game_options, window_dimensions);
+        let scale = PxScale::from(window_dimensions.1 / SUB_TEXT_SCALE_DOWN);
         Self {
             selection: 0,
             player_num: 0,
@@ -103,17 +103,17 @@ impl InputConfigMenu {
             input_uninitialized_text: Text::new(
                 TextFragment::new("No Controls\nKeyboard: Space/Enter\nGamepad: 'G'")
                     .color(HELP_RED)
-                    .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+                    .scale(scale),
             ),
             keycode_conflict_text: Text::new(
                 TextFragment::new("[!] Redundant KeyCode; ignoring")
                     .color(HELP_RED)
-                    .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+                    .scale(scale),
             ),
             is_gamepad_text: Text::new(
                 TextFragment::new("Set to Gamepad\n\n\nSee README for help")
-                    .color(graphics::BLACK)
-                    .scale(Scale::uniform(window_dimensions.1 / SUB_TEXT_SCALE_DOWN)),
+                    .color(graphics::Color::BLACK)
+                    .scale(scale),
             ),
         }
     }
@@ -472,7 +472,12 @@ impl InputConfigMenu {
                 )
                 .unwrap();
             }
-            graphics::draw(ctx, &editing_indicator_rectangle, (Point2::new(0.0, 0.0),)).unwrap();
+            graphics::draw(
+                ctx,
+                &editing_indicator_rectangle,
+                (Point2::from_slice(&[0.0, 0.0]),),
+            )
+            .unwrap();
 
             if self.vec_menu_items_main[self.selection].trigger == MenuItemTrigger::SubSelection {
                 if self.keycode_conflict_flag {
@@ -506,14 +511,14 @@ impl InputConfigMenu {
         vertical_position: f32,
         window_dimensions: &(f32, f32),
     ) {
-        let (text_width, text_height) = text_var.dimensions(ctx);
+        let text_var_dimensions = text_var.dimensions(ctx);
         graphics::draw(
             ctx,
             text_var,
-            DrawParam::new().dest(Point2::new(
-                (window_dimensions.0 - text_width as f32) / 2.0,
-                (window_dimensions.1 - text_height as f32) * vertical_position,
-            )),
+            DrawParam::new().dest(Point2::from_slice(&[
+                (window_dimensions.0 - text_var_dimensions.w as f32) / 2.0,
+                (window_dimensions.1 - text_var_dimensions.h as f32) * vertical_position,
+            ])),
         )
         .unwrap();
     }
