@@ -128,7 +128,7 @@ impl InputConfigMenu {
         game_options.reset_controls();
         self.vec_used_keycode.clear();
         match game_mode {
-            GameMode::None => panic!(GAME_MODE_UNEXPECTEDLY_NONE),
+            GameMode::None => panic!("{}", GAME_MODE_UNEXPECTEDLY_NONE),
             GameMode::Classic => Self::setup_classic_mode_subtext(
                 &mut self.vec_menu_items_keycode,
                 &game_options,
