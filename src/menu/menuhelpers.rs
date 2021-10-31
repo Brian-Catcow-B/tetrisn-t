@@ -1,5 +1,5 @@
 use ggez::event::KeyCode;
-use ggez::graphics::{self, Color, Font, Scale, Text, TextFragment};
+use ggez::graphics::{self, Color, Font, PxScale, Text, TextFragment};
 
 use crate::game::GameMode;
 use crate::inputs::KeyboardControlScheme;
@@ -66,7 +66,7 @@ impl MenuItem {
         text_scale_down: f32,
         trigger: MenuItemTrigger,
     ) -> Self {
-        let mut text = Text::new(TextFragment::new(item_start_str).color(graphics::BLACK));
+        let mut text = Text::new(TextFragment::new(item_start_str).color(graphics::Color::BLACK));
         let mut num_values = 0;
         let mut value_show_increase = 0;
         match value_type {
@@ -76,36 +76,36 @@ impl MenuItem {
                 value_show_increase = 1;
                 text.add(
                     TextFragment::new(format!(" {}", value + value_show_increase))
-                        .color(graphics::BLACK),
+                        .color(graphics::Color::BLACK),
                 );
             }
             MenuItemValueType::StartingLevel => {
                 num_values = MAX_STARTING_LEVEL + 1; // level indexes by 0, so we have one more than max starting level
-                text.add(TextFragment::new(format!(" {}", value)).color(graphics::BLACK));
+                text.add(TextFragment::new(format!(" {}", value)).color(graphics::Color::BLACK));
             }
             MenuItemValueType::PlayerNum => {
                 num_values = MAX_NUM_PLAYERS;
                 value_show_increase = 1;
                 text.add(
                     TextFragment::new(format!(" {}", value + value_show_increase))
-                        .color(graphics::BLACK),
+                        .color(graphics::Color::BLACK),
                 );
             }
             MenuItemValueType::KeyCode => {
                 match keycode {
-                    Some(key) => {
-                        text.add(TextFragment::new(format!("{:?}", key)).color(graphics::BLACK))
-                    }
-                    None => text.add(TextFragment::new("None".to_string()).color(graphics::BLACK)),
+                    Some(key) => text
+                        .add(TextFragment::new(format!("{:?}", key)).color(graphics::Color::BLACK)),
+                    None => text
+                        .add(TextFragment::new("None".to_string()).color(graphics::Color::BLACK)),
                 };
             }
             MenuItemValueType::Custom => {
-                text.add(TextFragment::new("".to_string()).color(graphics::BLACK));
+                text.add(TextFragment::new("".to_string()).color(graphics::Color::BLACK));
             }
         }
         text.set_font(
             Font::default(),
-            Scale::uniform(window_height / text_scale_down),
+            PxScale::from(window_height / text_scale_down),
         );
         Self {
             text,
@@ -125,13 +125,13 @@ impl MenuItem {
         self.text.fragments_mut()[0].color = Some(if select {
             SELECT_GREEN
         } else {
-            graphics::BLACK
+            graphics::Color::BLACK
         });
         if self.value_type != MenuItemValueType::None {
             self.text.fragments_mut()[1].color = Some(if select {
                 SELECT_GREEN
             } else {
-                graphics::BLACK
+                graphics::Color::BLACK
             });
             if self.value_type == MenuItemValueType::NumPlayers
                 || self.value_type == MenuItemValueType::StartingLevel
@@ -176,7 +176,7 @@ impl MenuItem {
     pub fn resize(&mut self, window_height: f32) {
         self.text.set_font(
             Font::default(),
-            Scale::uniform(window_height / self.text_scale_down),
+            PxScale::from(window_height / self.text_scale_down),
         );
     }
 

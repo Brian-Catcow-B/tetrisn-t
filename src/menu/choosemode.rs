@@ -1,5 +1,5 @@
 use ggez::graphics::{self, DrawParam, Text};
-use ggez::nalgebra::Point2;
+use ggez::mint::Point2;
 use ggez::Context;
 
 use crate::game::GameMode;
@@ -90,14 +90,14 @@ impl ChooseModeMenu {
         vertical_position: f32,
         window_dimensions: &(f32, f32),
     ) {
-        let (text_width, text_height) = text_var.dimensions(ctx);
+        let text_var_dimensions = text_var.dimensions(ctx);
         graphics::draw(
             ctx,
             text_var,
-            DrawParam::new().dest(Point2::new(
-                (window_dimensions.0 - text_width as f32) / 2.0,
-                (window_dimensions.1 - text_height as f32) * vertical_position,
-            )),
+            DrawParam::new().dest(Point2::from_slice(&[
+                (window_dimensions.0 - text_var_dimensions.w as f32) / 2.0,
+                (window_dimensions.1 - text_var_dimensions.h as f32) * vertical_position,
+            ])),
         )
         .unwrap();
     }
