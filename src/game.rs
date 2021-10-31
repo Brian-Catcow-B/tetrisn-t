@@ -124,7 +124,7 @@ impl From<&MenuGameOptions> for GameOptions {
             Vec::with_capacity(menu_game_options.arr_controls.len());
         let mut counted_active_controls: u8 = 0;
         match menu_game_options.game_mode {
-            GameMode::None => panic!("{}", GAME_MODE_NONE),
+            GameMode::None => unreachable!("{}", GAME_MODE_NONE),
             GameMode::Classic => {
                 for ctrls in menu_game_options.arr_controls.iter() {
                     if !(ctrls.0).is_empty() {
@@ -246,12 +246,12 @@ impl Game {
     pub fn new(ctx: &mut Context, game_options: &GameOptions) -> Game {
         let mode = game_options.game_mode;
         let board_width = match mode {
-            GameMode::None => panic!("{}", GAME_MODE_NONE),
+            GameMode::None => unreachable!("{}", GAME_MODE_NONE),
             GameMode::Classic => 6 + 4 * game_options.num_players,
             GameMode::Rotatris => ROTATRIS_BOARD_SIDE_LENGTH,
         };
         let board_height = match mode {
-            GameMode::None => panic!("{}", GAME_MODE_NONE),
+            GameMode::None => unreachable!("{}", GAME_MODE_NONE),
             GameMode::Classic => BOARD_HEIGHT,
             GameMode::Rotatris => ROTATRIS_BOARD_SIDE_LENGTH,
         };
@@ -329,7 +329,7 @@ impl Game {
         }
         let little_text_scale = PxScale::from(LITTLE_TEXT_SCALE);
         let mut game_info_text = match mode {
-            GameMode::None => panic!("{}", GAME_MODE_NONE),
+            GameMode::None => unreachable!("{}", GAME_MODE_NONE),
             GameMode::Classic => Text::new(
                 TextFragment::new("Lines: ")
                     .color(graphics::Color::WHITE)
@@ -515,7 +515,8 @@ impl Game {
                                     break;
                                 }
                             }
-                            let random_shape = Shapes::from(rand % 7);
+                            let random_shape =
+                                Shapes::try_from(rand % 7).expect("Unable to get random piece");
                             if self.bh.get_shape_from_player(player.player_num) != random_shape {
                                 player.next_piece_shape = random_shape;
                             } else {
@@ -526,7 +527,8 @@ impl Game {
                                         break;
                                     }
                                 }
-                                player.next_piece_shape = Shapes::from(rand % 7);
+                                player.next_piece_shape =
+                                    Shapes::try_from(rand % 7).expect("Unable to get random piece");
                             }
                             self.vec_next_piece[player.player_num as usize] =
                                 NextPiece::new(player.next_piece_shape);
@@ -876,7 +878,7 @@ impl Game {
                                 center * 2 - x - is_center_even,
                             ),
                             Movement::Right => (x, center * 2 - y - is_center_even),
-                            _ => panic!(
+                            _ => unreachable!(
                                 "[!] Error: self.gravity_direction is {}",
                                 self.gravity_direction as u8
                             ),

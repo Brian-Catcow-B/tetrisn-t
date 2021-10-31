@@ -1,6 +1,8 @@
 use crate::game::board::Gravity;
 use crate::movement::Movement;
 
+use std::convert::TryFrom;
+
 #[repr(u8)]
 #[derive(PartialEq, Eq, Copy, Clone)]
 pub enum Shapes {
@@ -14,17 +16,19 @@ pub enum Shapes {
     None,
 }
 
-impl From<u8> for Shapes {
-    fn from(value: u8) -> Shapes {
+impl TryFrom<u8> for Shapes {
+    type Error = &'static str;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            0 => Shapes::I,
-            1 => Shapes::O,
-            2 => Shapes::T,
-            3 => Shapes::J,
-            4 => Shapes::S,
-            5 => Shapes::L,
-            6 => Shapes::Z,
-            _ => panic!("Unknown Shapes value: {}", value),
+            0 => Ok(Shapes::I),
+            1 => Ok(Shapes::O),
+            2 => Ok(Shapes::T),
+            3 => Ok(Shapes::J),
+            4 => Ok(Shapes::S),
+            5 => Ok(Shapes::L),
+            6 => Ok(Shapes::Z),
+            _ => Err("Conversion failed (u8 -> Shapes): Invalid value"),
         }
     }
 }
@@ -234,7 +238,7 @@ impl Piece {
             }
         };
         if piece_copy.shape == Shapes::None {
-            panic!("[!] Error: `Piece::spawn_pos()` called with shape: Shapes::None");
+            unreachable!("[!] Error: `Piece::spawn_pos()` called with shape: Shapes::None");
         } else if piece_copy.shape == Shapes::O {
             piece_copy.positions
         } else {
@@ -252,7 +256,7 @@ impl Piece {
                     piece_copy.positions = piece_copy.rotate(false);
                     piece_copy.piece_pos(Movement::Down)
                 }
-                Gravity::Invalid => panic!("[!] Gravity::Invalid passed into `spawn_pos()`"),
+                Gravity::Invalid => unreachable!("[!] Gravity::Invalid passed into `spawn_pos()`"),
             }
         }
     }

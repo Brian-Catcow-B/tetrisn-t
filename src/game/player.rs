@@ -7,6 +7,8 @@ use crate::game::{DETECT_GAMEPAD_AXIS_THRESHOLD, UNDETECT_GAMEPAD_AXIS_THRESHOLD
 use crate::inputs::{Input, KeyboardControlScheme};
 use crate::movement::Movement;
 
+use std::convert::TryFrom;
+
 pub const SPAWN_DELAY: i16 = 20i16;
 
 pub struct Player {
@@ -49,7 +51,7 @@ impl Player {
                         break;
                     }
                 }
-                Shapes::from(rand % 7)
+                Shapes::try_from(rand % 7).expect("Unable to get random piece")
             },
             redraw_next_piece_flag: true,
             fall_countdown: INITIAL_HANG_FRAMES,
