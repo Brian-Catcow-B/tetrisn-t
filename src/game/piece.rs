@@ -261,33 +261,33 @@ impl Piece {
         }
     }
 
-    // returns the position based on the given Movement type
-    pub fn piece_pos(&self, r#move: Movement) -> [(u8, u8); 4] {
+    // returns the resulting positions based on the given Movement type
+    pub fn piece_pos(&self, movement: Movement) -> [(u8, u8); 4] {
         // for movements and rotations, we don't have to worry about integer underflow because we will assume the board width is nowhere close to 0xff
-        if r#move == Movement::None {
+        if movement == Movement::None {
             self.positions
-        } else if r#move == Movement::Left {
+        } else if movement == Movement::Left {
             [
                 (self.positions[0].0, self.positions[0].1 - 1),
                 (self.positions[1].0, self.positions[1].1 - 1),
                 (self.positions[2].0, self.positions[2].1 - 1),
                 (self.positions[3].0, self.positions[3].1 - 1),
             ]
-        } else if r#move == Movement::Right {
+        } else if movement == Movement::Right {
             [
                 (self.positions[0].0, self.positions[0].1 + 1),
                 (self.positions[1].0, self.positions[1].1 + 1),
                 (self.positions[2].0, self.positions[2].1 + 1),
                 (self.positions[3].0, self.positions[3].1 + 1),
             ]
-        } else if r#move == Movement::Down {
+        } else if movement == Movement::Down {
             [
                 (self.positions[0].0 + 1, self.positions[0].1),
                 (self.positions[1].0 + 1, self.positions[1].1),
                 (self.positions[2].0 + 1, self.positions[2].1),
                 (self.positions[3].0 + 1, self.positions[3].1),
             ]
-        } else if r#move == Movement::Up {
+        } else if movement == Movement::Up {
             return [
                 (self.positions[0].0 - 1, self.positions[0].1),
                 (self.positions[1].0 - 1, self.positions[1].1),
@@ -297,9 +297,9 @@ impl Piece {
         } else {
             // T, L, J
             if self.num_rotations == 4 {
-                if r#move == Movement::RotateCw {
+                if movement == Movement::RotateCw {
                     self.rotate(true)
-                } else if r#move == Movement::RotateCcw {
+                } else if movement == Movement::RotateCcw {
                     self.rotate(false)
                 } else {
                     self.double_rotate()
@@ -307,7 +307,7 @@ impl Piece {
             // I, S, Z
             } else if self.num_rotations == 2 {
                 // the I piece is special in that it starts with rotation: 1 so that it lines up with S and Z
-                if r#move != Movement::DoubleRotate {
+                if movement != Movement::DoubleRotate {
                     if self.rotation == 0 {
                         self.rotate(false)
                     } else {

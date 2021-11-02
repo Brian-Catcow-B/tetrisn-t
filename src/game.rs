@@ -224,17 +224,17 @@ pub struct Game {
     keycode_down_flags: (bool, bool),
     keycode_escape_flags: (bool, bool),
     pause_flags: (bool, bool),
-    rotate_board_cw: (bool, bool),
-    rotate_board_ccw: (bool, bool),
     gravity_direction: Movement,
     game_over_flag: bool,
     game_over_delay: i8,
+    determine_ghost_tile_locations: bool,
     // drawing
     tile_size: f32,
     batch_empty_tile: spritebatch::SpriteBatch,
     batch_highlight_active_tile: spritebatch::SpriteBatch,
     batch_highlight_clearing_standard_tile: spritebatch::SpriteBatch,
     batch_highlight_clearing_tetrisnt_tile: spritebatch::SpriteBatch,
+    batch_highlight_ghost_tile: spritebatch::SpriteBatch,
     vec_batch_player_piece: Vec<spritebatch::SpriteBatch>,
     vec_batch_next_piece: Vec<spritebatch::SpriteBatch>,
     game_info_text: Text,
@@ -393,11 +393,10 @@ impl Game {
             keycode_down_flags: (false, false),
             keycode_escape_flags: (false, false),
             pause_flags: (false, false),
-            rotate_board_cw: (false, false),
-            rotate_board_ccw: (false, false),
             gravity_direction: Movement::Down,
             game_over_flag: false,
             game_over_delay: GAME_OVER_DELAY,
+            determine_ghost_tile_locations: true,
             tile_size: TileGraphic::get_size(
                 window_width,
                 window_height,
@@ -413,6 +412,9 @@ impl Game {
             ),
             batch_highlight_clearing_tetrisnt_tile: spritebatch::SpriteBatch::new(
                 TileGraphic::new_clear_tetrisnt_highlight(ctx).image,
+            ),
+            batch_highlight_ghost_tile: spritebatch::SpriteBatch::new(
+                TileGraphic::new_ghost_highlight(ctx).image,
             ),
             vec_batch_player_piece,
             vec_batch_next_piece,
@@ -480,8 +482,6 @@ impl Game {
                     && self.bh.get_shape_from_player(player.player_num) == Shapes::None
                 {
                     player.input.was_just_pressed_setfalse();
-                    self.rotate_board_cw.1 = false;
-                    self.rotate_board_ccw.1 = false;
                     continue;
                 }
 
@@ -862,6 +862,38 @@ impl Game {
             self.draw_text(ctx, &self.pause_text, 0.4, &(window_width, window_height));
         } else {
             // DRAW GAME
+
+            // ghost tile highlights
+            if self.determine_ghost_tile_locations {
+                self.batch_highlight_ghost_tile.clear();
+                for piece_positions in self.bh.get_ghost_highlight_positions().iter() {
+                    for pos in piece_positions.iter().take(4) {
+                        let center = width / 2;
+                        let is_center_even: u8 = (center + 1) % 2;
+                        let (y_draw_pos, x_draw_pos) = match self.gravity_direction {
+                            // account for the gravity direction in how to draw it (rotatris)
+                            Movement::Down => (pos.0, pos.1),
+                            Movement::Left => (center * 2 - pos.1 - is_center_even, pos.0),
+                            Movement::Up => (
+                                center * 2 - pos.0 - is_center_even,
+                                center * 2 - pos.1 - is_center_even,
+                            ),
+                            Movement::Right => (pos.1, center * 2 - pos.0 - is_center_even),
+                            _ => unreachable!(
+                                "[!] Error: self.gravity_direction is {}",
+                                self.gravity_direction as u8
+                            ),
+                        };
+                        self.batch_highlight_ghost_tile
+                            .add(graphics::DrawParam::new().dest(Point2::from_slice(&[
+                                x_draw_pos as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                (y_draw_pos - height_buffer) as f32
+                                    * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                            ])));
+                    }
+                }
+            }
+
             // add each non-empty tile to the correct SpriteBatch
             for x in 0..width {
                 for y in 0..height {
@@ -909,11 +941,13 @@ impl Game {
                     }
                 }
             }
+
             // line clear highlights
             if let Some(classic) = &self.bh.classic {
                 for full_line in classic.vec_full_lines.iter() {
                     if full_line.lines_cleared_together < 4 {
                         // standard clear animation
+
                         let y = (full_line.row - height_buffer) as usize;
                         let board_max_index_remainder_2 = (width - 1) % 2;
                         // go from the middle to the outside and reach the end right before full_line.clear_delay reaches 0
@@ -943,6 +977,7 @@ impl Game {
                         }
                     } else {
                         // tetrisnt clear animation
+
                         let y = (full_line.row - height_buffer) as usize;
                         let board_max_index_remainder_2 = (width - 1) % 2;
                         // go from the middle to the outside and reach the end right before full_line.clear_delay reaches 0
@@ -973,6 +1008,7 @@ impl Game {
                     }
                 }
             }
+
             // next pieces
             let mut color_number_singleplayer = 2;
             let next_piece = self.vec_next_piece[0].shape;
@@ -1034,6 +1070,18 @@ impl Game {
             graphics::draw(
                 ctx,
                 &self.batch_empty_tile,
+                DrawParam::new()
+                    .dest(Point2::from_slice(&[
+                        board_top_left_corner,
+                        NON_BOARD_SPACE_U as f32 * self.tile_size,
+                    ]))
+                    .scale(Vector2::from_slice(&[scaled_tile_size, scaled_tile_size])),
+            )
+            .unwrap();
+            // ghost pieces
+            graphics::draw(
+                ctx,
+                &self.batch_highlight_ghost_tile,
                 DrawParam::new()
                     .dest(Point2::from_slice(&[
                         board_top_left_corner,

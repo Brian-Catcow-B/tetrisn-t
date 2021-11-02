@@ -383,7 +383,7 @@ impl InputConfigMenu {
                 return item.value;
             }
         }
-        0u8
+        unreachable!();
     }
 
     fn remove_from_used_keycodes(&mut self, k_ctrl_scheme: &KeyboardControlScheme) {

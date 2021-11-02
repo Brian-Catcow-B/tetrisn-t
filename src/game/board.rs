@@ -172,11 +172,27 @@ impl BoardHandler {
         }
     }
 
-    pub fn get_fall_delay_from_level(&mut self, level: u8) -> u8 {
+    pub fn get_fall_delay_from_level(&self, level: u8) -> u8 {
         match self.mode {
             GameMode::None => unreachable!("{}", BH_MODE_NONE),
             GameMode::Classic => FALL_DELAY_VALUES_CLASSIC[level as usize],
             GameMode::Rotatris => FALL_DELAY_VALUES_ROTATRIS[level as usize],
+        }
+    }
+
+    pub fn get_ghost_highlight_positions(&self) -> Vec<[(u8, u8); 4]> {
+        match self.mode {
+            GameMode::None => unreachable!("{}", BH_MODE_NONE),
+            GameMode::Classic => self
+                .classic
+                .as_ref()
+                .expect(BH_WRONG_MODE)
+                .get_ghost_highlight_positions(),
+            GameMode::Rotatris => self
+                .rotatris
+                .as_ref()
+                .expect(BH_WRONG_MODE)
+                .get_ghost_highlight_positions(),
         }
     }
 
@@ -348,6 +364,39 @@ impl BoardClassic {
                 println!("[!] tried to playerify piece that contained position (0xffu8, 0xffu8)");
             }
         }
+    }
+
+    pub fn get_ghost_highlight_positions(&self) -> Vec<[(u8, u8); 4]> {
+        let mut ghost_highlight_positions: Vec<[(u8, u8); 4]> = vec![];
+
+        for (idx, piece) in self.vec_active_piece.iter().enumerate() {
+            if piece.shape == Shapes::None {
+                continue;
+            }
+            let mut projection: [(u8, u8); 4] = piece.positions;
+            'project_down: loop {
+                for pos in projection.iter().take(4) {
+                    if pos.0 + 1 >= self.height + self.height_buffer {
+                        ghost_highlight_positions.push(projection);
+                        break 'project_down;
+                    } else if !self.matrix[1 + pos.0 as usize][pos.1 as usize].empty {
+                        if self.matrix[1 + pos.0 as usize][pos.1 as usize].active {
+                            if self.matrix[1 + pos.0 as usize][pos.1 as usize].player != idx as u8 {
+                                break 'project_down;
+                            }
+                        } else {
+                            ghost_highlight_positions.push(projection);
+                            break 'project_down;
+                        }
+                    }
+                }
+                for pos in projection.iter_mut().take(4) {
+                    pos.0 += 1;
+                }
+            }
+        }
+
+        ghost_highlight_positions
     }
 
     // returns (bool, bool) based on (blocked, blocked by some !active tile)
@@ -699,6 +748,64 @@ impl BoardRotatris {
             matrix,
             vec_active_piece,
         }
+    }
+
+    pub fn get_ghost_highlight_positions(&self) -> Vec<[(u8, u8); 4]> {
+        let mut ghost_highlight_positions: Vec<[(u8, u8); 4]> = vec![];
+
+        let piece_projection_movement: (isize, isize) = match self.gravity {
+            Gravity::Down => (1, 0),
+            Gravity::Left => (0, -1),
+            Gravity::Up => (-1, 0),
+            Gravity::Right => (0, 1),
+            _ => unreachable!(
+                "Called BoardRotatris::get_ghost_highlight_positions with invalid Gravity"
+            ),
+        };
+
+        for (idx, piece) in self.vec_active_piece.iter().enumerate() {
+            if piece.shape == Shapes::None {
+                continue;
+            }
+            let mut projection: [(u8, u8); 4] = piece.positions;
+            'project_gravity_direction: loop {
+                for pos in projection.iter().take(4) {
+                    if pos.0 as isize + piece_projection_movement.0 >= self.board_size as isize
+                        || pos.0 as isize + piece_projection_movement.0 < 0
+                        || pos.1 as isize + piece_projection_movement.1 >= self.board_size as isize
+                        || pos.1 as isize + piece_projection_movement.1 < 0
+                    {
+                        ghost_highlight_positions.push(projection);
+                        break 'project_gravity_direction;
+                    } else if !self.matrix[(piece_projection_movement.0 + pos.0 as isize) as usize]
+                        [(piece_projection_movement.1 + pos.1 as isize) as usize]
+                        .empty
+                    {
+                        if self.matrix[(piece_projection_movement.0 + pos.0 as isize) as usize]
+                            [(piece_projection_movement.1 + pos.1 as isize) as usize]
+                            .active
+                        {
+                            if self.matrix[(piece_projection_movement.0 + pos.0 as isize) as usize]
+                                [(piece_projection_movement.1 + pos.1 as isize) as usize]
+                                .player
+                                != idx as u8
+                            {
+                                break 'project_gravity_direction;
+                            }
+                        } else {
+                            ghost_highlight_positions.push(projection);
+                            break 'project_gravity_direction;
+                        }
+                    }
+                }
+                for pos in projection.iter_mut().take(4) {
+                    pos.0 += piece_projection_movement.0 as u8;
+                    pos.1 += piece_projection_movement.1 as u8;
+                }
+            }
+        }
+
+        ghost_highlight_positions
     }
 
     // return bool is if rotate was successful
