@@ -799,7 +799,8 @@ impl BoardRotatris {
                     }
                 }
                 for pos in projection.iter_mut().take(4) {
-                    pos.0 += 1;
+                    pos.0 += piece_projection_movement.0 as u8;
+                    pos.1 += piece_projection_movement.1 as u8;
                 }
             }
         }

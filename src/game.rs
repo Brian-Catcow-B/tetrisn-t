@@ -868,10 +868,26 @@ impl Game {
                 self.batch_highlight_ghost_tile.clear();
                 for piece_positions in self.bh.get_ghost_highlight_positions().iter() {
                     for pos in piece_positions.iter().take(4) {
+                        let center = width / 2;
+                        let is_center_even: u8 = (center + 1) % 2;
+                        let (y_draw_pos, x_draw_pos) = match self.gravity_direction {
+                            // account for the gravity direction in how to draw it (rotatris)
+                            Movement::Down => (pos.0, pos.1),
+                            Movement::Left => (center * 2 - pos.1 - is_center_even, pos.0),
+                            Movement::Up => (
+                                center * 2 - pos.0 - is_center_even,
+                                center * 2 - pos.1 - is_center_even,
+                            ),
+                            Movement::Right => (pos.1, center * 2 - pos.0 - is_center_even),
+                            _ => unreachable!(
+                                "[!] Error: self.gravity_direction is {}",
+                                self.gravity_direction as u8
+                            ),
+                        };
                         self.batch_highlight_ghost_tile
                             .add(graphics::DrawParam::new().dest(Point2::from_slice(&[
-                                pos.1 as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                                (pos.0 - height_buffer) as f32
+                                x_draw_pos as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                (y_draw_pos - height_buffer) as f32
                                     * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                             ])));
                     }
