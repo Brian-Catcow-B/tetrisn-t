@@ -2,10 +2,9 @@
 
 [package]
 name = "tetrisn-t"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Brian \"Catcow\" B"]
 edition = "2018"
-
 
 [profile.dev]
 opt-level = 0
@@ -26,7 +25,6 @@ opt-level = 3
 # incremental = true
 # codegen-units = 16
 # rpath = false
-
 
 [dependencies]
 ggez = "0.6"
