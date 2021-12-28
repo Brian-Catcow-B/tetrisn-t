@@ -1,31 +1,42 @@
-#########
-# 0.0.1 #
-#########
-Released with minimal functionality.
-Users can choose their keyboard control layouts, but they don't save to file.
-Gamepads don't work at all.
-Almost all gameplay functional as intended.
+# Changelog
+All notable changes to this project will be documented in this file.
 
-#########
-# 0.0.2 #
-#########
-Released with gamepad compatibility.
-Added a list of used KeyCode's stored in the inputconfig menu that notifies the user if they try to reuse a KeyCode and ignores the input.
-Escape clears selected input layout.
-G sets a player to be controlled by a gamepad.
-Users can setup their own gamepad layouts by adding their SDL2 Gamepad string to /resources/gamecontrollerdb.txt.
-Gamepads auto-map to the first player that doesn't have a GamepadId mapping to it for easy setup.
+## [Unreleased]
+### Added
+- New mode: Rotatris (square board, 2 new buttons that rotate the board, clear rings).
+- Ghost pieces.
 
-#########
-# 0.1.0 #
-#########
-Renamed project: Rustrisn-t -> Tetrisn-t.
-Improved menu slightly.
-Various quality-of-life changes.
+### Changed
+- Made colors better so they are more easily called out (help, I'm colorblind).
 
-#########
-# 0.1.1 #
-#########
-Added active piece tile highlights
-Added line clear animation using tile highlights
-Made it easier to quit to menu
+## [v0.1.1] - 03/15/21
+### Added
+- Active piece tile highlights.
+- Line clear animation using tile highlights.
+
+### Changed
+- Made it easier to quit to menu.
+
+## [v0.1.0] - 01/28/21
+### Changed
+- Renamed project: Rustrisn-t -> Tetrisn-t.
+- Various quality-of-life changes.
+- Improved menu slightly.
+
+## [v0.0.2] - Fall2020
+### Added
+- Released with gamepad compatibility.
+- A list of used KeyCode's are stored in the inputconfig menu that notifies the user if they try to reuse a KeyCode and ignores the input.
+- 'G' sets a player to be controlled by a gamepad.
+- Users can setup their own gamepad layouts by adding their SDL2 Gamepad string to `resources/gamecontrollerdb.txt`.
+- Gamepads auto-map to the first player that doesn't have a GamepadId mapping to it for easy setup.
+
+### Changed
+- Escape clears selected input layout.
+
+## [v0.0.1] - Fall2020
+### Added
+- Minimal functionality.
+- Users can choose their keyboard control layouts, but they don't save.
+- Gamepads don't work at all.
+- Almost all gameplay functional as intended.
