@@ -9,13 +9,14 @@ use crate::inputs::Input;
 mod choosemode;
 mod inputconfig;
 pub mod menuhelpers;
+mod settings;
 mod start;
 use choosemode::ChooseModeMenu;
-use start::StartMenu;
-use settings::SettingsMenu;
 use inputconfig::InputConfigMenu;
 use menuhelpers::GRAY;
 use menuhelpers::{MenuGameOptions, MenuItemTrigger};
+use settings::SettingsMenu;
+use start::StartMenu;
 
 #[repr(u8)]
 #[derive(PartialEq, Eq)]
@@ -35,7 +36,7 @@ pub struct Menu {
     state: MenuState,
     choose_mode_menu: ChooseModeMenu,
     start_menu: StartMenu,
-    settings_menu: SettingsMenu,
+    // settings_menu: SettingsMenu,
     input_config_menu: InputConfigMenu,
     // window size
     window_dimensions: (f32, f32),
@@ -105,9 +106,9 @@ impl Menu {
                 }
             }
             MenuState::Settings => {
-                if self.settings_menu.update(&self.input, game_options) {
-                    self.state = MenuState::Start;
-                }
+                // if self.settings_menu.update(&self.input, game_options) {
+                //     self.state = MenuState::Start;
+                // }
             }
             MenuState::InputConfig => {
                 if self.input_config_menu.update(&self.input, game_options) {

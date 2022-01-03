@@ -1,3 +1,4 @@
+use crate::menu::menuhelpers::TEXT_SCALE_DOWN;
 use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuItemValueType};
 
 pub struct SettingsMenu {
@@ -7,26 +8,29 @@ pub struct SettingsMenu {
     vec_menu_items_main: Vec<MenuItem>,
 }
 
+enum SettingsMenuItemId {
+    Back = 0,
+    GhostPieces = 1,
+}
+
 impl SettingsMenu {
     pub fn new(game_options: &MenuGameOptions, window_dimensions: (f32, f32)) -> Self {
         let vec_menu_items_main = vec![
-            MenuItem::new(
+            MenuItem::new_novalue(
                 "Back",
-                MenuItemValueType::None,
-                0,
-                None,
+                SettingsMenuItemId::Back as u8,
+                MenuItemTrigger::Back,
                 window_dimensions.1,
                 TEXT_SCALE_DOWN,
-                MenuItemTrigger::Back
             ),
-            MenuItem::new(
+            MenuItem::new_onoffvalue(
                 "Ghost Pieces: ",
                 MenuItemValueType::Custom,
                 0,
                 None,
                 window_dimensions.1,
                 TEXT_SCALE_DOWN,
-                MenuItemTrigger::Back
+                MenuItemTrigger::Back,
             ),
         ];
         Self {
@@ -36,6 +40,6 @@ impl SettingsMenu {
     }
 
     pub fn update(&mut self, input: &Input, game_options: &mut MenuGameOptions) -> bool {
-
+        false
     }
 }

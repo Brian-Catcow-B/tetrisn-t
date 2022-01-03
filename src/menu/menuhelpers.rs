@@ -21,9 +21,8 @@ pub static GAME_MODE_UNEXPECTEDLY_NONE: &str = "[!] GameMode unexpectedly None";
 #[derive(Eq, PartialEq)]
 pub enum MenuItemValueType {
     None,
-    NumPlayers,
-    StartingLevel,
-    PlayerNum,
+    OnOff,
+    Numerical,
     KeyCode,
     Custom,
 }
@@ -45,84 +44,30 @@ pub enum MenuItemTrigger {
 }
 
 pub struct MenuItem {
+    // data
     pub text: Text,
-    pub value_type: MenuItemValueType,
-    num_values: u8,
+    pub id: u8,
+    pub on: bool,
     pub value: u8,
-    pub keycode: Option<KeyCode>,
+    num_values: u8,
     value_show_increase: u8,
-    text_scale_down: f32,
+    pub keycode: Option<KeyCode>,
     pub trigger: MenuItemTrigger,
     selected: bool,
+    value_type: MenuItemValueType,
+    // draw
+    text_scale_down: f32,
 }
 
-impl MenuItem {
-    pub fn new(
-        item_start_str: &str,
-        value_type: MenuItemValueType,
-        value: u8,
-        keycode: Option<KeyCode>,
-        window_height: f32,
-        text_scale_down: f32,
-        trigger: MenuItemTrigger,
-    ) -> Self {
-        let mut text = Text::new(TextFragment::new(item_start_str).color(graphics::Color::BLACK));
-        let mut num_values = 0;
-        let mut value_show_increase = 0;
-        match value_type {
-            MenuItemValueType::None => {}
-            MenuItemValueType::NumPlayers => {
-                num_values = MAX_NUM_PLAYERS;
-                value_show_increase = 1;
-                text.add(
-                    TextFragment::new(format!(" {}", value + value_show_increase))
-                        .color(graphics::Color::BLACK),
-                );
-            }
-            MenuItemValueType::StartingLevel => {
-                num_values = MAX_STARTING_LEVEL + 1; // level indexes by 0, so we have one more than max starting level
-                text.add(TextFragment::new(format!(" {}", value)).color(graphics::Color::BLACK));
-            }
-            MenuItemValueType::PlayerNum => {
-                num_values = MAX_NUM_PLAYERS;
-                value_show_increase = 1;
-                text.add(
-                    TextFragment::new(format!(" {}", value + value_show_increase))
-                        .color(graphics::Color::BLACK),
-                );
-            }
-            MenuItemValueType::KeyCode => {
-                match keycode {
-                    Some(key) => text
-                        .add(TextFragment::new(format!("{:?}", key)).color(graphics::Color::BLACK)),
-                    None => text
-                        .add(TextFragment::new("None".to_string()).color(graphics::Color::BLACK)),
-                };
-            }
-            MenuItemValueType::Custom => {
-                text.add(TextFragment::new("".to_string()).color(graphics::Color::BLACK));
-            }
-        }
-        text.set_font(
-            Font::default(),
-            PxScale::from(window_height / text_scale_down),
-        );
-        Self {
-            text,
-            value_type,
-            num_values,
-            value,
-            keycode,
-            value_show_increase,
-            text_scale_down,
-            trigger,
-            selected: false,
-        }
-    }
+static ON_STR: &str = "on";
+static OFF_STR: &str = "off";
 
-    // pub fn new_numvalue(
+impl MenuItem {
+    // pub fn new(
     //     item_start_str: &str,
-    //     start_value: u8,
+    //     value_type: MenuItemValueType,
+    //     value: u8,
+    //     keycode: Option<KeyCode>,
     //     window_height: f32,
     //     text_scale_down: f32,
     //     trigger: MenuItemTrigger,
@@ -180,6 +125,163 @@ impl MenuItem {
     //         selected: false,
     //     }
     // }
+
+    fn onoffstr(on: bool) -> &'static str {
+        match on {
+            true => ON_STR,
+            false => OFF_STR,
+        }
+    }
+
+    pub fn new_novalue(
+        title: &str,
+        id: u8,
+        trigger: MenuItemTrigger,
+        window_height: f32,
+        text_scale_down: f32,
+    ) -> Self {
+        let mut text = Text::new(TextFragment::new(title).color(graphics::Color::BLACK));
+        text.set_font(
+            Font::default(),
+            PxScale::from(window_height / text_scale_down),
+        );
+        Self {
+            text,
+            id,
+            on: true,
+            value: 0u8,
+            num_values: 0u8,
+            value_show_increase: 0u8,
+            keycode: None,
+            trigger,
+            selected: false,
+            value_type: MenuItemValueType::None,
+            text_scale_down,
+        }
+    }
+
+    pub fn new_onoffvalue(
+        title: &str,
+        id: u8,
+        start_on: bool,
+        trigger: MenuItemTrigger,
+        window_height: f32,
+        text_scale_down: f32,
+    ) -> Self {
+        let mut text = Text::new(TextFragment::new(title).color(graphics::Color::BLACK));
+        text.add(TextFragment::new(Self::onoffstr(start_on)).color(graphics::Color::BLACK));
+        text.set_font(
+            Font::default(),
+            PxScale::from(window_height / text_scale_down),
+        );
+        Self {
+            text,
+            id,
+            on: true,
+            value: 0u8,
+            num_values: 0u8,
+            value_show_increase: 0u8,
+            keycode: None,
+            trigger,
+            selected: false,
+            value_type: MenuItemValueType::OnOff,
+            text_scale_down,
+        }
+    }
+
+    pub fn new_numericalvalue(
+        title: &str,
+        id: u8,
+        start_value: u8,
+        num_values: u8,
+        value_show_increase: u8,
+        trigger: MenuItemTrigger,
+        window_height: f32,
+        text_scale_down: f32,
+    ) -> Self {
+        let mut text = Text::new(TextFragment::new(title).color(graphics::Color::BLACK));
+        text.add(
+            TextFragment::new(format!("{}", start_value + value_show_increase))
+                .color(graphics::Color::BLACK),
+        );
+        text.set_font(
+            Font::default(),
+            PxScale::from(window_height / text_scale_down),
+        );
+        Self {
+            text,
+            id,
+            on: true,
+            value: start_value,
+            num_values,
+            value_show_increase,
+            keycode: None,
+            trigger,
+            selected: false,
+            value_type: MenuItemValueType::Numerical,
+            text_scale_down,
+        }
+    }
+
+    pub fn new_keycodevalue(
+        title: &str,
+        id: u8,
+        opt_start_keycode: Option<KeyCode>,
+        trigger: MenuItemTrigger,
+        window_height: f32,
+        text_scale_down: f32,
+    ) -> Self {
+        let mut text = Text::new(TextFragment::new(title).color(graphics::Color::BLACK));
+        text.add(
+            TextFragment::new(format!("{:?}", opt_start_keycode)).color(graphics::Color::BLACK),
+        );
+        text.set_font(
+            Font::default(),
+            PxScale::from(window_height / text_scale_down),
+        );
+        Self {
+            text,
+            id,
+            on: true,
+            value: 0u8,
+            num_values: 0u8,
+            value_show_increase: 0u8,
+            keycode: opt_start_keycode,
+            trigger,
+            selected: false,
+            value_type: MenuItemValueType::KeyCode,
+            text_scale_down,
+        }
+    }
+
+    pub fn new_customvalue(
+        title: &str,
+        id: u8,
+        start_custom_str: &str,
+        trigger: MenuItemTrigger,
+        window_height: f32,
+        text_scale_down: f32,
+    ) -> Self {
+        let mut text = Text::new(TextFragment::new(title).color(graphics::Color::BLACK));
+        text.add(TextFragment::new(start_custom_str).color(graphics::Color::BLACK));
+        text.set_font(
+            Font::default(),
+            PxScale::from(window_height / text_scale_down),
+        );
+        Self {
+            text,
+            id,
+            on: true,
+            value: 0u8,
+            num_values: 0u8,
+            value_show_increase: 0u8,
+            keycode: None,
+            trigger,
+            selected: false,
+            value_type: MenuItemValueType::Custom,
+            text_scale_down,
+        }
+    }
 
     pub fn set_select(&mut self, select: bool) {
         self.selected = select;

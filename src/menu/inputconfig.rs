@@ -11,11 +11,56 @@ use crate::movement::CONVERSION_FAILED_MOVEMENT_FROM_MENUITEMTRIGGER;
 use crate::menu::menuhelpers::GAME_MODE_UNEXPECTEDLY_NONE;
 use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuItemValueType};
 use crate::menu::menuhelpers::{DARK_GRAY, HELP_RED, LIGHT_GRAY};
+use crate::menu::menuhelpers::{MAX_NUM_PLAYERS, MAX_STARTING_LEVEL};
 use crate::menu::menuhelpers::{SUB_TEXT_SCALE_DOWN, TEXT_SCALE_DOWN};
 
 use std::convert::TryFrom;
 
 const MAX_NON_START_INPUTS_PER_PLAYER: usize = 8;
+
+enum InputConfigId {
+    Back = 0,
+    PlayerNum = 1,
+}
+
+impl TryFrom<u8> for InputConfigId {
+    type Error = &'static str;
+
+    fn try_from(val: u8) -> Result<Self, Self::Error> {
+        match val {
+            0 => Ok(Self::Back),
+            1 => Ok(Self::PlayerNum),
+            _ => Err("Conversion failed (u8 -> InputConfigId): Invalid value"),
+        }
+    }
+}
+
+enum InputConfigControlsId {
+    Left = 0,
+    Right = 1,
+    Down = 2,
+    RotateCw = 3,
+    RotateCcw = 4,
+    BoardRotateCw = 5,
+    BoardRotateCcw = 6,
+}
+
+impl TryFrom<u8> for InputConfigControlsId {
+    type Error = &'static str;
+
+    fn try_from(val: u8) -> Result<Self, Self::Error> {
+        match val {
+            0 => Ok(Self::Left),
+            1 => Ok(Self::Right),
+            2 => Ok(Self::Down),
+            3 => Ok(Self::RotateCw),
+            4 => Ok(Self::RotateCcw),
+            5 => Ok(Self::BoardRotateCw),
+            6 => Ok(Self::BoardRotateCcw),
+            _ => Err("Conversion failed (u8 -> InputConfigId): Invalid value"),
+        }
+    }
+}
 
 static KEY_UNEXPECTEDLY_NONE: &str =
     "[!] KeyCode of most recently pressed key is unexpectedly None";
@@ -49,23 +94,22 @@ impl InputConfigMenu {
         }
         // main MenuItems
         let mut vec_menu_items_main: Vec<MenuItem> = vec![
-            MenuItem::new(
+            MenuItem::new_novalue(
                 "Back",
-                MenuItemValueType::None,
-                0,
-                None,
-                window_dimensions.1,
-                TEXT_SCALE_DOWN,
+                InputConfigId::Back as u8,
                 MenuItemTrigger::Back,
-            ),
-            MenuItem::new(
-                "Player Number: ",
-                MenuItemValueType::PlayerNum,
-                0,
-                None,
                 window_dimensions.1,
                 TEXT_SCALE_DOWN,
+            ),
+            MenuItem::new_numericalvalue(
+                "Player Number: ",
+                InputConfigId::PlayerNum as u8,
+                0,
+                MAX_NUM_PLAYERS,
+                1,
                 MenuItemTrigger::SubSelection,
+                window_dimensions.1,
+                TEXT_SCALE_DOWN,
             ),
         ];
         vec_menu_items_main[0].set_select(true);
@@ -166,32 +210,29 @@ impl InputConfigMenu {
         game_options: &MenuGameOptions,
         window_dimensions: (f32, f32),
     ) {
-        vec_to_add_to.push(MenuItem::new(
+        vec_to_add_to.push(MenuItem::new_keycodevalue(
             "Left:     ",
-            MenuItemValueType::KeyCode,
-            0,
+            InputConfigControlsId::Left as u8,
             (game_options.arr_controls[0].0).keycode_from_movement(Movement::Left),
-            window_dimensions.1,
-            SUB_TEXT_SCALE_DOWN,
             MenuItemTrigger::KeyLeft,
+            window_dimensions.1,
+            SUB_TEXT_SCALE_DOWN,
         ));
-        vec_to_add_to.push(MenuItem::new(
+        vec_to_add_to.push(MenuItem::new_keycodevalue(
             "Right:    ",
-            MenuItemValueType::KeyCode,
-            0,
+            InputConfigControlsId::Right as u8,
             (game_options.arr_controls[0].0).keycode_from_movement(Movement::Right),
-            window_dimensions.1,
-            SUB_TEXT_SCALE_DOWN,
             MenuItemTrigger::KeyRight,
-        ));
-        vec_to_add_to.push(MenuItem::new(
-            "Down:     ",
-            MenuItemValueType::KeyCode,
-            0,
-            (game_options.arr_controls[0].0).keycode_from_movement(Movement::Down),
             window_dimensions.1,
             SUB_TEXT_SCALE_DOWN,
+        ));
+        vec_to_add_to.push(MenuItem::new_keycodevalue(
+            "Down:     ",
+            InputConfigControlsId::Down as u8,
+            (game_options.arr_controls[0].0).keycode_from_movement(Movement::Down),
             MenuItemTrigger::KeyDown,
+            window_dimensions.1,
+            SUB_TEXT_SCALE_DOWN,
         ));
     }
 
@@ -200,23 +241,21 @@ impl InputConfigMenu {
         game_options: &MenuGameOptions,
         window_dimensions: (f32, f32),
     ) {
-        vec_to_add_to.push(MenuItem::new(
+        vec_to_add_to.push(MenuItem::new_keycodevalue(
             "RotateCw:  ",
-            MenuItemValueType::KeyCode,
-            0,
+            InputConfigControlsId::RotateCw as u8,
             (game_options.arr_controls[0].0).keycode_from_movement(Movement::RotateCw),
-            window_dimensions.1,
-            SUB_TEXT_SCALE_DOWN,
             MenuItemTrigger::KeyRotateCw,
-        ));
-        vec_to_add_to.push(MenuItem::new(
-            "RotateCcw: ",
-            MenuItemValueType::KeyCode,
-            0,
-            (game_options.arr_controls[0].0).keycode_from_movement(Movement::RotateCcw),
             window_dimensions.1,
             SUB_TEXT_SCALE_DOWN,
+        ));
+        vec_to_add_to.push(MenuItem::new_keycodevalue(
+            "RotateCcw: ",
+            InputConfigControlsId::RotateCcw as u8,
+            (game_options.arr_controls[0].0).keycode_from_movement(Movement::RotateCcw),
             MenuItemTrigger::KeyRotateCcw,
+            window_dimensions.1,
+            SUB_TEXT_SCALE_DOWN,
         ));
     }
 
@@ -225,23 +264,21 @@ impl InputConfigMenu {
         game_options: &MenuGameOptions,
         window_dimensions: (f32, f32),
     ) {
-        vec_to_add_to.push(MenuItem::new(
+        vec_to_add_to.push(MenuItem::new_keycodevalue(
             "BoardCw:  ",
-            MenuItemValueType::KeyCode,
-            0,
+            InputConfigControlsId::BoardRotateCw as u8,
             (game_options.arr_controls[0].0).keycode_from_movement(Movement::BoardCw),
-            window_dimensions.1,
-            SUB_TEXT_SCALE_DOWN,
             MenuItemTrigger::KeyBoardCw,
-        ));
-        vec_to_add_to.push(MenuItem::new(
-            "BoardCcw: ",
-            MenuItemValueType::KeyCode,
-            0,
-            (game_options.arr_controls[0].0).keycode_from_movement(Movement::BoardCcw),
             window_dimensions.1,
             SUB_TEXT_SCALE_DOWN,
+        ));
+        vec_to_add_to.push(MenuItem::new_keycodevalue(
+            "BoardCcw: ",
+            InputConfigControlsId::BoardRotateCcw as u8,
+            (game_options.arr_controls[0].0).keycode_from_movement(Movement::BoardCcw),
             MenuItemTrigger::KeyBoardCcw,
+            window_dimensions.1,
+            SUB_TEXT_SCALE_DOWN,
         ));
     }
 
@@ -379,7 +416,7 @@ impl InputConfigMenu {
 
     fn get_player_num(&self) -> u8 {
         for item in self.vec_menu_items_main.iter() {
-            if item.value_type == MenuItemValueType::PlayerNum {
+            if item.id == InputConfigId::PlayerNum as u8 {
                 return item.value;
             }
         }
