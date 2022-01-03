@@ -11,16 +11,18 @@ mod inputconfig;
 pub mod menuhelpers;
 mod start;
 use choosemode::ChooseModeMenu;
+use start::StartMenu;
+use settings::SettingsMenu;
 use inputconfig::InputConfigMenu;
 use menuhelpers::GRAY;
 use menuhelpers::{MenuGameOptions, MenuItemTrigger};
-use start::StartMenu;
 
 #[repr(u8)]
 #[derive(PartialEq, Eq)]
 enum MenuState {
     ChooseMode,
     Start,
+    Settings,
     InputConfig,
 }
 
@@ -33,6 +35,7 @@ pub struct Menu {
     state: MenuState,
     choose_mode_menu: ChooseModeMenu,
     start_menu: StartMenu,
+    settings_menu: SettingsMenu,
     input_config_menu: InputConfigMenu,
     // window size
     window_dimensions: (f32, f32),
@@ -99,6 +102,11 @@ impl Menu {
                     }
                     MenuItemTrigger::None => {}
                     _ => println!("[!] Wrong menu?"),
+                }
+            }
+            MenuState::Settings => {
+                if self.settings_menu.update(&self.input, game_options) {
+                    self.state = MenuState::Start;
                 }
             }
             MenuState::InputConfig => {
