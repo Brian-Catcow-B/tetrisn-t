@@ -69,7 +69,7 @@ const CLEARING_TILE_TETRISNT_HIGHLIGHT: [u8; 3] = [0xa0, 0x30, 0x10];
 // [0][1][1][1][1][1][1][0]
 
 // this one is also opacity out of 0xff, since it's drawn over the empty tiles the piece would go to were it to go straight down
-const GHOST_TILE_HIGHLIGHT: [u8; 4] = [0x40, 0x25, 0x20, 0x15];
+const GHOST_TILE_HIGHLIGHT: [u8; 4] = [0x20, 0x04, 0x00, 0x00];
 
 // [0][0][0][0][0][0][0][0]
 // [0][1][1][1][1][1][1][0]
