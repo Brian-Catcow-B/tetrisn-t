@@ -1,7 +1,7 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [v0.2.0] - 01/04/22
 ### Added
 - New mode: Rotatris (square board, 2 new buttons that rotate the board, clear rings).
 - Ghost pieces.
