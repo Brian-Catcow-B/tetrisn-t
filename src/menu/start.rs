@@ -4,8 +4,16 @@ use ggez::Context;
 
 use crate::game::GameMode;
 use crate::inputs::Input;
+use crate::menu::menuhelpers::MAX_STARTING_LEVEL;
 use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuItemValueType};
 use crate::menu::menuhelpers::{HELP_RED, TEXT_SCALE_DOWN};
+
+enum StartMenuItemId {
+    Start,
+    NumPlayers,
+    StartingLevel,
+    Controls,
+}
 
 pub struct StartMenu {
     // logic
@@ -138,23 +146,22 @@ impl StartMenu {
                 MenuItemTrigger::StartGame,
             ));
         }
-        vec_menu_items.push(MenuItem::new(
+        vec_menu_items.push(MenuItem::new_numericalvalue(
             "Starting Level: ",
-            MenuItemValueType::StartingLevel,
+            StartMenuItemId::StartingLevel as u8,
             starting_level,
-            None,
-            window_dimensions.1,
-            TEXT_SCALE_DOWN,
-            MenuItemTrigger::StartGame,
-        ));
-        vec_menu_items.push(MenuItem::new(
-            "Controls",
-            MenuItemValueType::None,
+            MAX_STARTING_LEVEL + 1,
             0,
-            None,
+            MenuItemTrigger::StartGame,
             window_dimensions.1,
             TEXT_SCALE_DOWN,
+        ));
+        vec_menu_items.push(MenuItem::new_novalue(
+            "Controls",
+            StartMenuItemId::Controls as u8,
             MenuItemTrigger::SubMenu,
+            window_dimensions.1,
+            TEXT_SCALE_DOWN,
         ));
         *selection = 0;
         vec_menu_items[0].set_select(true);
@@ -162,7 +169,7 @@ impl StartMenu {
 
     fn get_num_players(&self) -> u8 {
         for item in self.vec_menu_items.iter() {
-            if item.value_type == MenuItemValueType::NumPlayers {
+            if item.id == StartMenuItemId::NumPlayers as u8 {
                 return item.value;
             }
         }
@@ -171,7 +178,7 @@ impl StartMenu {
 
     fn get_starting_level(&self) -> u8 {
         for item in self.vec_menu_items.iter() {
-            if item.value_type == MenuItemValueType::StartingLevel {
+            if item.id == StartMenuItemId::StartingLevel as u8 {
                 return item.value;
             }
         }

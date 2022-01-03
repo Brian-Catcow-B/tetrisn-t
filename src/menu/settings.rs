@@ -1,6 +1,8 @@
 use crate::menu::menuhelpers::TEXT_SCALE_DOWN;
 use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuItemValueType};
 
+use crate::inputs::{Input, KeyboardControlScheme};
+
 pub struct SettingsMenu {
     // logic
     selection: usize,
@@ -25,12 +27,11 @@ impl SettingsMenu {
             ),
             MenuItem::new_onoffvalue(
                 "Ghost Pieces: ",
-                MenuItemValueType::Custom,
-                0,
-                None,
+                SettingsMenuItemId::GhostPieces as u8,
+                true,
+                MenuItemTrigger::None,
                 window_dimensions.1,
                 TEXT_SCALE_DOWN,
-                MenuItemTrigger::Back,
             ),
         ];
         Self {

@@ -49,6 +49,7 @@ pub struct MenuItem {
     pub id: u8,
     pub on: bool,
     pub value: u8,
+    min_value: u8,
     num_values: u8,
     value_show_increase: u8,
     pub keycode: Option<KeyCode>,
@@ -150,6 +151,7 @@ impl MenuItem {
             id,
             on: true,
             value: 0u8,
+            min_value: 0u8,
             num_values: 0u8,
             value_show_increase: 0u8,
             keycode: None,
@@ -177,8 +179,9 @@ impl MenuItem {
         Self {
             text,
             id,
-            on: true,
+            on: start_on,
             value: 0u8,
+            min_value: 0u8,
             num_values: 0u8,
             value_show_increase: 0u8,
             keycode: None,
@@ -193,6 +196,7 @@ impl MenuItem {
         title: &str,
         id: u8,
         start_value: u8,
+        min_value: u8,
         num_values: u8,
         value_show_increase: u8,
         trigger: MenuItemTrigger,
@@ -213,6 +217,7 @@ impl MenuItem {
             id,
             on: true,
             value: start_value,
+            min_value,
             num_values,
             value_show_increase,
             keycode: None,
@@ -244,6 +249,7 @@ impl MenuItem {
             id,
             on: true,
             value: 0u8,
+            min_value: 0u8,
             num_values: 0u8,
             value_show_increase: 0u8,
             keycode: opt_start_keycode,
@@ -273,6 +279,7 @@ impl MenuItem {
             id,
             on: true,
             value: 0u8,
+            min_value: 0u8,
             num_values: 0u8,
             value_show_increase: 0u8,
             keycode: None,
@@ -296,10 +303,7 @@ impl MenuItem {
             } else {
                 graphics::Color::BLACK
             });
-            if self.value_type == MenuItemValueType::NumPlayers
-                || self.value_type == MenuItemValueType::StartingLevel
-                || self.value_type == MenuItemValueType::PlayerNum
-            {
+            if self.value_type == MenuItemValueType::Numerical {
                 self.text.fragments_mut()[1].text = if select {
                     format!("<{}>", self.value + self.value_show_increase)
                 } else {
@@ -310,9 +314,7 @@ impl MenuItem {
     }
 
     pub fn inc_or_dec(&mut self, inc: bool) {
-        if self.value_type == MenuItemValueType::NumPlayers
-            || self.value_type == MenuItemValueType::StartingLevel
-            || self.value_type == MenuItemValueType::PlayerNum
+        if self.value_type == MenuItemValueType::Numerical
             || self.value_type == MenuItemValueType::Custom
         {
             self.value = if inc {
