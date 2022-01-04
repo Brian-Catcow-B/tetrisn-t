@@ -105,6 +105,7 @@ impl InputConfigMenu {
                 "Player Number: ",
                 InputConfigId::PlayerNum as u8,
                 0,
+                0,
                 MAX_NUM_PLAYERS,
                 1,
                 MenuItemTrigger::SubSelection,

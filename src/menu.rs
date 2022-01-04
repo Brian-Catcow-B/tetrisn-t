@@ -23,7 +23,7 @@ use start::StartMenu;
 enum MenuState {
     ChooseMode,
     Start,
-    Settings,
+    // Settings,
     InputConfig,
 }
 
@@ -105,11 +105,11 @@ impl Menu {
                     _ => println!("[!] Wrong menu?"),
                 }
             }
-            MenuState::Settings => {
-                // if self.settings_menu.update(&self.input, game_options) {
-                //     self.state = MenuState::Start;
-                // }
-            }
+            // MenuState::Settings => {
+            //     // if self.settings_menu.update(&self.input, game_options) {
+            //     //     self.state = MenuState::Start;
+            //     // }
+            // }
             MenuState::InputConfig => {
                 if self.input_config_menu.update(&self.input, game_options) {
                     self.state = MenuState::Start;

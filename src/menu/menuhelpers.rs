@@ -60,9 +60,6 @@ pub struct MenuItem {
     text_scale_down: f32,
 }
 
-static ON_STR: &str = "on";
-static OFF_STR: &str = "off";
-
 impl MenuItem {
     // pub fn new(
     //     item_start_str: &str,
@@ -129,8 +126,8 @@ impl MenuItem {
 
     fn onoffstr(on: bool) -> &'static str {
         match on {
-            true => ON_STR,
-            false => OFF_STR,
+            true => "on",
+            false => "off",
         }
     }
 
@@ -264,6 +261,8 @@ impl MenuItem {
         title: &str,
         id: u8,
         start_custom_str: &str,
+        value: u8,
+        num_values: u8,
         trigger: MenuItemTrigger,
         window_height: f32,
         text_scale_down: f32,
@@ -278,9 +277,9 @@ impl MenuItem {
             text,
             id,
             on: true,
-            value: 0u8,
+            value,
             min_value: 0u8,
-            num_values: 0u8,
+            num_values,
             value_show_increase: 0u8,
             keycode: None,
             trigger,
@@ -309,24 +308,35 @@ impl MenuItem {
                 } else {
                     format!(" {}", self.value + self.value_show_increase)
                 };
+            } else if self.value_type == MenuItemValueType::OnOff {
+                self.text.fragments_mut()[1].text = if select {
+                    format!("<{}>", Self::onoffstr(self.on))
+                } else {
+                    format!("{}", Self::onoffstr(self.on))
+                }
             }
         }
     }
 
-    pub fn inc_or_dec(&mut self, inc: bool) {
+    pub fn change_val(&mut self, rightward_press: bool) {
         if self.value_type == MenuItemValueType::Numerical
             || self.value_type == MenuItemValueType::Custom
         {
-            self.value = if inc {
-                (self.value + 1) % self.num_values
+            self.value = if rightward_press {
+                // increment 1 with looping value
+                ((self.value + 1 - self.min_value) % self.num_values) + self.min_value
             } else {
-                (self.value - 1 + self.num_values) % self.num_values
+                // decrement 1 with looping value
+                ((self.value - 1 + self.num_values - self.min_value) % self.num_values)
+                    + self.min_value
             };
             if self.value_type != MenuItemValueType::Custom {
                 // assume it's selected because it's being incremented/decremented
                 self.text.fragments_mut()[1].text =
                     format!("<{}>", self.value + self.value_show_increase);
             }
+        } else if self.value_type == MenuItemValueType::OnOff {
+            self.on = !self.on;
         }
     }
 
@@ -343,10 +353,6 @@ impl MenuItem {
             Font::default(),
             PxScale::from(window_height / self.text_scale_down),
         );
-    }
-
-    pub fn set_num_values(&mut self, num_vals: u8) {
-        self.num_values = num_vals;
     }
 }
 

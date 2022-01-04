@@ -4,9 +4,9 @@ use ggez::Context;
 
 use crate::game::GameMode;
 use crate::inputs::Input;
-use crate::menu::menuhelpers::MAX_STARTING_LEVEL;
 use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuItemValueType};
 use crate::menu::menuhelpers::{HELP_RED, TEXT_SCALE_DOWN};
+use crate::menu::menuhelpers::{MAX_NUM_PLAYERS, MAX_STARTING_LEVEL};
 
 enum StartMenuItemId {
     Start,
@@ -125,34 +125,35 @@ impl StartMenu {
         starting_level: u8,
         window_dimensions: (f32, f32),
     ) {
-        vec_menu_items.push(MenuItem::new(
+        vec_menu_items.push(MenuItem::new_novalue(
             "Start",
-            MenuItemValueType::None,
-            0,
-            None,
+            StartMenuItemId::Start as u8,
+            MenuItemTrigger::StartGame,
             window_dimensions.1,
             TEXT_SCALE_DOWN,
-            MenuItemTrigger::StartGame,
         ));
 
         if mode == GameMode::Classic {
-            vec_menu_items.push(MenuItem::new(
+            vec_menu_items.push(MenuItem::new_numericalvalue(
                 "Number of Players: ",
-                MenuItemValueType::NumPlayers,
-                num_players - 1,
-                None,
+                StartMenuItemId::NumPlayers as u8,
+                num_players,
+                1,
+                MAX_NUM_PLAYERS,
+                0,
+                MenuItemTrigger::None,
                 window_dimensions.1,
                 TEXT_SCALE_DOWN,
-                MenuItemTrigger::StartGame,
             ));
         }
         vec_menu_items.push(MenuItem::new_numericalvalue(
             "Starting Level: ",
             StartMenuItemId::StartingLevel as u8,
             starting_level,
+            0,
             MAX_STARTING_LEVEL + 1,
             0,
-            MenuItemTrigger::StartGame,
+            MenuItemTrigger::None,
             window_dimensions.1,
             TEXT_SCALE_DOWN,
         ));
