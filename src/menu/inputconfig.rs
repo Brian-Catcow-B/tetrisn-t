@@ -10,7 +10,7 @@ use crate::movement::CONVERSION_FAILED_MOVEMENT_FROM_MENUITEMTRIGGER;
 
 use crate::menu::menuhelpers::GAME_MODE_UNEXPECTEDLY_NONE;
 use crate::menu::menuhelpers::MAX_NUM_PLAYERS;
-use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuItemValueType};
+use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger};
 use crate::menu::menuhelpers::{DARK_GRAY, HELP_RED, LIGHT_GRAY};
 use crate::menu::menuhelpers::{SUB_TEXT_SCALE_DOWN, TEXT_SCALE_DOWN};
 

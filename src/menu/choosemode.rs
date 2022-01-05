@@ -5,7 +5,7 @@ use ggez::Context;
 use crate::game::GameMode;
 use crate::inputs::Input;
 use crate::menu::menuhelpers::TEXT_SCALE_DOWN;
-use crate::menu::menuhelpers::{MenuItem, MenuItemTrigger, MenuItemValueType};
+use crate::menu::menuhelpers::{MenuItem, MenuItemTrigger};
 
 enum ChooseModeMenuItemId {
     Mode,

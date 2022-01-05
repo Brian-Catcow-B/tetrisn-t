@@ -235,7 +235,7 @@ impl MenuItem {
     ) -> Self {
         let mut text = Text::new(TextFragment::new(title).color(graphics::Color::BLACK));
         text.add(match opt_start_keycode {
-            Some(k) => TextFragment::new(format!("{:?}", k)).color(graphics::Color::BLACK),
+            Some(key) => TextFragment::new(format!("{:?}", key)).color(graphics::Color::BLACK),
             None => TextFragment::new("None").color(graphics::Color::BLACK),
         });
         text.set_font(

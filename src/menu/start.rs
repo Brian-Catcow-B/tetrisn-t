@@ -71,7 +71,7 @@ impl StartMenu {
             self.vec_menu_items[self.selection].change_val(false);
         }
 
-        game_options.num_players = self.get_num_players() + 1;
+        game_options.num_players = self.get_num_players();
         game_options.starting_level = self.get_starting_level();
 
         if input.keydown_down.1 {

@@ -15,7 +15,7 @@ use choosemode::ChooseModeMenu;
 use inputconfig::InputConfigMenu;
 use menuhelpers::GRAY;
 use menuhelpers::{MenuGameOptions, MenuItemTrigger};
-use settings::SettingsMenu;
+// use settings::SettingsMenu;
 use start::StartMenu;
 
 #[repr(u8)]
