@@ -2,10 +2,9 @@
 
 [package]
 name = "tetrisn-t"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Brian \"Catcow\" B"]
 edition = "2018"
-
 
 [profile.dev]
 opt-level = 0
@@ -27,9 +26,7 @@ opt-level = 3
 # codegen-units = 16
 # rpath = false
 
-
 [dependencies]
-# ggez = "0.5"
-ggez = { git = "https://github.com/Brian-Catcow-B/ggez.git", branch = "master-custom-gamepads" }
+ggez = "0.6"
 rand = "0.7.3"
-gilrs = "0.7.4"
+glam = "0.19.0"

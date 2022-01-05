@@ -1,5 +1,5 @@
-use ggez::event;
 use ggez::graphics;
+use ggez::input::gamepad::gilrs;
 use ggez::ContextBuilder;
 
 // file systems stuff
@@ -16,6 +16,7 @@ mod game;
 mod menu;
 
 mod inputs;
+mod movement;
 
 use ggez::input::gamepad::GilrsGamepadContext;
 
@@ -27,11 +28,10 @@ fn main() {
     if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
         let mut path = path::PathBuf::from(manifest_dir);
         path.push("resources");
-        println!("[+] Adding path {:?}", path);
         context = context.add_resource_path(path);
     }
 
-    let (ctx, event_loop) = &mut context.build().expect("[!] Failed to build context");
+    let (mut ctx, event_loop) = context.build().expect("[!] Failed to build context");
 
     // custom controller setup stuffs
     let mut gilrs_builder = gilrs::GilrsBuilder::new().add_included_mappings(false);
@@ -55,17 +55,15 @@ fn main() {
     ctx.gamepad_context = Box::new(GilrsGamepadContext::from(gilrs_builder.build().unwrap()));
 
     // set window size
-    graphics::set_resizable(ctx, true).expect("[!] Failed to set window to resizable");
-    graphics::set_drawable_size(ctx, 800.0, 600.0).expect("[!] Failed to resize window");
+    graphics::set_resizable(&mut ctx, true).expect("[!] Failed to set window to resizable");
+    graphics::set_drawable_size(&mut ctx, 800.0, 600.0).expect("[!] Failed to resize window");
 
     // make it not blurry
-    graphics::set_default_filter(ctx, graphics::FilterMode::Nearest);
+    graphics::set_default_filter(&mut ctx, graphics::FilterMode::Nearest);
 
     // create an instance of the event handler
-    let mut control = Control::new(ctx);
+    let control = Control::new(&mut ctx);
 
     // loop that controls the ProgramState
-    if let Err(e) = event::run(ctx, event_loop, &mut control) {
-        println!("[!] Error occured: {}", e);
-    }
+    ggez::event::run(ctx, event_loop, control)
 }

@@ -1,5 +1,7 @@
 use ggez::{graphics, Context};
 
+use crate::game::Shapes;
+
 pub const NUM_PIXEL_ROWS_PER_TILEGRAPHIC: u16 = 8u16;
 
 const DARK_GRAY: (u8, u8, u8, u8) = (20u8, 20u8, 20u8, 0xffu8);
@@ -66,7 +68,19 @@ const CLEARING_TILE_TETRISNT_HIGHLIGHT: [u8; 3] = [0xa0, 0x30, 0x10];
 // [1][1][1][2][2][1][1][1]
 // [0][1][1][1][1][1][1][0]
 
-// defined player colors, otherwise it uses a "random" but consistent color based on BASE_PLAYER_COLOR
+// this one is also opacity out of 0xff, since it's drawn over the empty tiles the piece would go to were it to go straight down
+const GHOST_TILE_HIGHLIGHT: [u8; 4] = [0x20, 0x04, 0x00, 0x00];
+
+// [0][0][0][0][0][0][0][0]
+// [0][1][1][1][1][1][1][0]
+// [0][1][2][2][2][2][1][0]
+// [0][1][2][3][3][2][1][0]
+// [0][1][2][3][3][2][1][0]
+// [0][1][2][2][2][2][1][0]
+// [0][1][1][1][1][1][1][0]
+// [0][0][0][0][0][0][0][0]
+
+// defined player colors, otherwise it uses a generated color using BASE_PLAYER_COLOR based on player number
 const NUM_PLAYERCOLORS: u8 = 7;
 const PLAYER_RGBA: [(u8, u8, u8, u8); NUM_PLAYERCOLORS as usize] = [
     (69u8, 125u8, 225u8, 0xffu8),
@@ -74,25 +88,27 @@ const PLAYER_RGBA: [(u8, u8, u8, u8); NUM_PLAYERCOLORS as usize] = [
     (80u8, 200u8, 60u8, 0xffu8),
     (230u8, 230u8, 50u8, 0xffu8),
     (220u8, 150u8, 70u8, 0xffu8),
-    (160u8, 230u8, 250u8, 0xffu8),
+    (125u8, 125u8, 125u8, 0xffu8),
     (230u8, 100u8, 210u8, 0xffu8),
 ];
 
-const BASE_PLAYER_COLOR: (u8, u8, u8, u8) = (20u8, 80u8, 150u8, 0xffu8);
+const BASE_PLAYER_COLOR: (u8, u8, u8, u8) = (25u8, 80u8, 212u8, 0xffu8);
 
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 pub struct Tile {
     pub empty: bool,
     pub active: bool,
     pub player: u8,
+    pub shape: Shapes,
 }
 
 impl Tile {
-    pub fn new(empty: bool, active: bool, player: u8) -> Self {
+    pub fn new(empty: bool, active: bool, player: u8, shape: Shapes) -> Self {
         Self {
             empty,
             active,
             player,
+            shape,
         }
     }
 }
@@ -103,6 +119,7 @@ impl Default for Tile {
             empty: true,
             active: false,
             player: 0xffu8,
+            shape: Shapes::None,
         }
     }
 }
@@ -556,10 +573,73 @@ impl TileGraphic {
         }
     }
 
-    pub fn get_size(ctx: &mut Context, board_width: u8, board_height: u8) -> f32 {
+    pub fn new_ghost_highlight(ctx: &mut Context) -> Self {
+        // create a buffer of (u8, u8, u8, u8), because rgba, big enough to hold each pixel
+        let mut pixel_color_buf: [(u8, u8, u8, u8);
+            NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize] =
+            [WHITE;
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize];
+
+        // outer (0)
+        for x in 0..=NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1 {
+            for y in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
+                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                    GHOST_TILE_HIGHLIGHT[0];
+                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                    GHOST_TILE_HIGHLIGHT[0];
+            }
+        }
+
+        // between (1)
+        for x in 1..=NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2 {
+            for y in &[1, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2] {
+                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                    GHOST_TILE_HIGHLIGHT[1];
+                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                    GHOST_TILE_HIGHLIGHT[1];
+            }
+        }
+
+        // inner (2)
+        for x in 2..=NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 3 {
+            for y in &[2, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 3] {
+                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                    GHOST_TILE_HIGHLIGHT[2];
+                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                    GHOST_TILE_HIGHLIGHT[2];
+            }
+        }
+
+        // middle (3)
+        for x in 3..=NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 4 {
+            for y in &[3, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 4] {
+                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                    GHOST_TILE_HIGHLIGHT[3];
+                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                    GHOST_TILE_HIGHLIGHT[3];
+            }
+        }
+
+        Self {
+            image: graphics::Image::from_rgba8(
+                ctx,
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
+                &TileGraphic::pack_color_buf(&pixel_color_buf),
+            )
+            .expect("Failed to create tile ghost tile highlight image"),
+        }
+    }
+
+    pub fn get_size(
+        window_width: f32,
+        window_height: f32,
+        board_width: u8,
+        board_height: u8,
+    ) -> f32 {
         std::cmp::min(
-            graphics::size(ctx).1 as u32 / board_height as u32,
-            graphics::size(ctx).0 as u32 / board_width as u32,
+            window_height as u32 / board_height as u32,
+            window_width as u32 / board_width as u32,
         ) as f32
     }
 

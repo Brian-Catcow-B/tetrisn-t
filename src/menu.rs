@@ -1,88 +1,25 @@
 use ggez::event::KeyCode;
-use ggez::graphics::{self, Color};
+use ggez::graphics;
 use ggez::Context;
 
 use crate::control::ProgramState;
-use crate::inputs::{Input, KeyboardControlScheme};
+use crate::game::GameMode;
+use crate::inputs::Input;
 
-pub const MAX_STARTING_LEVEL: u8 = 29; // this is just the fastest speed, so yeah
-pub const MAX_NUM_PLAYERS: u8 = 62; // currently held back by board width being a u8 equal to 6 + 4 * num_players
-
-pub const TEXT_SCALE_DOWN: f32 = 15.0;
-pub const SUB_TEXT_SCALE_DOWN: f32 = 25.0;
-
-const GRAY: Color = Color::new(0.4, 0.4, 0.4, 1.0);
-pub const DARK_GRAY: Color = Color::new(0.3, 0.3, 0.3, 1.0);
-pub const LIGHT_GRAY: Color = Color::new(0.6, 0.6, 0.6, 1.0);
-pub const SELECT_GREEN: Color = Color::new(0.153, 0.839, 0.075, 1.0);
-pub const HELP_RED: Color = Color::new(0.9, 0.11, 0.11, 1.0);
-
+mod choosemode;
 mod inputconfig;
+pub mod menuhelpers;
 mod start;
+use choosemode::ChooseModeMenu;
 use inputconfig::InputConfigMenu;
+use menuhelpers::GRAY;
+use menuhelpers::{MenuGameOptions, MenuItemTrigger};
 use start::StartMenu;
-
-pub struct MenuGameOptions {
-    pub num_players: u8,
-    pub starting_level: u8,
-    pub arr_controls: [(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize],
-}
-
-impl MenuGameOptions {
-    fn new(
-        num_players: u8,
-        starting_level: u8,
-        arr_split_controls: [(
-            Option<(
-                Option<KeyCode>,
-                Option<KeyCode>,
-                Option<KeyCode>,
-                Option<KeyCode>,
-                Option<KeyCode>,
-            )>,
-            bool,
-        ); MAX_NUM_PLAYERS as usize],
-    ) -> Self {
-        let mut arr_controls: [(Option<KeyboardControlScheme>, bool); MAX_NUM_PLAYERS as usize] =
-            [(None, false); MAX_NUM_PLAYERS as usize];
-        for (idx, ctrls) in arr_split_controls.iter().enumerate() {
-            if let Some(k_ctrls) = ctrls.0 {
-                arr_controls[idx] = (
-                    Some(KeyboardControlScheme::new(
-                        k_ctrls.0.expect(
-                            "[!] attempted to create KeyboardControlScheme with Left == None",
-                        ),
-                        k_ctrls.1.expect(
-                            "[!] attempted to create KeyboardControlScheme with Right == None",
-                        ),
-                        k_ctrls.2.expect(
-                            "[!] attempted to create KeyboardControlScheme with Down == None",
-                        ),
-                        k_ctrls.3.expect(
-                            "[!] attempted to create KeyboardControlScheme with RotateCw == None",
-                        ),
-                        k_ctrls.4.expect(
-                            "[!] attempted to create KeyboardControlScheme with RotateCcw == None",
-                        ),
-                        KeyCode::Escape,
-                    )),
-                    false,
-                );
-            } else if ctrls.1 {
-                arr_controls[idx] = (None, true);
-            }
-        }
-        Self {
-            num_players,
-            starting_level,
-            arr_controls,
-        }
-    }
-}
 
 #[repr(u8)]
 #[derive(PartialEq, Eq)]
 enum MenuState {
+    ChooseMode,
     Start,
     InputConfig,
 }
@@ -91,68 +28,81 @@ enum MenuState {
 pub struct Menu {
     // logic
     input: Input,
+    num_required_keycode_movement_pairs: usize,
     // states
     state: MenuState,
-    start_menu: start::StartMenu,
-    input_config_menu: inputconfig::InputConfigMenu,
+    choose_mode_menu: ChooseModeMenu,
+    start_menu: StartMenu,
+    input_config_menu: InputConfigMenu,
+    // window size
+    window_dimensions: (f32, f32),
 }
 
 impl Menu {
-    pub fn new(ctx: &mut Context, last_used_game_options: &Option<MenuGameOptions>) -> Self {
+    pub fn new(ctx: &mut Context, game_options: &MenuGameOptions) -> Self {
         let window_dimensions = graphics::size(ctx);
-        if let Some(menu_game_options) = last_used_game_options {
-            // previously used
-            Self {
-                input: Input::new(),
-                state: MenuState::Start,
-                start_menu: StartMenu::new(
-                    window_dimensions,
-                    menu_game_options.num_players,
-                    menu_game_options.starting_level,
-                ),
-                input_config_menu: InputConfigMenu::new(
-                    window_dimensions,
-                    menu_game_options.arr_controls,
-                ),
-            }
-        } else {
-            // defaults
-            Self {
-                input: Input::new(),
-                state: MenuState::Start,
-                start_menu: StartMenu::new(window_dimensions, 1, 0),
-                input_config_menu: InputConfigMenu::new(
-                    window_dimensions,
-                    [(None, false); MAX_NUM_PLAYERS as usize],
-                ),
-            }
+        Self {
+            input: Input::new(),
+            num_required_keycode_movement_pairs: game_options.game_mode.num_required_inputs(),
+            state: match game_options.game_mode {
+                GameMode::None => MenuState::ChooseMode,
+                _ => MenuState::Start,
+            },
+            choose_mode_menu: ChooseModeMenu::new(game_options.game_mode, window_dimensions),
+            start_menu: StartMenu::new(
+                window_dimensions,
+                game_options.num_players,
+                game_options.starting_level,
+                game_options.game_mode,
+            ),
+            input_config_menu: InputConfigMenu::new(game_options, window_dimensions),
+            window_dimensions,
         }
     }
 
-    pub fn update(&mut self) -> Option<(ProgramState, MenuGameOptions)> {
+    pub fn update(&mut self, game_options: &mut MenuGameOptions) -> Option<ProgramState> {
         match self.state {
-            MenuState::Start => {
-                let ret_bools: (bool, bool) = self.start_menu.update(&self.input);
-                if ret_bools.0 {
-                    if self.ensure_enough_controls() {
-                        return Some((
-                            ProgramState::Game,
-                            MenuGameOptions::new(
-                                self.start_menu.num_players,
-                                self.start_menu.starting_level,
-                                self.input_config_menu.arr_split_controls,
-                            ),
-                        ));
-                    } else {
-                        self.start_menu.not_enough_controls_flag = true;
+            MenuState::ChooseMode => {
+                if self.choose_mode_menu.update(&self.input) == MenuItemTrigger::SubMenu {
+                    self.state = MenuState::Start;
+                    if game_options.game_mode != self.choose_mode_menu.game_mode {
+                        game_options.game_mode = self.choose_mode_menu.game_mode;
+                        self.num_required_keycode_movement_pairs =
+                            game_options.game_mode.num_required_inputs();
+                        self.start_menu.set_game_mode(
+                            self.choose_mode_menu.game_mode,
+                            game_options,
+                            self.window_dimensions,
+                        );
+                        self.input_config_menu
+                            .update_game_mode(self.window_dimensions, game_options);
                     }
-                } else if ret_bools.1 {
-                    // we are entering the InputConfig menu
-                    self.state = MenuState::InputConfig;
+                }
+            }
+            MenuState::Start => {
+                let trigger: MenuItemTrigger = self.start_menu.update(&self.input, game_options);
+                match trigger {
+                    MenuItemTrigger::StartGame => {
+                        if self.ensure_enough_controls(game_options) {
+                            return Some(ProgramState::Game);
+                        } else {
+                            self.start_menu.not_enough_controls_flag = true;
+                        }
+                    }
+                    MenuItemTrigger::SubMenu => {
+                        // InputConfig menu
+                        self.start_menu.not_enough_controls_flag = false;
+                        self.state = MenuState::InputConfig;
+                    }
+                    MenuItemTrigger::Back => {
+                        self.state = MenuState::ChooseMode;
+                    }
+                    MenuItemTrigger::None => {}
+                    _ => println!("[!] Wrong menu?"),
                 }
             }
             MenuState::InputConfig => {
-                if self.input_config_menu.update(&self.input) {
+                if self.input_config_menu.update(&self.input, game_options) {
                     self.state = MenuState::Start;
                 }
             }
@@ -162,14 +112,14 @@ impl Menu {
         None
     }
 
-    fn ensure_enough_controls(&self) -> bool {
+    fn ensure_enough_controls(&self, game_options: &MenuGameOptions) -> bool {
         let mut ctrls_count = 0;
-        for ctrls in self.input_config_menu.arr_split_controls.iter() {
-            if ctrls.0.is_some() || ctrls.1 {
+        for ctrls in game_options.arr_controls.iter() {
+            if ctrls.1 || (ctrls.0).len() >= self.num_required_keycode_movement_pairs {
                 ctrls_count += 1;
             }
         }
-        ctrls_count >= self.start_menu.num_players
+        ctrls_count >= game_options.num_players
     }
 
     pub fn key_down_event(&mut self, keycode: KeyCode, _repeat: bool) {
@@ -228,12 +178,22 @@ impl Menu {
         }
     }
 
-    pub fn draw(&mut self, ctx: &mut Context) {
+    pub fn draw(&mut self, ctx: &mut Context, game_options: &MenuGameOptions) {
         graphics::clear(ctx, GRAY);
 
         match self.state {
+            MenuState::ChooseMode => self.choose_mode_menu.draw(ctx),
             MenuState::Start => self.start_menu.draw(ctx),
-            MenuState::InputConfig => self.input_config_menu.draw(ctx),
+            MenuState::InputConfig => self.input_config_menu.draw(ctx, game_options),
+        }
+    }
+
+    pub fn resize_event(&mut self, window_dims: (f32, f32)) {
+        self.window_dimensions = window_dims;
+        match self.state {
+            MenuState::ChooseMode => self.choose_mode_menu.resize_event(window_dims.1),
+            MenuState::Start => self.start_menu.resize_event(window_dims.1),
+            MenuState::InputConfig => {}
         }
     }
 }
