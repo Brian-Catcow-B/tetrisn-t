@@ -234,9 +234,10 @@ impl MenuItem {
         text_scale_down: f32,
     ) -> Self {
         let mut text = Text::new(TextFragment::new(title).color(graphics::Color::BLACK));
-        text.add(
-            TextFragment::new(format!("{:?}", opt_start_keycode)).color(graphics::Color::BLACK),
-        );
+        text.add(match opt_start_keycode {
+            Some(k) => TextFragment::new(format!("{:?}", k)).color(graphics::Color::BLACK),
+            None => TextFragment::new("None").color(graphics::Color::BLACK),
+        });
         text.set_font(
             Font::default(),
             PxScale::from(window_height / text_scale_down),
@@ -312,7 +313,7 @@ impl MenuItem {
                 self.text.fragments_mut()[1].text = if select {
                     format!("<{}>", Self::onoffstr(self.on))
                 } else {
-                    format!("{}", Self::onoffstr(self.on))
+                    Self::onoffstr(self.on).to_string()
                 }
             }
         }
@@ -337,6 +338,8 @@ impl MenuItem {
             }
         } else if self.value_type == MenuItemValueType::OnOff {
             self.on = !self.on;
+            // assume it's selected because it's being swapped
+            self.text.fragments_mut()[1].text = format!("<{}>", Self::onoffstr(self.on));
         }
     }
 

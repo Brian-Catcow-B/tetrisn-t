@@ -288,13 +288,13 @@ impl InputConfigMenu {
             // NOT the input box
 
             if input.keydown_right.1 {
-                self.vec_menu_items_main[self.selection].inc_or_dec(true);
+                self.vec_menu_items_main[self.selection].change_val(true);
                 self.player_num = self.get_player_num();
                 self.update_all_sub_text_strings(game_options);
             }
 
             if input.keydown_left.1 {
-                self.vec_menu_items_main[self.selection].inc_or_dec(false);
+                self.vec_menu_items_main[self.selection].change_val(false);
                 self.player_num = self.get_player_num();
                 self.update_all_sub_text_strings(game_options);
             }

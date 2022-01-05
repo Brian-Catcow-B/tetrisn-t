@@ -60,7 +60,7 @@ impl ChooseModeMenu {
             || input.keydown_down.1
             || input.keydown_up.1
         {
-            self.vec_menu_items[self.selection].inc_or_dec(true);
+            self.vec_menu_items[self.selection].change_val(true);
             self.game_mode = GameMode::from(self.vec_menu_items[self.selection].value as usize);
             self.vec_menu_items[self.selection].text.fragments_mut()[1].text =
                 format!("{:?}", self.game_mode);

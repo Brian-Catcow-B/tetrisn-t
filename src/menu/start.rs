@@ -4,7 +4,7 @@ use ggez::Context;
 
 use crate::game::GameMode;
 use crate::inputs::Input;
-use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuItemValueType};
+use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger};
 use crate::menu::menuhelpers::{HELP_RED, TEXT_SCALE_DOWN};
 use crate::menu::menuhelpers::{MAX_NUM_PLAYERS, MAX_STARTING_LEVEL};
 
@@ -64,11 +64,11 @@ impl StartMenu {
         }
 
         if input.keydown_right.1 {
-            self.vec_menu_items[self.selection].inc_or_dec(true);
+            self.vec_menu_items[self.selection].change_val(true);
         }
 
         if input.keydown_left.1 {
-            self.vec_menu_items[self.selection].inc_or_dec(false);
+            self.vec_menu_items[self.selection].change_val(false);
         }
 
         game_options.num_players = self.get_num_players() + 1;

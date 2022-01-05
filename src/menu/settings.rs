@@ -1,7 +1,7 @@
 use crate::menu::menuhelpers::TEXT_SCALE_DOWN;
-use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuItemValueType};
+use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger};
 
-use crate::inputs::{Input, KeyboardControlScheme};
+use crate::inputs::Input;
 
 pub struct SettingsMenu {
     // logic
