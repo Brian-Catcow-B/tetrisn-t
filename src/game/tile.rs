@@ -1,5 +1,6 @@
 use ggez::{graphics, Context};
 
+use crate::game::board::BoardDim;
 use crate::game::Shapes;
 
 pub const NUM_PIXEL_ROWS_PER_TILEGRAPHIC: u16 = 8u16;
@@ -634,8 +635,8 @@ impl TileGraphic {
     pub fn get_size(
         window_width: f32,
         window_height: f32,
-        board_width: u8,
-        board_height: u8,
+        board_width: BoardDim,
+        board_height: BoardDim,
     ) -> f32 {
         std::cmp::min(
             window_height as u32 / board_height as u32,
