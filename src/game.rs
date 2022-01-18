@@ -23,7 +23,7 @@ use crate::game::tile::NUM_PIXEL_ROWS_PER_TILEGRAPHIC;
 mod piece;
 use crate::game::piece::{NextPiece, Shapes};
 
-mod board;
+pub mod board;
 use crate::game::board::BoardDimandler;
 use crate::game::board::{BoardDim, BoardPos, BOARD_HEIGHT, ROTATRIS_BOARD_SIDE_LENGTH};
 
@@ -110,12 +110,16 @@ impl From<usize> for GameMode {
 #[derive(Copy, Clone)]
 pub struct GameSettings {
     pub ghost_pieces_state: bool,
+    pub board_width_per_player: BoardDim,
+    pub board_width_constant: BoardDim,
 }
 
 impl Default for GameSettings {
     fn default() -> Self {
         Self {
             ghost_pieces_state: true,
+            board_width_per_player: 4,
+            board_width_constant: 6,
         }
     }
 }
@@ -259,7 +263,11 @@ impl Game {
         let mode = game_options.game_mode;
         let board_width: BoardDim = match mode {
             GameMode::None => unreachable!("{}", GAME_MODE_NONE),
-            GameMode::Classic => 6 + 4 * (game_options.num_players as BoardDim),
+            GameMode::Classic => {
+                game_options.settings.board_width_constant
+                    + game_options.settings.board_width_per_player
+                        * (game_options.num_players as BoardDim)
+            }
             GameMode::Rotatris => ROTATRIS_BOARD_SIDE_LENGTH,
         };
         let board_height = match mode {

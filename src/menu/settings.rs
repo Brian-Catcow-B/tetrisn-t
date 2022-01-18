@@ -7,9 +7,13 @@ use crate::inputs::Input;
 use crate::menu::menuhelpers::TEXT_SCALE_DOWN;
 use crate::menu::menuhelpers::{MenuItem, MenuItemTrigger};
 
+use crate::game::board::BoardDim;
+
 enum SettingsMenuItemId {
     Back,
     GhostPiecesState,
+    BoardWidthPerPlayer,
+    ExtraBoardWidth,
 }
 
 pub struct SettingsMenu {
@@ -32,6 +36,28 @@ impl SettingsMenu {
                 "Ghost Pieces: ",
                 SettingsMenuItemId::GhostPiecesState as u8,
                 starting_settings.ghost_pieces_state,
+                MenuItemTrigger::None,
+                window_dimensions.1,
+                TEXT_SCALE_DOWN,
+            ),
+            MenuItem::new_numericalvalue(
+                "Board Width Per Player: ",
+                SettingsMenuItemId::BoardWidthPerPlayer as u8,
+                starting_settings.board_width_per_player as u8,
+                4,
+                7,
+                0,
+                MenuItemTrigger::None,
+                window_dimensions.1,
+                TEXT_SCALE_DOWN,
+            ),
+            MenuItem::new_numericalvalue(
+                "Extra Board Width: ",
+                SettingsMenuItemId::ExtraBoardWidth as u8,
+                starting_settings.board_width_constant as u8,
+                0,
+                21,
+                0,
                 MenuItemTrigger::None,
                 window_dimensions.1,
                 TEXT_SCALE_DOWN,
@@ -60,6 +86,8 @@ impl SettingsMenu {
         }
 
         settings.ghost_pieces_state = self.get_ghost_pieces_state();
+        settings.board_width_per_player = self.get_board_width_per_player() as BoardDim;
+        settings.board_width_constant = self.get_board_width_constant() as BoardDim;
 
         if input.keydown_down.1 {
             self.vec_menu_items[self.selection].set_select(false);
@@ -91,6 +119,24 @@ impl SettingsMenu {
             }
         }
         unreachable!("Failed to get ghost pieces state in Menu::Settings");
+    }
+
+    fn get_board_width_per_player(&self) -> u8 {
+        for item in self.vec_menu_items.iter() {
+            if item.id == SettingsMenuItemId::BoardWidthPerPlayer as u8 {
+                return item.value;
+            }
+        }
+        unreachable!("Failed to get board width per player in Menu::Settings");
+    }
+
+    fn get_board_width_constant(&self) -> u8 {
+        for item in self.vec_menu_items.iter() {
+            if item.id == SettingsMenuItemId::ExtraBoardWidth as u8 {
+                return item.value;
+            }
+        }
+        unreachable!("Failed to get extra board width in Menu::Settings");
     }
 
     pub fn draw(&mut self, ctx: &mut Context) {

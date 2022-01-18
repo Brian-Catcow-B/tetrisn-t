@@ -5,7 +5,7 @@ use crate::game::{GameMode, GameSettings};
 use crate::inputs::KeyboardControlScheme;
 
 pub const MAX_STARTING_LEVEL: u8 = 29; // this is just the fastest speed, so yeah
-pub const MAX_NUM_PLAYERS: u8 = 255; // num_players being u8 technically caps this at 255
+pub const MAX_NUM_PLAYERS: u8 = 100; // num_players being u8 technically caps this at 255
 
 pub const GRAY: Color = Color::new(0.4, 0.4, 0.4, 1.0);
 pub const DARK_GRAY: Color = Color::new(0.3, 0.3, 0.3, 1.0);
