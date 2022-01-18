@@ -5,7 +5,7 @@ use ggez::Context;
 use crate::game::GameMode;
 use crate::inputs::Input;
 use crate::menu::menuhelpers::TEXT_SCALE_DOWN;
-use crate::menu::menuhelpers::{MenuItem, MenuItemTrigger};
+use crate::menu::menuhelpers::{MenuItem, MenuItemTrigger, MenuState};
 
 enum ChooseModeMenuItemId {
     Mode,
@@ -32,7 +32,7 @@ impl ChooseModeMenu {
                 GameMode::Rotatris => 1,
             },
             2,
-            MenuItemTrigger::SubMenu,
+            MenuItemTrigger::SubMenu(MenuState::Start),
             window_dimensions.1,
             TEXT_SCALE_DOWN,
         ));
@@ -67,7 +67,7 @@ impl ChooseModeMenu {
         }
 
         if input.keydown_start.1 {
-            return self.vec_menu_items[self.selection].trigger;
+            return self.vec_menu_items[self.selection].trigger.clone();
         }
 
         MenuItemTrigger::None

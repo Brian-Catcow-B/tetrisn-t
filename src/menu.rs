@@ -14,18 +14,9 @@ mod start;
 use choosemode::ChooseModeMenu;
 use inputconfig::InputConfigMenu;
 use menuhelpers::GRAY;
-use menuhelpers::{MenuGameOptions, MenuItemTrigger};
-// use settings::SettingsMenu;
+use menuhelpers::{MenuGameOptions, MenuItemTrigger, MenuState};
+use settings::SettingsMenu;
 use start::StartMenu;
-
-#[repr(u8)]
-#[derive(PartialEq, Eq)]
-enum MenuState {
-    ChooseMode,
-    Start,
-    // Settings,
-    InputConfig,
-}
 
 // we just have all the menu stuffs loaded into here because they're all connected and it's not much memory anyways
 pub struct Menu {
@@ -36,7 +27,7 @@ pub struct Menu {
     state: MenuState,
     choose_mode_menu: ChooseModeMenu,
     start_menu: StartMenu,
-    // settings_menu: SettingsMenu,
+    settings_menu: SettingsMenu,
     input_config_menu: InputConfigMenu,
     // window size
     window_dimensions: (f32, f32),
@@ -53,12 +44,8 @@ impl Menu {
                 _ => MenuState::Start,
             },
             choose_mode_menu: ChooseModeMenu::new(game_options.game_mode, window_dimensions),
-            start_menu: StartMenu::new(
-                window_dimensions,
-                game_options.num_players,
-                game_options.starting_level,
-                game_options.game_mode,
-            ),
+            start_menu: StartMenu::new(game_options, window_dimensions),
+            settings_menu: SettingsMenu::new(&game_options.settings, window_dimensions),
             input_config_menu: InputConfigMenu::new(game_options, window_dimensions),
             window_dimensions,
         }
@@ -67,8 +54,10 @@ impl Menu {
     pub fn update(&mut self, game_options: &mut MenuGameOptions) -> Option<ProgramState> {
         match self.state {
             MenuState::ChooseMode => {
-                if self.choose_mode_menu.update(&self.input) == MenuItemTrigger::SubMenu {
-                    self.state = MenuState::Start;
+                if let MenuItemTrigger::SubMenu(menu_state) =
+                    self.choose_mode_menu.update(&self.input)
+                {
+                    self.state = menu_state;
                     if game_options.game_mode != self.choose_mode_menu.game_mode {
                         game_options.game_mode = self.choose_mode_menu.game_mode;
                         self.num_required_keycode_movement_pairs =
@@ -93,10 +82,10 @@ impl Menu {
                             self.start_menu.not_enough_controls_flag = true;
                         }
                     }
-                    MenuItemTrigger::SubMenu => {
-                        // InputConfig menu
+                    MenuItemTrigger::SubMenu(menu_state) => {
+                        // Settings menu or InputConfig menu
                         self.start_menu.not_enough_controls_flag = false;
-                        self.state = MenuState::InputConfig;
+                        self.state = menu_state;
                     }
                     MenuItemTrigger::Back => {
                         self.state = MenuState::ChooseMode;
@@ -105,11 +94,15 @@ impl Menu {
                     _ => println!("[!] Wrong menu?"),
                 }
             }
-            // MenuState::Settings => {
-            //     // if self.settings_menu.update(&self.input, game_options) {
-            //     //     self.state = MenuState::Start;
-            //     // }
-            // }
+            MenuState::Settings => {
+                if self
+                    .settings_menu
+                    .update(&self.input, &mut game_options.settings)
+                    == MenuItemTrigger::Back
+                {
+                    self.state = MenuState::Start;
+                }
+            }
             MenuState::InputConfig => {
                 if self.input_config_menu.update(&self.input, game_options) {
                     self.state = MenuState::Start;
@@ -193,6 +186,7 @@ impl Menu {
         match self.state {
             MenuState::ChooseMode => self.choose_mode_menu.draw(ctx),
             MenuState::Start => self.start_menu.draw(ctx),
+            MenuState::Settings => self.settings_menu.draw(ctx),
             MenuState::InputConfig => self.input_config_menu.draw(ctx, game_options),
         }
     }
@@ -202,7 +196,8 @@ impl Menu {
         match self.state {
             MenuState::ChooseMode => self.choose_mode_menu.resize_event(window_dims.1),
             MenuState::Start => self.start_menu.resize_event(window_dims.1),
-            MenuState::InputConfig => {}
+            MenuState::Settings => self.settings_menu.resize_event(window_dims.1),
+            MenuState::InputConfig => self.input_config_menu.resize_event(window_dims.1),
         }
     }
 }

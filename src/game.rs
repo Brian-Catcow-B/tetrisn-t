@@ -110,12 +110,26 @@ impl From<usize> for GameMode {
     }
 }
 
+#[derive(Copy, Clone)]
+pub struct GameSettings {
+    pub ghost_pieces_state: bool,
+}
+
+impl Default for GameSettings {
+    fn default() -> Self {
+        Self {
+            ghost_pieces_state: true,
+        }
+    }
+}
+
 // this struct is for the Menu class so that it can return what game options to start the game with
 pub struct GameOptions {
     pub num_players: u8,
     pub starting_level: u8,
     pub game_mode: GameMode,
     pub vec_controls: Vec<(Option<KeyboardControlScheme>, bool)>,
+    pub settings: GameSettings,
 }
 
 impl From<&MenuGameOptions> for GameOptions {
@@ -204,6 +218,7 @@ impl From<&MenuGameOptions> for GameOptions {
             starting_level: menu_game_options.starting_level,
             game_mode: menu_game_options.game_mode,
             vec_controls,
+            settings: menu_game_options.settings,
         }
     }
 }
@@ -396,7 +411,7 @@ impl Game {
             gravity_direction: Movement::Down,
             game_over_flag: false,
             game_over_delay: GAME_OVER_DELAY,
-            determine_ghost_tile_locations: true,
+            determine_ghost_tile_locations: game_options.settings.ghost_pieces_state,
             tile_size: TileGraphic::get_size(
                 window_width,
                 window_height,

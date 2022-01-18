@@ -395,7 +395,9 @@ impl InputConfigMenu {
                 (game_options.arr_controls[self.player_num as usize].0).add_pair(
                     key,
                     Movement::try_from(
-                        self.vec_menu_items_keycode[self.sub_selection_keyboard].trigger,
+                        self.vec_menu_items_keycode[self.sub_selection_keyboard]
+                            .trigger
+                            .clone(),
                     )
                     .expect(CONVERSION_FAILED_MOVEMENT_FROM_MENUITEMTRIGGER),
                 );
@@ -444,7 +446,7 @@ impl InputConfigMenu {
 
     fn update_all_sub_text_strings(&mut self, game_options: &MenuGameOptions) {
         for item in self.vec_menu_items_keycode.iter_mut() {
-            let desired_movement = Movement::try_from(item.trigger)
+            let desired_movement = Movement::try_from(item.trigger.clone())
                 .expect(CONVERSION_FAILED_MOVEMENT_FROM_MENUITEMTRIGGER);
             item.set_keycode(None);
             for kmp in (game_options.arr_controls[self.player_num as usize].0)
@@ -559,5 +561,14 @@ impl InputConfigMenu {
             ])),
         )
         .unwrap();
+    }
+
+    pub fn resize_event(&mut self, height: f32) {
+        for item in self.vec_menu_items_keycode.iter_mut() {
+            item.resize(height);
+        }
+        for item in self.vec_menu_items_main.iter_mut() {
+            item.resize(height);
+        }
     }
 }

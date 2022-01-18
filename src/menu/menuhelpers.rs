@@ -1,7 +1,7 @@
 use ggez::event::KeyCode;
 use ggez::graphics::{self, Color, Font, PxScale, Text, TextFragment};
 
-use crate::game::GameMode;
+use crate::game::{GameMode, GameSettings};
 use crate::inputs::KeyboardControlScheme;
 
 pub const MAX_STARTING_LEVEL: u8 = 29; // this is just the fastest speed, so yeah
@@ -18,6 +18,16 @@ pub const SUB_TEXT_SCALE_DOWN: f32 = 25.0;
 
 pub static GAME_MODE_UNEXPECTEDLY_NONE: &str = "[!] GameMode unexpectedly None";
 
+#[repr(u8)]
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum MenuState {
+    ChooseMode,
+    Start,
+    Settings,
+    InputConfig,
+}
+
+#[repr(u8)]
 #[derive(Eq, PartialEq)]
 pub enum MenuItemValueType {
     None,
@@ -27,11 +37,12 @@ pub enum MenuItemValueType {
     Custom,
 }
 
-#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+#[repr(u8)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum MenuItemTrigger {
     None,
     StartGame,
-    SubMenu,
+    SubMenu(MenuState),
     Back,
     SubSelection,
     KeyLeft,
@@ -301,6 +312,7 @@ pub struct MenuGameOptions {
     pub starting_level: u8,
     pub game_mode: GameMode,
     pub arr_controls: Vec<(KeyboardControlScheme, bool)>,
+    pub settings: GameSettings,
 }
 
 impl Default for MenuGameOptions {
@@ -312,6 +324,7 @@ impl Default for MenuGameOptions {
             starting_level: 0,
             game_mode: GameMode::None,
             arr_controls,
+            settings: GameSettings::default(),
         }
     }
 }
