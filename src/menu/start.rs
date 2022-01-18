@@ -169,12 +169,15 @@ impl StartMenu {
     }
 
     fn get_num_players(&self) -> u8 {
+        if self.game_mode == GameMode::Rotatris {
+            return 1;
+        }
         for item in self.vec_menu_items.iter() {
             if item.id == StartMenuItemId::NumPlayers as u8 {
                 return item.value;
             }
         }
-        0u8
+        unreachable!("Failed to get number of players in Menu::Start");
     }
 
     fn get_starting_level(&self) -> u8 {
