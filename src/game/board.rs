@@ -525,7 +525,7 @@ impl BoardClassic {
                     for row in full_line_rows.iter() {
                         self.vec_full_lines.push(FullLine::new(
                             *row,
-                            full_line_rows.len() as BoardPos,
+                            full_line_rows.len() as BoardDim,
                             player,
                         ));
                     }
