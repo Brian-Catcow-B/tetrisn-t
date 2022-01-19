@@ -13,8 +13,8 @@ pub type BoardPos = BoardDim;
 pub const BOARD_HEIGHT: BoardDim = 20;
 pub const ROTATRIS_BOARD_SIDE_LENGTH: BoardDim = 20;
 
-static BH_WRONG_MODE: &str = "[!] BoardDimandler has wrong GameMode setup";
-static BH_MODE_NONE: &str = "[!] BoardDimandler has GameMode None";
+static BH_WRONG_MODE: &str = "[!] BoardHandler has wrong GameMode setup";
+static BH_MODE_NONE: &str = "[!] BoardHandler has GameMode None";
 
 #[repr(u8)]
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -51,13 +51,13 @@ impl From<Movement> for Gravity {
 }
 
 // abstract the board and the possible gamemodes into one struct
-pub struct BoardDimandler {
+pub struct BoardHandler {
     pub mode: GameMode,
     pub classic: Option<BoardClassic>,
     pub rotatris: Option<BoardRotatris>,
 }
 
-impl BoardDimandler {
+impl BoardHandler {
     pub fn new(
         board_width: BoardDim,
         board_height: BoardDim,
@@ -95,6 +95,49 @@ impl BoardDimandler {
     }
 
     // get...
+    pub fn get_spawn_columns(&self) -> Vec<BoardPos> {
+        match self.mode {
+            GameMode::None => unreachable!("{}", BH_MODE_NONE),
+            GameMode::Classic => {
+                let num_players = self
+                    .classic
+                    .as_ref()
+                    .expect(BH_WRONG_MODE)
+                    .vec_active_piece
+                    .len();
+                let board_width = self.classic.as_ref().expect(BH_WRONG_MODE).width;
+                let mut vec_cols: Vec<BoardPos> = vec![];
+
+                for p_idx in 0..num_players {
+                    // spawn_column
+                    let spawn_column: BoardPos = if p_idx < num_players / 2 {
+                        // first half, not including middle player if there's an odd number of players
+                        (p_idx as f32 * (board_width as f32 / num_players as f32)
+                            + board_width as f32 / (2.0 * num_players as f32))
+                            as BoardPos
+                        // + 1
+                    } else if p_idx == num_players / 2 && num_players % 2 == 1 {
+                        // middle player, for an odd number of players
+                        board_width / 2
+                    } else {
+                        // second half, not including the middle player if there's an odd number of players
+                        board_width
+                            // - 1
+                            - ((num_players - 1 - p_idx) as f32
+                                * (board_width as f32 / num_players as f32)
+                                + board_width as f32 / (2.0 * num_players as f32))
+                                as BoardPos
+                    };
+
+                    vec_cols.push(spawn_column);
+                }
+
+                vec_cols
+            }
+            GameMode::Rotatris => vec![ROTATRIS_BOARD_SIDE_LENGTH / 2],
+        }
+    }
+
     pub fn get_width(&mut self) -> BoardDim {
         match self.mode {
             GameMode::None => unreachable!("{}", BH_MODE_NONE),
@@ -847,7 +890,7 @@ impl BoardRotatris {
                 }
             }
             _ => {
-                println!("[!] Sent some non-rotation Movement to `attempt_rotate_board`, a method of `BoardDimandler`");
+                println!("[!] Sent some non-rotation Movement to `attempt_rotate_board`, a method of `BoardHandler`");
                 return false;
             }
         }

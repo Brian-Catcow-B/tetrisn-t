@@ -24,7 +24,7 @@ mod piece;
 use crate::game::piece::{NextPiece, Shapes};
 
 pub mod board;
-use crate::game::board::BoardDimandler;
+use crate::game::board::BoardHandler;
 use crate::game::board::{BoardDim, BoardPos, BOARD_HEIGHT, ROTATRIS_BOARD_SIDE_LENGTH};
 
 use crate::inputs::KeyboardControlScheme;
@@ -227,7 +227,7 @@ impl From<&MenuGameOptions> for GameOptions {
 pub struct Game {
     // GAME STUFF
     // logic (mostly)
-    bh: BoardDimandler,
+    bh: BoardHandler,
     num_players: u8,
     vec_players: Vec<Player>,
     vec_next_piece: Vec<NextPiece>,
@@ -273,37 +273,25 @@ impl Game {
         let board_height = match mode {
             GameMode::None => unreachable!("{}", GAME_MODE_NONE),
             GameMode::Classic => BOARD_HEIGHT,
-            GameMode::Rotatris => ROTATRIS_BOARD_SIDE_LENGTH as BoardDim,
+            GameMode::Rotatris => ROTATRIS_BOARD_SIDE_LENGTH,
         };
+        let num_players = game_options.num_players;
+        let bh = BoardHandler::new(board_width, board_height, num_players, mode);
+        let spawn_columns: Vec<BoardPos> = bh.get_spawn_columns();
         let mut vec_players: Vec<Player> = Vec::with_capacity(game_options.num_players as usize);
-        for player in 0..game_options.num_players {
-            // spawn_column
-            let spawn_column: BoardPos = if player < game_options.num_players / 2 {
-                // first half, not including middle player if there's an odd number of players
-                (player as f32 * (board_width as f32 / game_options.num_players as f32)
-                    + board_width as f32 / (2.0 * game_options.num_players as f32))
-                    as BoardPos
-                    + 1
-            } else if player == game_options.num_players / 2 && game_options.num_players % 2 == 1 {
-                // middle player, for an odd number of players
-                board_width / 2
-            } else {
-                // second half, not including the middle player if there's an odd number of players
-                board_width
-                    - 1
-                    - ((game_options.num_players - 1 - player) as f32
-                        * (board_width as f32 / game_options.num_players as f32)
-                        + board_width as f32 / (2.0 * game_options.num_players as f32))
-                        as BoardPos
-            };
+        for player_index in 0..num_players {
             // control_scheme; we need to create a copy of game_options.vec_controls, but to do that,
             // we must "manually" copy the keyboard controls for the player if they exist (since that has a vector)
-            let control_scheme = match &game_options.vec_controls[player as usize].0 {
+            let control_scheme = match &game_options.vec_controls[player_index as usize].0 {
                 Some(k_ctrl_scheme) => (Some(k_ctrl_scheme.copy()), false),
                 None => (None, true),
             };
 
-            vec_players.push(Player::new(player, control_scheme, spawn_column));
+            vec_players.push(Player::new(
+                player_index,
+                control_scheme,
+                spawn_columns[player_index as usize],
+            ));
         }
         let mut batch_empty_tile = spritebatch::SpriteBatch::new(TileGraphic::new_empty(ctx).image);
         // the emtpy tile batch will be constant once the game starts with
@@ -402,8 +390,8 @@ impl Game {
         let (window_width, window_height) = graphics::size(ctx);
 
         Self {
-            bh: BoardDimandler::new(board_width, board_height, game_options.num_players, mode),
-            num_players: game_options.num_players,
+            bh,
+            num_players,
             vec_players,
             vec_next_piece,
             vec_gamepad_id_map_to_player,
