@@ -23,15 +23,12 @@ use crate::game::tile::NUM_PIXEL_ROWS_PER_TILEGRAPHIC;
 mod piece;
 use crate::game::piece::{NextPiece, Shapes};
 
-mod board;
+pub mod board;
 use crate::game::board::BoardHandler;
+use crate::game::board::{BoardDim, BoardPos, BOARD_HEIGHT, ROTATRIS_BOARD_SIDE_LENGTH};
 
 use crate::inputs::KeyboardControlScheme;
 use crate::menu::menuhelpers::MenuGameOptions;
-
-const BOARD_HEIGHT: u8 = 20u8;
-
-const ROTATRIS_BOARD_SIDE_LENGTH: u8 = 20u8;
 
 pub const CLEAR_DELAY_CLASSIC: i8 = 30i8;
 
@@ -43,11 +40,11 @@ pub const SCORE_QUADRUPLE_BASE: u16 = 1200u16;
 const GAME_OVER_DELAY: i8 = 60i8;
 
 // space up of the board that is not the board in tiles
-const NON_BOARD_SPACE_U: u8 = 4u8;
+const NON_BOARD_SPACE_U: BoardDim = 4;
 // space between the top of the board and the next piece in tiles
-const BOARD_NEXT_PIECE_SPACING: u8 = 3;
+const BOARD_NEXT_PIECE_SPACING: BoardDim = 3;
 // space down of the board that is not the board in tiles
-const NON_BOARD_SPACE_D: u8 = 3u8;
+const NON_BOARD_SPACE_D: BoardDim = 3;
 // each tile is actually 8x8 pixels, so we scale down by 8 and then some because with 8.0, window resizing can clip off the bottom of the board
 const TILE_SIZE_DOWN_SCALE: f32 = 8.5;
 
@@ -110,12 +107,30 @@ impl From<usize> for GameMode {
     }
 }
 
+#[derive(Copy, Clone)]
+pub struct GameSettings {
+    pub ghost_pieces_state: bool,
+    pub board_width_per_player: BoardDim,
+    pub board_width_constant: BoardDim,
+}
+
+impl Default for GameSettings {
+    fn default() -> Self {
+        Self {
+            ghost_pieces_state: true,
+            board_width_per_player: 4,
+            board_width_constant: 6,
+        }
+    }
+}
+
 // this struct is for the Menu class so that it can return what game options to start the game with
 pub struct GameOptions {
     pub num_players: u8,
     pub starting_level: u8,
     pub game_mode: GameMode,
     pub vec_controls: Vec<(Option<KeyboardControlScheme>, bool)>,
+    pub settings: GameSettings,
 }
 
 impl From<&MenuGameOptions> for GameOptions {
@@ -204,6 +219,7 @@ impl From<&MenuGameOptions> for GameOptions {
             starting_level: menu_game_options.starting_level,
             game_mode: menu_game_options.game_mode,
             vec_controls,
+            settings: menu_game_options.settings,
         }
     }
 }
@@ -245,9 +261,13 @@ pub struct Game {
 impl Game {
     pub fn new(ctx: &mut Context, game_options: &GameOptions) -> Game {
         let mode = game_options.game_mode;
-        let board_width = match mode {
+        let board_width: BoardDim = match mode {
             GameMode::None => unreachable!("{}", GAME_MODE_NONE),
-            GameMode::Classic => 6 + 4 * game_options.num_players,
+            GameMode::Classic => {
+                game_options.settings.board_width_constant
+                    + game_options.settings.board_width_per_player
+                        * (game_options.num_players as BoardDim)
+            }
             GameMode::Rotatris => ROTATRIS_BOARD_SIDE_LENGTH,
         };
         let board_height = match mode {
@@ -255,37 +275,27 @@ impl Game {
             GameMode::Classic => BOARD_HEIGHT,
             GameMode::Rotatris => ROTATRIS_BOARD_SIDE_LENGTH,
         };
+        let num_players = game_options.num_players;
+        let bh = BoardHandler::new(board_width, board_height, num_players, mode);
+        let spawn_columns: Vec<BoardPos> = bh.get_spawn_columns();
         let mut vec_players: Vec<Player> = Vec::with_capacity(game_options.num_players as usize);
-        for player in 0..game_options.num_players {
-            // spawn_column
-            let spawn_column: u8 = if player < game_options.num_players / 2 {
-                // first half, not including middle player if there's an odd number of players
-                (player as f32 * (board_width as f32 / game_options.num_players as f32)
-                    + board_width as f32 / (2.0 * game_options.num_players as f32))
-                    as u8
-                    + 1
-            } else if player == game_options.num_players / 2 && game_options.num_players % 2 == 1 {
-                // middle player, for an odd number of players
-                board_width / 2
-            } else {
-                // second half, not including the middle player if there's an odd number of players
-                board_width
-                    - 1
-                    - ((game_options.num_players - 1 - player) as f32
-                        * (board_width as f32 / game_options.num_players as f32)
-                        + board_width as f32 / (2.0 * game_options.num_players as f32))
-                        as u8
-            };
-            // control_scheme; we need to create a copy of game_options.vec_controls, but to do that, we must "manually" copy the keyboard controls for the player if they exist (since that has a vector)
-            let control_scheme = match &game_options.vec_controls[player as usize].0 {
+        for player_index in 0..num_players {
+            // control_scheme; we need to create a copy of game_options.vec_controls, but to do that,
+            // we must "manually" copy the keyboard controls for the player if they exist (since that has a vector)
+            let control_scheme = match &game_options.vec_controls[player_index as usize].0 {
                 Some(k_ctrl_scheme) => (Some(k_ctrl_scheme.copy()), false),
                 None => (None, true),
             };
 
-            vec_players.push(Player::new(player, control_scheme, spawn_column));
+            vec_players.push(Player::new(
+                player_index,
+                control_scheme,
+                spawn_columns[player_index as usize],
+            ));
         }
         let mut batch_empty_tile = spritebatch::SpriteBatch::new(TileGraphic::new_empty(ctx).image);
-        // the emtpy tile batch will be constant once the game starts with the player tile batches drawing on top of it, so just set that up here
+        // the emtpy tile batch will be constant once the game starts with
+        // the player tile batches drawing on top of it, so just set that up here
         for x in 0..board_width {
             for y in 0..board_height as usize {
                 // empty tiles
@@ -380,8 +390,8 @@ impl Game {
         let (window_width, window_height) = graphics::size(ctx);
 
         Self {
-            bh: BoardHandler::new(board_width, board_height, game_options.num_players, mode),
-            num_players: game_options.num_players,
+            bh,
+            num_players,
             vec_players,
             vec_next_piece,
             vec_gamepad_id_map_to_player,
@@ -396,7 +406,7 @@ impl Game {
             gravity_direction: Movement::Down,
             game_over_flag: false,
             game_over_delay: GAME_OVER_DELAY,
-            determine_ghost_tile_locations: true,
+            determine_ghost_tile_locations: game_options.settings.ghost_pieces_state,
             tile_size: TileGraphic::get_size(
                 window_width,
                 window_height,
@@ -869,7 +879,7 @@ impl Game {
                 for piece_positions in self.bh.get_ghost_highlight_positions().iter() {
                     for pos in piece_positions.iter().take(4) {
                         let center = width / 2;
-                        let is_center_even: u8 = (center + 1) % 2;
+                        let is_center_even = (center + 1) % 2;
                         let (y_draw_pos, x_draw_pos) = match self.gravity_direction {
                             // account for the gravity direction in how to draw it (rotatris)
                             Movement::Down => (pos.0, pos.1),
@@ -901,7 +911,7 @@ impl Game {
                     if !self.bh.get_empty_from_pos(y + height_buffer, x) {
                         // account for the gravity direction in how to draw it (rotatris)
                         let center = width / 2;
-                        let is_center_even: u8 = (center + 1) % 2;
+                        let is_center_even = (center + 1) % 2;
                         let (y_draw_pos, x_draw_pos) = match self.gravity_direction {
                             Movement::Down => (y, x),
                             Movement::Left => (center * 2 - x - is_center_even, y),

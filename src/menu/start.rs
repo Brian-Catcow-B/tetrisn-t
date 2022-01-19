@@ -4,8 +4,17 @@ use ggez::Context;
 
 use crate::game::GameMode;
 use crate::inputs::Input;
-use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuItemValueType};
+use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger, MenuState};
 use crate::menu::menuhelpers::{HELP_RED, TEXT_SCALE_DOWN};
+use crate::menu::menuhelpers::{MAX_NUM_PLAYERS, MAX_STARTING_LEVEL};
+
+enum StartMenuItemId {
+    Start,
+    NumPlayers,
+    StartingLevel,
+    Settings,
+    Controls,
+}
 
 pub struct StartMenu {
     // logic
@@ -18,28 +27,15 @@ pub struct StartMenu {
 }
 
 impl StartMenu {
-    pub fn new(
-        window_dimensions: (f32, f32),
-        num_players: u8,
-        starting_level: u8,
-        game_mode: GameMode,
-    ) -> Self {
+    pub fn new(game_options: &MenuGameOptions, window_dimensions: (f32, f32)) -> Self {
         let mut vec_menu_items: Vec<MenuItem> = Vec::with_capacity(4);
-        let mut selection = 0;
-        Self::fill_vec_menu_items(
-            &mut vec_menu_items,
-            game_mode,
-            &mut selection,
-            num_players,
-            starting_level,
-            window_dimensions,
-        );
+        Self::fill_vec_menu_items(game_options, &mut vec_menu_items, window_dimensions);
         vec_menu_items[0].set_select(true);
         Self {
             // logic
-            selection,
+            selection: 0,
             not_enough_controls_flag: false,
-            game_mode,
+            game_mode: game_options.game_mode,
             vec_menu_items,
             // drawing
             not_enough_controls_text: Text::new(
@@ -56,14 +52,14 @@ impl StartMenu {
         }
 
         if input.keydown_right.1 {
-            self.vec_menu_items[self.selection].inc_or_dec(true);
+            self.vec_menu_items[self.selection].change_val(true);
         }
 
         if input.keydown_left.1 {
-            self.vec_menu_items[self.selection].inc_or_dec(false);
+            self.vec_menu_items[self.selection].change_val(false);
         }
 
-        game_options.num_players = self.get_num_players() + 1;
+        game_options.num_players = self.get_num_players();
         game_options.starting_level = self.get_starting_level();
 
         if input.keydown_down.1 {
@@ -83,7 +79,7 @@ impl StartMenu {
         }
 
         if input.keydown_start.1 {
-            return self.vec_menu_items[self.selection].trigger;
+            return self.vec_menu_items[self.selection].trigger.clone();
         }
 
         MenuItemTrigger::None
@@ -97,81 +93,80 @@ impl StartMenu {
     ) {
         if self.game_mode != mode {
             self.game_mode = mode;
+            self.selection = 0;
             self.vec_menu_items.clear();
-            Self::fill_vec_menu_items(
-                &mut self.vec_menu_items,
-                mode,
-                &mut self.selection,
-                game_options.num_players,
-                game_options.starting_level,
-                window_dimensions,
-            );
+            Self::fill_vec_menu_items(game_options, &mut self.vec_menu_items, window_dimensions);
         }
     }
 
     fn fill_vec_menu_items(
+        game_options: &MenuGameOptions,
         vec_menu_items: &mut Vec<MenuItem>,
-        mode: GameMode,
-        selection: &mut usize,
-        num_players: u8,
-        starting_level: u8,
         window_dimensions: (f32, f32),
     ) {
-        vec_menu_items.push(MenuItem::new(
+        vec_menu_items.push(MenuItem::new_novalue(
             "Start",
-            MenuItemValueType::None,
-            0,
-            None,
+            StartMenuItemId::Start as u8,
+            MenuItemTrigger::StartGame,
             window_dimensions.1,
             TEXT_SCALE_DOWN,
-            MenuItemTrigger::StartGame,
         ));
-
-        if mode == GameMode::Classic {
-            vec_menu_items.push(MenuItem::new(
+        if game_options.game_mode == GameMode::Classic {
+            vec_menu_items.push(MenuItem::new_numericalvalue(
                 "Number of Players: ",
-                MenuItemValueType::NumPlayers,
-                num_players - 1,
-                None,
+                StartMenuItemId::NumPlayers as u8,
+                game_options.num_players,
+                1,
+                MAX_NUM_PLAYERS,
+                0,
+                MenuItemTrigger::None,
                 window_dimensions.1,
                 TEXT_SCALE_DOWN,
-                MenuItemTrigger::StartGame,
             ));
         }
-        vec_menu_items.push(MenuItem::new(
+        vec_menu_items.push(MenuItem::new_numericalvalue(
             "Starting Level: ",
-            MenuItemValueType::StartingLevel,
-            starting_level,
-            None,
-            window_dimensions.1,
-            TEXT_SCALE_DOWN,
-            MenuItemTrigger::StartGame,
-        ));
-        vec_menu_items.push(MenuItem::new(
-            "Controls",
-            MenuItemValueType::None,
+            StartMenuItemId::StartingLevel as u8,
+            game_options.starting_level,
             0,
-            None,
+            MAX_STARTING_LEVEL + 1,
+            0,
+            MenuItemTrigger::None,
             window_dimensions.1,
             TEXT_SCALE_DOWN,
-            MenuItemTrigger::SubMenu,
         ));
-        *selection = 0;
+        vec_menu_items.push(MenuItem::new_novalue(
+            "Settings",
+            StartMenuItemId::Settings as u8,
+            MenuItemTrigger::SubMenu(MenuState::Settings),
+            window_dimensions.1,
+            TEXT_SCALE_DOWN,
+        ));
+        vec_menu_items.push(MenuItem::new_novalue(
+            "Controls",
+            StartMenuItemId::Controls as u8,
+            MenuItemTrigger::SubMenu(MenuState::InputConfig),
+            window_dimensions.1,
+            TEXT_SCALE_DOWN,
+        ));
         vec_menu_items[0].set_select(true);
     }
 
     fn get_num_players(&self) -> u8 {
+        if self.game_mode == GameMode::Rotatris {
+            return 1;
+        }
         for item in self.vec_menu_items.iter() {
-            if item.value_type == MenuItemValueType::NumPlayers {
+            if item.id == StartMenuItemId::NumPlayers as u8 {
                 return item.value;
             }
         }
-        0u8
+        unreachable!("Failed to get number of players in Menu::Start");
     }
 
     fn get_starting_level(&self) -> u8 {
         for item in self.vec_menu_items.iter() {
-            if item.value_type == MenuItemValueType::StartingLevel {
+            if item.id == StartMenuItemId::StartingLevel as u8 {
                 return item.value;
             }
         }

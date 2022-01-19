@@ -5,7 +5,11 @@ use ggez::Context;
 use crate::game::GameMode;
 use crate::inputs::Input;
 use crate::menu::menuhelpers::TEXT_SCALE_DOWN;
-use crate::menu::menuhelpers::{MenuItem, MenuItemTrigger, MenuItemValueType};
+use crate::menu::menuhelpers::{MenuItem, MenuItemTrigger, MenuState};
+
+enum ChooseModeMenuItemId {
+    Mode,
+}
 
 pub struct ChooseModeMenu {
     // logic
@@ -18,20 +22,20 @@ pub struct ChooseModeMenu {
 impl ChooseModeMenu {
     pub fn new(game_mode: GameMode, window_dimensions: (f32, f32)) -> Self {
         let mut vec_menu_items: Vec<MenuItem> = Vec::with_capacity(1);
-        vec_menu_items.push(MenuItem::new(
+        vec_menu_items.push(MenuItem::new_customvalue(
             "Mode: ",
-            MenuItemValueType::Custom,
+            ChooseModeMenuItemId::Mode as u8,
+            &format!("{:?}", game_mode),
             match game_mode {
                 GameMode::None => 0,
                 GameMode::Classic => 0,
                 GameMode::Rotatris => 1,
             },
-            None,
+            2,
+            MenuItemTrigger::SubMenu(MenuState::Start),
             window_dimensions.1,
             TEXT_SCALE_DOWN,
-            MenuItemTrigger::SubMenu,
         ));
-        vec_menu_items[0].set_num_values(2);
         let game_mode_for_text = if game_mode == GameMode::None {
             GameMode::Classic
         } else {
@@ -56,14 +60,14 @@ impl ChooseModeMenu {
             || input.keydown_down.1
             || input.keydown_up.1
         {
-            self.vec_menu_items[self.selection].inc_or_dec(true);
+            self.vec_menu_items[self.selection].change_val(true);
             self.game_mode = GameMode::from(self.vec_menu_items[self.selection].value as usize);
             self.vec_menu_items[self.selection].text.fragments_mut()[1].text =
                 format!("{:?}", self.game_mode);
         }
 
         if input.keydown_start.1 {
-            return self.vec_menu_items[self.selection].trigger;
+            return self.vec_menu_items[self.selection].trigger.clone();
         }
 
         MenuItemTrigger::None

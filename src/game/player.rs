@@ -1,6 +1,7 @@
 use ggez::event::{Axis, Button, KeyCode};
 use rand::random;
 
+use crate::game::board::BoardPos;
 use crate::game::piece::Shapes;
 use crate::game::{DAS_THRESHOLD_BIG, FORCE_FALL_DELAY, INITIAL_HANG_FRAMES};
 use crate::game::{DETECT_GAMEPAD_AXIS_THRESHOLD, UNDETECT_GAMEPAD_AXIS_THRESHOLD};
@@ -18,7 +19,7 @@ pub struct Player {
     axis_wait_for_unpress_y: bool,
     pub input: Input,
     pub spawn_piece_flag: bool,
-    pub spawn_column: u8,
+    pub spawn_column: BoardPos,
     pub spawn_delay: i16,
     pub next_piece_shape: Shapes,
     pub redraw_next_piece_flag: bool,
@@ -32,7 +33,7 @@ impl Player {
     pub fn new(
         player_num: u8,
         control_scheme: (Option<KeyboardControlScheme>, bool),
-        spawn_column: u8,
+        spawn_column: BoardPos,
     ) -> Self {
         Self {
             player_num,
