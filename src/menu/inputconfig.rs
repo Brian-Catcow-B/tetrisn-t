@@ -18,48 +18,19 @@ use std::convert::TryFrom;
 
 const MAX_NON_START_INPUTS_PER_PLAYER: usize = 8;
 
-enum InputConfigId {
-    Back = 0,
-    PlayerNum = 1,
-}
-
-impl TryFrom<u8> for InputConfigId {
-    type Error = &'static str;
-
-    fn try_from(val: u8) -> Result<Self, Self::Error> {
-        match val {
-            0 => Ok(Self::Back),
-            1 => Ok(Self::PlayerNum),
-            _ => Err("Conversion failed (u8 -> InputConfigId): Invalid value"),
-        }
-    }
+enum InputConfigMenuItemId {
+    Back,
+    PlayerNum,
 }
 
 enum InputConfigControlsId {
-    Left = 0,
-    Right = 1,
-    Down = 2,
-    RotateCw = 3,
-    RotateCcw = 4,
-    BoardRotateCw = 5,
-    BoardRotateCcw = 6,
-}
-
-impl TryFrom<u8> for InputConfigControlsId {
-    type Error = &'static str;
-
-    fn try_from(val: u8) -> Result<Self, Self::Error> {
-        match val {
-            0 => Ok(Self::Left),
-            1 => Ok(Self::Right),
-            2 => Ok(Self::Down),
-            3 => Ok(Self::RotateCw),
-            4 => Ok(Self::RotateCcw),
-            5 => Ok(Self::BoardRotateCw),
-            6 => Ok(Self::BoardRotateCcw),
-            _ => Err("Conversion failed (u8 -> InputConfigId): Invalid value"),
-        }
-    }
+    Left,
+    Right,
+    Down,
+    RotateCw,
+    RotateCcw,
+    BoardRotateCw,
+    BoardRotateCcw,
 }
 
 static KEY_UNEXPECTEDLY_NONE: &str =
@@ -96,14 +67,14 @@ impl InputConfigMenu {
         let mut vec_menu_items_main: Vec<MenuItem> = vec![
             MenuItem::new_novalue(
                 "Back",
-                InputConfigId::Back as u8,
+                InputConfigMenuItemId::Back as u8,
                 MenuItemTrigger::Back,
                 window_dimensions.1,
                 TEXT_SCALE_DOWN,
             ),
             MenuItem::new_numericalvalue(
                 "Player Number: ",
-                InputConfigId::PlayerNum as u8,
+                InputConfigMenuItemId::PlayerNum as u8,
                 0,
                 0,
                 MAX_NUM_PLAYERS,
@@ -419,7 +390,7 @@ impl InputConfigMenu {
 
     fn get_player_num(&self) -> u8 {
         for item in self.vec_menu_items_main.iter() {
-            if item.id == InputConfigId::PlayerNum as u8 {
+            if item.id == InputConfigMenuItemId::PlayerNum as u8 {
                 return item.value;
             }
         }
