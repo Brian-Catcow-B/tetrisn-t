@@ -3,6 +3,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### Added
+- Settings menu with ghost piece toggle and board width options.
+
+### Changed
+- Spawn column calculations altered to avoid column clashes in particularly small boards (using the settings).
+- The board width is stored in a `u16`, so the max number of players is now 255, but capped at 64 anyways.
 
 ## [v0.2.0] - 01/04/22
 ### Added

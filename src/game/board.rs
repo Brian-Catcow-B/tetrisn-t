@@ -115,14 +115,12 @@ impl BoardHandler {
                         (p_idx as f32 * (board_width as f32 / num_players as f32)
                             + board_width as f32 / (2.0 * num_players as f32))
                             as BoardPos
-                        // + 1
                     } else if p_idx == num_players / 2 && num_players % 2 == 1 {
                         // middle player, for an odd number of players
                         board_width / 2
                     } else {
                         // second half, not including the middle player if there's an odd number of players
                         board_width
-                            // - 1
                             - ((num_players - 1 - p_idx) as f32
                                 * (board_width as f32 / num_players as f32)
                                 + board_width as f32 / (2.0 * num_players as f32))
