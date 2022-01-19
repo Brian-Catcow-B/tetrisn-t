@@ -91,7 +91,7 @@ impl Menu {
                         self.state = MenuState::ChooseMode;
                     }
                     MenuItemTrigger::None => {}
-                    _ => println!("[!] Wrong menu?"),
+                    _ => unreachable!("[!] Wrong menu?"),
                 }
             }
             MenuState::Settings => {
