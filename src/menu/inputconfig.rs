@@ -1,5 +1,5 @@
 use ggez::event::KeyCode;
-use ggez::graphics::{self, DrawParam, PxScale, Text, TextFragment};
+use ggez::graphics::{self, DrawParam, Font, PxScale, Text, TextFragment};
 use ggez::mint::Point2;
 use ggez::Context;
 
@@ -103,7 +103,15 @@ impl InputConfigMenu {
                 window_dimensions,
             ),
         }
-        let scale = PxScale::from(window_dimensions.1 / SUB_TEXT_SCALE_DOWN);
+        let input_uninitialized_text = Text::new(
+            TextFragment::new("No Controls\nKeyboard: Space/Enter\nGamepad: 'G'").color(HELP_RED),
+        );
+        let keycode_conflict_text =
+            Text::new(TextFragment::new("[!] Redundant KeyCode; ignoring").color(HELP_RED));
+        let is_gamepad_text = Text::new(
+            TextFragment::new("Set to Gamepad\n\n\nSee README for help")
+                .color(ggez::graphics::Color::BLACK),
+        );
         Self {
             selection: 0,
             player_num: 0,
@@ -116,21 +124,9 @@ impl InputConfigMenu {
             vec_menu_items_main,
             // subtext
             vec_menu_items_keycode,
-            input_uninitialized_text: Text::new(
-                TextFragment::new("No Controls\nKeyboard: Space/Enter\nGamepad: 'G'")
-                    .color(HELP_RED)
-                    .scale(scale),
-            ),
-            keycode_conflict_text: Text::new(
-                TextFragment::new("[!] Redundant KeyCode; ignoring")
-                    .color(HELP_RED)
-                    .scale(scale),
-            ),
-            is_gamepad_text: Text::new(
-                TextFragment::new("Set to Gamepad\n\n\nSee README for help")
-                    .color(graphics::Color::BLACK)
-                    .scale(scale),
-            ),
+            input_uninitialized_text,
+            keycode_conflict_text,
+            is_gamepad_text,
         }
     }
 
@@ -541,5 +537,11 @@ impl InputConfigMenu {
         for item in self.vec_menu_items_main.iter_mut() {
             item.resize(height);
         }
+        self.input_uninitialized_text
+            .set_font(Font::default(), PxScale::from(height / SUB_TEXT_SCALE_DOWN));
+        self.keycode_conflict_text
+            .set_font(Font::default(), PxScale::from(height / SUB_TEXT_SCALE_DOWN));
+        self.is_gamepad_text
+            .set_font(Font::default(), PxScale::from(height / SUB_TEXT_SCALE_DOWN));
     }
 }

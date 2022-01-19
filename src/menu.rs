@@ -193,11 +193,9 @@ impl Menu {
 
     pub fn resize_event(&mut self, window_dims: (f32, f32)) {
         self.window_dimensions = window_dims;
-        match self.state {
-            MenuState::ChooseMode => self.choose_mode_menu.resize_event(window_dims.1),
-            MenuState::Start => self.start_menu.resize_event(window_dims.1),
-            MenuState::Settings => self.settings_menu.resize_event(window_dims.1),
-            MenuState::InputConfig => self.input_config_menu.resize_event(window_dims.1),
-        }
+        self.choose_mode_menu.resize_event(window_dims.1);
+        self.start_menu.resize_event(window_dims.1);
+        self.settings_menu.resize_event(window_dims.1);
+        self.input_config_menu.resize_event(window_dims.1);
     }
 }
