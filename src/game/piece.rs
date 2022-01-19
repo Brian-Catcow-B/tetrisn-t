@@ -22,12 +22,6 @@ impl TryFrom<u8> for Shapes {
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(Shapes::I),
-            // 1 => Ok(Shapes::I),
-            // 2 => Ok(Shapes::I),
-            // 3 => Ok(Shapes::I),
-            // 4 => Ok(Shapes::I),
-            // 5 => Ok(Shapes::I),
-            // 6 => Ok(Shapes::I),
             1 => Ok(Shapes::O),
             2 => Ok(Shapes::T),
             3 => Ok(Shapes::J),
