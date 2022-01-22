@@ -1,5 +1,5 @@
 use ggez::event::KeyCode;
-use ggez::graphics::{self, DrawParam, Font, PxScale, Text, TextFragment};
+use ggez::graphics::{self, Font, PxScale, Text, TextFragment};
 use ggez::mint::Point2;
 use ggez::Context;
 
@@ -8,6 +8,7 @@ use crate::inputs::{Input, KeyboardControlScheme};
 use crate::movement::Movement;
 use crate::movement::CONVERSION_FAILED_MOVEMENT_FROM_MENUITEMTRIGGER;
 
+use crate::menu::menuhelpers::draw_text;
 use crate::menu::menuhelpers::GAME_MODE_UNEXPECTEDLY_NONE;
 use crate::menu::menuhelpers::MAX_NUM_PLAYERS;
 use crate::menu::menuhelpers::{MenuGameOptions, MenuItem, MenuItemTrigger};
@@ -434,7 +435,7 @@ impl InputConfigMenu {
         // always drawn stuff
 
         for (index, item) in self.vec_menu_items_main.iter().enumerate() {
-            self.draw_text(
+            draw_text(
                 ctx,
                 &item.text,
                 0.1 + 0.2 * index as f32,
@@ -488,14 +489,14 @@ impl InputConfigMenu {
 
             if self.vec_menu_items_main[self.selection].trigger == MenuItemTrigger::SubSelection {
                 if self.keycode_conflict_flag {
-                    self.draw_text(ctx, &self.keycode_conflict_text, 0.43, &window_dimensions);
+                    draw_text(ctx, &self.keycode_conflict_text, 0.43, &window_dimensions);
                 }
 
                 if self.sub_selection_keyboard_flag
                     || !(game_options.arr_controls[self.player_num as usize].0).is_empty()
                 {
                     for (index, item) in self.vec_menu_items_keycode.iter().enumerate() {
-                        self.draw_text(
+                        draw_text(
                             ctx,
                             &item.text,
                             0.5 + 0.05 * index as f32,
@@ -503,31 +504,12 @@ impl InputConfigMenu {
                         );
                     }
                 } else if game_options.arr_controls[self.player_num as usize].1 {
-                    self.draw_text(ctx, &self.is_gamepad_text, 0.63, &window_dimensions);
+                    draw_text(ctx, &self.is_gamepad_text, 0.63, &window_dimensions);
                 } else {
-                    self.draw_text(ctx, &self.input_uninitialized_text, 0.5, &window_dimensions);
+                    draw_text(ctx, &self.input_uninitialized_text, 0.5, &window_dimensions);
                 }
             }
         }
-    }
-
-    fn draw_text(
-        &self,
-        ctx: &mut Context,
-        text_var: &Text,
-        vertical_position: f32,
-        window_dimensions: &(f32, f32),
-    ) {
-        let text_var_dimensions = text_var.dimensions(ctx);
-        graphics::draw(
-            ctx,
-            text_var,
-            DrawParam::new().dest(Point2::from_slice(&[
-                (window_dimensions.0 - text_var_dimensions.w as f32) / 2.0,
-                (window_dimensions.1 - text_var_dimensions.h as f32) * vertical_position,
-            ])),
-        )
-        .unwrap();
     }
 
     pub fn resize_event(&mut self, height: f32) {

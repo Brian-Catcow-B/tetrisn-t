@@ -1,5 +1,8 @@
 use ggez::event::KeyCode;
-use ggez::graphics::{self, Color, Font, PxScale, Text, TextFragment};
+use ggez::graphics::{self, Color, DrawParam, Font, PxScale, Text, TextFragment};
+use ggez::Context;
+
+use ggez::mint::Point2;
 
 use crate::game::{GameMode, GameSettings};
 use crate::inputs::KeyboardControlScheme;
@@ -17,6 +20,24 @@ pub const TEXT_SCALE_DOWN: f32 = 15.0;
 pub const SUB_TEXT_SCALE_DOWN: f32 = 25.0;
 
 pub static GAME_MODE_UNEXPECTEDLY_NONE: &str = "[!] GameMode unexpectedly None";
+
+pub fn draw_text(
+    ctx: &mut Context,
+    text_var: &Text,
+    vertical_position: f32,
+    window_dimensions: &(f32, f32),
+) {
+    let text_var_dimensions = text_var.dimensions(ctx);
+    graphics::draw(
+        ctx,
+        text_var,
+        DrawParam::new().dest(Point2::from_slice(&[
+            (window_dimensions.0 - text_var_dimensions.w as f32) / 2.0,
+            (window_dimensions.1 - text_var_dimensions.h as f32) * vertical_position,
+        ])),
+    )
+    .unwrap();
+}
 
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq, Clone)]

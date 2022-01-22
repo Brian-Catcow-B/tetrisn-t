@@ -8,6 +8,7 @@ use ggez::mint::{Point2, Vector2};
 use rand::random;
 
 use crate::control::ProgramState;
+use crate::menu::menuhelpers::draw_text;
 use crate::movement::Movement;
 use crate::movement::CONVERSION_FAILED_MOVEMENT_FROM_U8;
 
@@ -855,13 +856,13 @@ impl Game {
         let (window_width, window_height) = graphics::size(ctx);
         if self.game_over_flag && self.game_over_delay == 0 {
             // DRAW GAME OVER
-            self.draw_text(
+            draw_text(
                 ctx,
                 &self.game_over_text,
                 0.4,
                 &(window_width, window_height),
             );
-            self.draw_text(
+            draw_text(
                 ctx,
                 &self.game_info_text,
                 0.55,
@@ -869,7 +870,7 @@ impl Game {
             );
         } else if self.pause_flags.0 {
             // DRAW PAUSE
-            self.draw_text(ctx, &self.pause_text, 0.4, &(window_width, window_height));
+            draw_text(ctx, &self.pause_text, 0.4, &(window_width, window_height));
         } else {
             // DRAW GAME
 
@@ -1189,7 +1190,7 @@ impl Game {
             }
             // score text; TODO: perhaps make a separate function for something based on the bottom,
             // or just figure out how to do this better so we don't divide out by the window_height
-            self.draw_text(
+            draw_text(
                 ctx,
                 &self.game_info_text,
                 1.0 - ((NON_BOARD_SPACE_D as f32 * self.tile_size) / window_height),
@@ -1207,25 +1208,6 @@ impl Game {
             // clear highlight clearing tile tetrisnt sprite batch
             self.batch_highlight_clearing_tetrisnt_tile.clear();
         }
-    }
-
-    fn draw_text(
-        &self,
-        ctx: &mut Context,
-        text_var: &Text,
-        vertical_position: f32,
-        window_dimensions: &(f32, f32),
-    ) {
-        let text_var_dimensions = text_var.dimensions(ctx);
-        graphics::draw(
-            ctx,
-            text_var,
-            DrawParam::new().dest(Point2::from_slice(&[
-                (window_dimensions.0 - text_var_dimensions.w as f32) / 2.0,
-                (window_dimensions.1 - text_var_dimensions.h as f32) * vertical_position,
-            ])),
-        )
-        .unwrap();
     }
 
     pub fn resize_event(&mut self, width: f32, height: f32) {

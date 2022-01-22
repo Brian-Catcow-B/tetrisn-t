@@ -1,9 +1,9 @@
-use ggez::graphics::{self, DrawParam, Text};
-use ggez::mint::Point2;
+use ggez::graphics;
 use ggez::Context;
 
 use crate::game::GameSettings;
 use crate::inputs::Input;
+use crate::menu::menuhelpers::draw_text;
 use crate::menu::menuhelpers::TEXT_SCALE_DOWN;
 use crate::menu::menuhelpers::{MenuItem, MenuItemTrigger};
 
@@ -144,32 +144,13 @@ impl SettingsMenu {
         let num_menu_items_to_draw = self.vec_menu_items.len();
 
         for (index, item) in self.vec_menu_items.iter().enumerate() {
-            self.draw_text(
+            draw_text(
                 ctx,
                 &item.text,
                 (1.0 * (index + 1) as f32) / (num_menu_items_to_draw + 1) as f32,
                 &window_dimensions,
             );
         }
-    }
-
-    fn draw_text(
-        &self,
-        ctx: &mut Context,
-        text_var: &Text,
-        vertical_position: f32,
-        window_dimensions: &(f32, f32),
-    ) {
-        let text_var_dimensions = text_var.dimensions(ctx);
-        graphics::draw(
-            ctx,
-            text_var,
-            DrawParam::new().dest(Point2::from_slice(&[
-                (window_dimensions.0 - text_var_dimensions.w as f32) / 2.0,
-                (window_dimensions.1 - text_var_dimensions.h as f32) * vertical_position,
-            ])),
-        )
-        .unwrap();
     }
 
     pub fn resize_event(&mut self, height: f32) {
