@@ -1,6 +1,7 @@
 use ggez::graphics;
 use ggez::input::gamepad::gilrs;
 use ggez::ContextBuilder;
+use ggez::input::gamepad::GilrsGamepadContext;
 
 // file systems stuff
 use ggez::filesystem::resources_dir;
@@ -11,14 +12,7 @@ use std::path;
 // tetrisn-t files
 mod control;
 use control::Control;
-
-mod game;
 mod menu;
-
-mod inputs;
-mod movement;
-
-use ggez::input::gamepad::GilrsGamepadContext;
 
 fn main() {
     let mut context = ContextBuilder::new("Tetrisn-t", "Catcow")

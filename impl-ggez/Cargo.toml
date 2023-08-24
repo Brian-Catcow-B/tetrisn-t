@@ -1,7 +1,7 @@
 # cargo-features = ["named-profiles"]
 
 [package]
-name = "core-mino"
+name = "tetrisn-t"
 version = "0.2.0"
 authors = ["Brian \"Catcow\" B"]
 edition = "2018"
@@ -28,5 +28,5 @@ opt-level = 3
 
 [dependencies]
 ggez = "0.6"
-rand = "0.7.3"
-glam = "0.19.0"
+#glam = "0.19.0"
+core-mino = { path = "../core-mino" }

@@ -4,20 +4,13 @@ use ggez::graphics;
 use ggez::timer;
 use ggez::{Context, GameResult};
 
-use crate::game::{Game, GameOptions};
+use core_mino::game::{Game, GameOptions};
 use crate::menu::{menuhelpers::MenuGameOptions, Menu};
 
 static STATE_MENU_BUT_MENU_NONE: &str =
     "[!] control.state == ProgramState::Menu but control.menu == None";
 static STATE_GAME_BUT_GAME_NONE: &str =
     "[!] control.state == ProgramState::Game but control.game == None";
-
-#[repr(u8)]
-#[derive(PartialEq, Eq, Copy, Clone)]
-pub enum ProgramState {
-    Menu,
-    Game,
-}
 
 pub struct Control {
     state: ProgramState,
