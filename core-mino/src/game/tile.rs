@@ -1,5 +1,3 @@
-use ggez::{graphics, Context};
-
 use crate::game::board::BoardDim;
 use crate::game::Shapes;
 
@@ -126,7 +124,9 @@ impl Default for Tile {
 }
 
 pub struct TileGraphic {
-    pub image: graphics::Image,
+    pub rgba_buf: Vec<(u8, u8, u8, u8)>,
+    pub w: usize,
+    pub h: usize,
 }
 
 impl TileGraphic {
@@ -152,33 +152,30 @@ impl TileGraphic {
         buf
     }
 
-    pub fn new_empty(ctx: &mut Context) -> Self {
+    pub fn new_empty() -> Self {
         // create a buffer of (u8, u8, u8, u8), because rgba, big enough to hold each pixel
-        let mut pixel_color_buf: [(u8, u8, u8, u8);
-            NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize] =
-            [GRAY;
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize];
+        let mut rgba_buf: Vec<(u8, u8, u8, u8)> = Vec::new();
+        rgba_buf.resize(
+            NUM_PIXEL_ROWS_PER_TILEGRAPHIC * NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
+            GRAY,
+        );
         for row_index in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
             for col_index in 0..NUM_PIXEL_ROWS_PER_TILEGRAPHIC {
-                pixel_color_buf
-                    [(row_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC + col_index) as usize] = DARK_GRAY;
-                pixel_color_buf
-                    [(row_index + col_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC) as usize] = DARK_GRAY;
+                rgba_buf[(row_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC + col_index) as usize] =
+                    DARK_GRAY;
+                rgba_buf[(row_index + col_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC) as usize] =
+                    DARK_GRAY;
                 // flipped for symmetry
             }
         }
         Self {
-            image: graphics::Image::from_rgba8(
-                ctx,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
-                &TileGraphic::pack_color_buf(&pixel_color_buf),
-            )
-            .expect("Failed to create background tile image"),
+            rgba_buf,
+            w: NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize,
+            h: NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize,
         }
     }
 
-    pub fn new_player(ctx: &mut Context, player: u8) -> Self {
+    pub fn new_player(player: u8) -> Self {
         let player_color: (u8, u8, u8, u8) = if player < NUM_PLAYERCOLORS {
             PLAYER_RGBA[player as usize]
         } else {
@@ -194,15 +191,15 @@ impl TileGraphic {
             )
         };
         // create a buffer of (u8, u8, u8, u8), because rgba, big enough to hold each pixel
-        let mut pixel_color_buf: [(u8, u8, u8, u8);
-            NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize] =
-            [player_color;
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize];
+        let mut rgba_buf: Vec<(u8, u8, u8, u8)> = Vec::new();
+        rgba_buf.resize(
+            NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize,
+            player_color,
+        );
         // corner
         for row_index in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
             for col_index in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
-                pixel_color_buf
-                    [(row_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC + col_index) as usize] = (
+                rgba_buf[(row_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC + col_index) as usize] = (
                     ((1.0 - PLAYER_TILE_DARKEN[0]) * player_color.0 as f32) as u8,
                     ((1.0 - PLAYER_TILE_DARKEN[0]) * player_color.1 as f32) as u8,
                     ((1.0 - PLAYER_TILE_DARKEN[0]) * player_color.2 as f32) as u8,
@@ -218,16 +215,14 @@ impl TileGraphic {
             NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 3,
         ] {
             for col_index in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
-                pixel_color_buf
-                    [(row_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC + col_index) as usize] = (
+                rgba_buf[(row_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC + col_index) as usize] = (
                     ((1.0 - PLAYER_TILE_DARKEN[1]) * player_color.0 as f32) as u8,
                     ((1.0 - PLAYER_TILE_DARKEN[1]) * player_color.1 as f32) as u8,
                     ((1.0 - PLAYER_TILE_DARKEN[1]) * player_color.2 as f32) as u8,
                     0xff,
                 );
                 // flipped for symmetry
-                pixel_color_buf
-                    [(row_index + col_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC) as usize] = (
+                rgba_buf[(row_index + col_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC) as usize] = (
                     ((1.0 - PLAYER_TILE_DARKEN[1]) * player_color.0 as f32) as u8,
                     ((1.0 - PLAYER_TILE_DARKEN[1]) * player_color.1 as f32) as u8,
                     ((1.0 - PLAYER_TILE_DARKEN[1]) * player_color.2 as f32) as u8,
@@ -238,16 +233,14 @@ impl TileGraphic {
         // the rest across that edge
         for row_index in &[3, 4] {
             for col_index in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
-                pixel_color_buf
-                    [(row_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC + col_index) as usize] = (
+                rgba_buf[(row_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC + col_index) as usize] = (
                     ((1.0 - PLAYER_TILE_DARKEN[2]) * player_color.0 as f32) as u8,
                     ((1.0 - PLAYER_TILE_DARKEN[2]) * player_color.1 as f32) as u8,
                     ((1.0 - PLAYER_TILE_DARKEN[2]) * player_color.2 as f32) as u8,
                     0xff,
                 );
                 // flipped for symmetry
-                pixel_color_buf
-                    [(row_index + col_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC) as usize] = (
+                rgba_buf[(row_index + col_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC) as usize] = (
                     ((1.0 - PLAYER_TILE_DARKEN[2]) * player_color.0 as f32) as u8,
                     ((1.0 - PLAYER_TILE_DARKEN[2]) * player_color.1 as f32) as u8,
                     ((1.0 - PLAYER_TILE_DARKEN[2]) * player_color.2 as f32) as u8,
@@ -259,8 +252,7 @@ impl TileGraphic {
         // center square
         for row_index in &[3, 4] {
             for col_index in &[3, 4] {
-                pixel_color_buf
-                    [(row_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC + col_index) as usize] = (
+                rgba_buf[(row_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC + col_index) as usize] = (
                     (PLAYER_TILE_BRIGHTEN[0] * WHITE.0 as f32
                         + (1.0 - PLAYER_TILE_BRIGHTEN[0]) * player_color.0 as f32)
                         as u8,
@@ -277,8 +269,7 @@ impl TileGraphic {
         // around center square
         for row_index in &[2, 5] {
             for col_index in &[3, 4] {
-                pixel_color_buf
-                    [(row_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC + col_index) as usize] = (
+                rgba_buf[(row_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC + col_index) as usize] = (
                     (PLAYER_TILE_BRIGHTEN[1] * WHITE.0 as f32
                         + (1.0 - PLAYER_TILE_BRIGHTEN[1]) * player_color.0 as f32)
                         as u8,
@@ -291,8 +282,7 @@ impl TileGraphic {
                     0xff,
                 );
                 // flipped for symmetry
-                pixel_color_buf
-                    [(row_index + col_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC) as usize] = (
+                rgba_buf[(row_index + col_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC) as usize] = (
                     (PLAYER_TILE_BRIGHTEN[1] * WHITE.0 as f32
                         + (1.0 - PLAYER_TILE_BRIGHTEN[1]) * player_color.0 as f32)
                         as u8,
@@ -309,8 +299,7 @@ impl TileGraphic {
         // outer center
         for row_index in &[1, 6] {
             for col_index in &[3, 4] {
-                pixel_color_buf
-                    [(row_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC + col_index) as usize] = (
+                rgba_buf[(row_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC + col_index) as usize] = (
                     (PLAYER_TILE_BRIGHTEN[2] * WHITE.0 as f32
                         + (1.0 - PLAYER_TILE_BRIGHTEN[2]) * player_color.0 as f32)
                         as u8,
@@ -323,8 +312,7 @@ impl TileGraphic {
                     0xff,
                 );
                 // flipped for symmetry
-                pixel_color_buf
-                    [(row_index + col_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC) as usize] = (
+                rgba_buf[(row_index + col_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC) as usize] = (
                     (PLAYER_TILE_BRIGHTEN[2] * WHITE.0 as f32
                         + (1.0 - PLAYER_TILE_BRIGHTEN[2]) * player_color.0 as f32)
                         as u8,
@@ -340,8 +328,7 @@ impl TileGraphic {
         }
         for row_index in &[2, 5] {
             for col_index in &[2, 5] {
-                pixel_color_buf
-                    [(row_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC + col_index) as usize] = (
+                rgba_buf[(row_index * NUM_PIXEL_ROWS_PER_TILEGRAPHIC + col_index) as usize] = (
                     (PLAYER_TILE_BRIGHTEN[2] * WHITE.0 as f32
                         + (1.0 - PLAYER_TILE_BRIGHTEN[2]) * player_color.0 as f32)
                         as u8,
@@ -357,29 +344,26 @@ impl TileGraphic {
         }
 
         Self {
-            image: graphics::Image::from_rgba8(
-                ctx,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
-                &TileGraphic::pack_color_buf(&pixel_color_buf),
-            )
-            .expect("Failed to create player piece tile image"),
+            rgba_buf,
+            w: NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize,
+            h: NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize,
         }
     }
 
-    pub fn new_active_highlight(ctx: &mut Context) -> Self {
+    pub fn new_active_highlight() -> Self {
         // create a buffer of (u8, u8, u8, u8), because rgba, big enough to hold each pixel
-        let mut pixel_color_buf: [(u8, u8, u8, u8);
-            NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize] =
-            [WHITE;
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize];
+        let mut rgba_buf: Vec<(u8, u8, u8, u8)> = Vec::new();
+        rgba_buf.resize(
+            NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize,
+            WHITE,
+        );
 
         // corners (0)
         for x in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
             for y in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
-                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                rgba_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
                     PLAYER_TILE_ACTIVE_HIGHLIGHT[0];
-                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                rgba_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
                     PLAYER_TILE_ACTIVE_HIGHLIGHT[0];
             }
         }
@@ -387,9 +371,9 @@ impl TileGraphic {
         // edges (1)
         for x in 1..NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1 {
             for y in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
-                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                rgba_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
                     PLAYER_TILE_ACTIVE_HIGHLIGHT[1];
-                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                rgba_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
                     PLAYER_TILE_ACTIVE_HIGHLIGHT[1];
             }
         }
@@ -402,9 +386,9 @@ impl TileGraphic {
             NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2,
         ] {
             for y in &[1, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2] {
-                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                rgba_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
                     PLAYER_TILE_ACTIVE_HIGHLIGHT[1];
-                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                rgba_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
                     PLAYER_TILE_ACTIVE_HIGHLIGHT[1];
             }
         }
@@ -412,43 +396,40 @@ impl TileGraphic {
         // inside (2)
         for x in 3..NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 3 {
             for y in &[1, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2] {
-                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                rgba_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
                     PLAYER_TILE_ACTIVE_HIGHLIGHT[2];
-                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                rgba_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
                     PLAYER_TILE_ACTIVE_HIGHLIGHT[2];
             }
         }
         for x in 2..NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2 {
             for y in 2..NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2 {
-                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                rgba_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
                     PLAYER_TILE_ACTIVE_HIGHLIGHT[2];
             }
         }
 
         Self {
-            image: graphics::Image::from_rgba8(
-                ctx,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
-                &TileGraphic::pack_color_buf(&pixel_color_buf),
-            )
-            .expect("Failed to create active player tile highlight image"),
+            rgba_buf,
+            w: NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize,
+            h: NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize,
         }
     }
 
-    pub fn new_clear_standard_highlight(ctx: &mut Context) -> Self {
+    pub fn new_clear_standard_highlight() -> Self {
         // create a buffer of (u8, u8, u8, u8), because rgba, big enough to hold each pixel
-        let mut pixel_color_buf: [(u8, u8, u8, u8);
-            NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize] =
-            [WHITE;
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize];
+        let mut rgba_buf: Vec<(u8, u8, u8, u8)> = Vec::new();
+        rgba_buf.resize(
+            NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize,
+            WHITE,
+        );
 
         // corners (0)
         for x in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
             for y in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
-                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                rgba_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
                     CLEARING_TILE_STANDARD_HIGHLIGHT[0];
-                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                rgba_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
                     CLEARING_TILE_STANDARD_HIGHLIGHT[0];
             }
         }
@@ -456,9 +437,9 @@ impl TileGraphic {
         // edges (1)
         for x in 1..NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1 {
             for y in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
-                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                rgba_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
                     CLEARING_TILE_STANDARD_HIGHLIGHT[1];
-                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                rgba_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
                     CLEARING_TILE_STANDARD_HIGHLIGHT[1];
             }
         }
@@ -471,9 +452,9 @@ impl TileGraphic {
             NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2,
         ] {
             for y in &[1, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2] {
-                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                rgba_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
                     CLEARING_TILE_STANDARD_HIGHLIGHT[1];
-                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                rgba_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
                     CLEARING_TILE_STANDARD_HIGHLIGHT[1];
             }
         }
@@ -481,43 +462,40 @@ impl TileGraphic {
         // inside (2)
         for x in 3..NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 3 {
             for y in &[1, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2] {
-                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                rgba_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
                     CLEARING_TILE_STANDARD_HIGHLIGHT[2];
-                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                rgba_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
                     CLEARING_TILE_STANDARD_HIGHLIGHT[2];
             }
         }
         for x in 2..NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2 {
             for y in 2..NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2 {
-                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                rgba_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
                     CLEARING_TILE_STANDARD_HIGHLIGHT[2];
             }
         }
 
         Self {
-            image: graphics::Image::from_rgba8(
-                ctx,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
-                &TileGraphic::pack_color_buf(&pixel_color_buf),
-            )
-            .expect("Failed to create tile clearing standard highlight image"),
+            rgba_buf,
+            w: NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize,
+            h: NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize,
         }
     }
 
-    pub fn new_clear_tetrisnt_highlight(ctx: &mut Context) -> Self {
+    pub fn new_clear_tetrisnt_highlight() -> Self {
         // create a buffer of (u8, u8, u8, u8), because rgba, big enough to hold each pixel
-        let mut pixel_color_buf: [(u8, u8, u8, u8);
-            NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize] =
-            [WHITE;
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize];
+        let mut rgba_buf: Vec<(u8, u8, u8, u8)> = Vec::new();
+        rgba_buf.resize(
+            NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize,
+            WHITE,
+        );
 
         // corners (0)
         for x in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
             for y in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
-                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                rgba_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
                     CLEARING_TILE_TETRISNT_HIGHLIGHT[0];
-                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                rgba_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
                     CLEARING_TILE_TETRISNT_HIGHLIGHT[0];
             }
         }
@@ -525,9 +503,9 @@ impl TileGraphic {
         // edges (1)
         for x in 1..NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1 {
             for y in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
-                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                rgba_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
                     CLEARING_TILE_TETRISNT_HIGHLIGHT[1];
-                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                rgba_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
                     CLEARING_TILE_TETRISNT_HIGHLIGHT[1];
             }
         }
@@ -540,9 +518,9 @@ impl TileGraphic {
             NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2,
         ] {
             for y in &[1, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2] {
-                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                rgba_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
                     CLEARING_TILE_TETRISNT_HIGHLIGHT[1];
-                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                rgba_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
                     CLEARING_TILE_TETRISNT_HIGHLIGHT[1];
             }
         }
@@ -550,43 +528,40 @@ impl TileGraphic {
         // inside (2)
         for x in 3..NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 3 {
             for y in &[1, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2] {
-                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                rgba_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
                     CLEARING_TILE_TETRISNT_HIGHLIGHT[2];
-                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                rgba_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
                     CLEARING_TILE_TETRISNT_HIGHLIGHT[2];
             }
         }
         for x in 2..NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2 {
             for y in 2..NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2 {
-                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                rgba_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
                     CLEARING_TILE_TETRISNT_HIGHLIGHT[2];
             }
         }
 
         Self {
-            image: graphics::Image::from_rgba8(
-                ctx,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
-                &TileGraphic::pack_color_buf(&pixel_color_buf),
-            )
-            .expect("Failed to create tile clearing tetrisnt highlight image"),
+            rgba_buf,
+            w: NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize,
+            h: NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize,
         }
     }
 
-    pub fn new_ghost_highlight(ctx: &mut Context) -> Self {
+    pub fn new_ghost_highlight() -> Self {
         // create a buffer of (u8, u8, u8, u8), because rgba, big enough to hold each pixel
-        let mut pixel_color_buf: [(u8, u8, u8, u8);
-            NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize] =
-            [WHITE;
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize];
+        let mut rgba_buf: Vec<(u8, u8, u8, u8)> = Vec::new();
+        rgba_buf.resize(
+            NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize,
+            WHITE,
+        );
 
         // outer (0)
         for x in 0..=NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1 {
             for y in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {
-                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                rgba_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
                     GHOST_TILE_HIGHLIGHT[0];
-                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                rgba_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
                     GHOST_TILE_HIGHLIGHT[0];
             }
         }
@@ -594,9 +569,9 @@ impl TileGraphic {
         // between (1)
         for x in 1..=NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2 {
             for y in &[1, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 2] {
-                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                rgba_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
                     GHOST_TILE_HIGHLIGHT[1];
-                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                rgba_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
                     GHOST_TILE_HIGHLIGHT[1];
             }
         }
@@ -604,9 +579,9 @@ impl TileGraphic {
         // inner (2)
         for x in 2..=NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 3 {
             for y in &[2, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 3] {
-                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                rgba_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
                     GHOST_TILE_HIGHLIGHT[2];
-                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                rgba_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
                     GHOST_TILE_HIGHLIGHT[2];
             }
         }
@@ -614,21 +589,17 @@ impl TileGraphic {
         // middle (3)
         for x in 3..=NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 4 {
             for y in &[3, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 4] {
-                pixel_color_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
+                rgba_buf[(x + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * y) as usize].3 =
                     GHOST_TILE_HIGHLIGHT[3];
-                pixel_color_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
+                rgba_buf[(y + NUM_PIXEL_ROWS_PER_TILEGRAPHIC * x) as usize].3 =
                     GHOST_TILE_HIGHLIGHT[3];
             }
         }
 
         Self {
-            image: graphics::Image::from_rgba8(
-                ctx,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
-                &TileGraphic::pack_color_buf(&pixel_color_buf),
-            )
-            .expect("Failed to create tile ghost tile highlight image"),
+            rgba_buf,
+            w: NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize,
+            h: NUM_PIXEL_ROWS_PER_TILEGRAPHIC as usize,
         }
     }
 
@@ -642,23 +613,5 @@ impl TileGraphic {
             window_height as u32 / board_height as u32,
             window_width as u32 / board_width as u32,
         ) as f32
-    }
-
-    pub fn _print_image_buf(self, ctx: &mut Context) {
-        let image_buf: Vec<u8> = self
-            .image
-            .to_rgba8(ctx)
-            .expect("Failed to create image buffer");
-        for (index, image) in image_buf.iter().enumerate() {
-            if index % 4 == 0 {
-                if index % 32 == 0 {
-                    print!("\n");
-                } else if index != 0 {
-                    print!(" ");
-                }
-            }
-            print!("{:02x}", image);
-        }
-        print!("\n");
     }
 }

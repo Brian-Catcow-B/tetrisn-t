@@ -27,6 +27,4 @@ opt-level = 3
 # rpath = false
 
 [dependencies]
-ggez = "0.6"
 rand = "0.7.3"
-glam = "0.19.0"
