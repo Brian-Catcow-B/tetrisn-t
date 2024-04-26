@@ -1,4 +1,4 @@
-use crate::menu::menuhelpers::MenuItemTrigger;
+use crate::menuhelpers::MenuItemTrigger;
 
 use std::convert::TryFrom;
 

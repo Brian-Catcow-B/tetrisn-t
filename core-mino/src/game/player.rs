@@ -2,11 +2,11 @@ use ggez::event::{Axis, Button, KeyCode};
 use rand::random;
 
 use crate::game::board::BoardPos;
+use crate::game::inputs::{Input, KeyboardControlScheme};
+use crate::game::movement::Movement;
 use crate::game::piece::Shapes;
 use crate::game::{DAS_THRESHOLD_BIG, FORCE_FALL_DELAY, INITIAL_HANG_FRAMES};
 use crate::game::{DETECT_GAMEPAD_AXIS_THRESHOLD, UNDETECT_GAMEPAD_AXIS_THRESHOLD};
-use crate::inputs::{Input, KeyboardControlScheme};
-use crate::movement::Movement;
 
 use std::convert::TryFrom;
 

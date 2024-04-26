@@ -1,5 +1,5 @@
 use crate::game::board::{BoardDim, BoardPos, Gravity};
-use crate::movement::Movement;
+use crate::game::movement::Movement;
 
 use std::convert::TryFrom;
 

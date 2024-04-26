@@ -1,6 +1,6 @@
-use ggez::event::{Axis, Button, GamepadId, KeyCode};
+use ggez::event::{Axis, Button, GamepadId};
 use ggez::graphics::{self, spritebatch, DrawParam};
-use ggez::graphics::{PxScale, Text, TextFragment};
+use ggez::graphics::{Text, TextFragment};
 use ggez::Context;
 
 use ggez::mint::{Point2, Vector2};
@@ -27,8 +27,9 @@ pub mod board;
 use crate::game::board::BoardHandler;
 use crate::game::board::{BoardDim, BoardPos, BOARD_HEIGHT, ROTATRIS_BOARD_SIDE_LENGTH};
 
-use crate::inputs::KeyboardControlScheme;
-use crate::menu::menuhelpers::MenuGameOptions;
+use crate::abstracted;
+use crate::game::inputs::KeyboardControlScheme;
+use crate::menuhelpers::MenuGameOptions;
 
 pub const CLEAR_DELAY_CLASSIC: i8 = 30i8;
 
@@ -259,9 +260,9 @@ pub struct Game {
     batch_highlight_ghost_tile: spritebatch::SpriteBatch,
     vec_batch_player_piece: Vec<spritebatch::SpriteBatch>,
     vec_batch_next_piece: Vec<spritebatch::SpriteBatch>,
-    game_info_text: Text,
-    pause_text: Text,
-    game_over_text: Text,
+    game_info_text: abstracted::TextArray,
+    pause_text: abstracted::TextArray,
+    game_over_text: abstracted::TextArray,
 }
 
 impl Game {
@@ -299,7 +300,7 @@ impl Game {
                 spawn_columns[player_index as usize],
             ));
         }
-        let mut batch_empty_tile = spritebatch::SpriteBatch::new(TileGraphic::new_empty(ctx).image);
+        let mut batch_empty_tile = spritebatch::SpriteBatch::new(TileGraphic::new_empty().image);
         // the emtpy tile batch will be constant once the game starts with
         // the player tile batches drawing on top of it, so just set that up here
         for x in 0..board_width {
@@ -337,60 +338,48 @@ impl Game {
         for player in 0..std::cmp::max(game_options.num_players as usize, 3) {
             vec_next_piece.push(NextPiece::new(Shapes::None));
             vec_batch_player_piece.push(spritebatch::SpriteBatch::new(
-                TileGraphic::new_player(ctx, player as u8).image,
+                TileGraphic::new_player(player as u8).image,
             ));
             vec_batch_next_piece.push(spritebatch::SpriteBatch::new(
-                TileGraphic::new_player(ctx, player as u8).image,
+                TileGraphic::new_player(player as u8).image,
             ));
         }
-        let little_text_scale = PxScale::from(LITTLE_TEXT_SCALE);
-        let mut game_info_text = match mode {
+        let mut game_info_text = abstracted::TextArray::new(
+            vec![],
+            (
+                abstracted::PlacementX::Center,
+                abstracted::PlacementY::FlushBottom,
+            ),
+            abstracted::Size::Small,
+            true,
+        );
+        match mode {
             GameMode::None => unreachable!("{}", GAME_MODE_NONE),
-            GameMode::Classic => Text::new(
-                TextFragment::new("Lines: ")
-                    .color(graphics::Color::WHITE)
-                    .scale(little_text_scale),
-            ),
-            GameMode::Rotatris => Text::new(
-                TextFragment::new("Rings: ")
-                    .color(graphics::Color::WHITE)
-                    .scale(little_text_scale),
-            ),
+            GameMode::Classic => game_info_text.add_string("Lines: ".to_string()),
+            GameMode::Rotatris => game_info_text.add_string("Rings: ".to_string()),
         };
-        game_info_text.add(
-            TextFragment::new("000")
-                .color(graphics::Color::WHITE)
-                .scale(little_text_scale),
+        game_info_text.add_string("000".to_string());
+        game_info_text.add_string("   Score: ".to_string());
+        game_info_text.add_string("0000000".to_string());
+        game_info_text.add_string("   Level: ".to_string());
+        game_info_text.add_string(format!("{:02}", game_options.starting_level));
+        let pause_text = abstracted::TextArray::new(
+            vec!["Paused\n\nDown + ESC/Start to quit".to_string()],
+            (
+                abstracted::PlacementX::Center,
+                abstracted::PlacementY::Center,
+            ),
+            abstracted::Size::Large,
+            false,
         );
-        game_info_text.add(
-            TextFragment::new("   Score: ")
-                .color(graphics::Color::WHITE)
-                .scale(little_text_scale),
-        );
-        game_info_text.add(
-            TextFragment::new("0000000")
-                .color(graphics::Color::WHITE)
-                .scale(little_text_scale),
-        );
-        game_info_text.add(
-            TextFragment::new("   Level: ")
-                .color(graphics::Color::WHITE)
-                .scale(little_text_scale),
-        );
-        game_info_text.add(
-            TextFragment::new(format!("{:02}", game_options.starting_level))
-                .color(graphics::Color::WHITE)
-                .scale(little_text_scale),
-        );
-        let pause_text = Text::new(
-            TextFragment::new("PAUSED\n\nDown + ESC/Start to quit")
-                .color(graphics::Color::WHITE)
-                .scale(little_text_scale),
-        );
-        let game_over_text = Text::new(
-            TextFragment::new("Game Over!")
-                .color(graphics::Color::WHITE)
-                .scale(PxScale::from(LITTLE_TEXT_SCALE * 2.0)),
+        let game_over_text = abstracted::TextArray::new(
+            vec!["Game Over!".to_string()],
+            (
+                abstracted::PlacementX::Center,
+                abstracted::PlacementY::Center,
+            ),
+            abstracted::Size::Large,
+            false,
         );
 
         let (window_width, window_height) = graphics::size(ctx);
@@ -421,16 +410,16 @@ impl Game {
             ),
             batch_empty_tile,
             batch_highlight_active_tile: spritebatch::SpriteBatch::new(
-                TileGraphic::new_active_highlight(ctx).image,
+                TileGraphic::new_active_highlight().image,
             ),
             batch_highlight_clearing_standard_tile: spritebatch::SpriteBatch::new(
-                TileGraphic::new_clear_standard_highlight(ctx).image,
+                TileGraphic::new_clear_standard_highlight().image,
             ),
             batch_highlight_clearing_tetrisnt_tile: spritebatch::SpriteBatch::new(
-                TileGraphic::new_clear_tetrisnt_highlight(ctx).image,
+                TileGraphic::new_clear_tetrisnt_highlight().image,
             ),
             batch_highlight_ghost_tile: spritebatch::SpriteBatch::new(
-                TileGraphic::new_ghost_highlight(ctx).image,
+                TileGraphic::new_ghost_highlight().image,
             ),
             vec_batch_player_piece,
             vec_batch_next_piece,
@@ -708,10 +697,11 @@ impl Game {
             let (returned_lines, returned_score) = self.bh.attempt_clear(self.level);
             if returned_lines > 0 {
                 self.num_cleared_lines += returned_lines as u16;
-                self.game_info_text.fragments_mut()[1].text =
-                    format!("{:03}", self.num_cleared_lines);
+                self.game_info_text
+                    .change_string(1, format!("{:03}", self.num_cleared_lines));
                 self.score += returned_score as u64;
-                self.game_info_text.fragments_mut()[3].text = format!("{:07}", self.score);
+                self.game_info_text
+                    .change_string(3, format!("{:07}", self.score));
                 let first_level_up_lines_amount: u16 = (self.starting_level as u16 + 1) * 10;
                 let not_first_level_up_lines_amount: u16 = 10;
                 if self.level == self.starting_level {
@@ -725,7 +715,8 @@ impl Game {
                 {
                     self.level += 1;
                 }
-                self.game_info_text.fragments_mut()[5].text = format!("{:02}", self.level);
+                self.game_info_text
+                    .change_string(5, format!("{:02}", self.level));
             }
         }
 
