@@ -1,4 +1,5 @@
 use crate::game::board::BoardDim;
+use crate::game::player::PlayerIdx;
 use crate::game::Shapes;
 
 pub const NUM_PIXEL_ROWS_PER_TILEGRAPHIC: u16 = 8u16;
@@ -93,21 +94,21 @@ const PLAYER_RGBA: [(u8, u8, u8, u8); NUM_PLAYERCOLORS as usize] = [
 
 const BASE_PLAYER_COLOR: (u8, u8, u8, u8) = (25u8, 80u8, 212u8, 0xffu8);
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Tile {
     pub empty: bool,
     pub active: bool,
-    pub player: u8,
-    pub shape: Shapes,
+    pub ghost: bool,
+    pub player: PlayerIdx,
 }
 
 impl Tile {
-    pub fn new(empty: bool, active: bool, player: u8, shape: Shapes) -> Self {
+    pub fn new(empty: bool, active: bool, ghost: bool, player: PlayerIdx) -> Self {
         Self {
             empty,
             active,
+            ghost,
             player,
-            shape,
         }
     }
 }
@@ -117,8 +118,8 @@ impl Default for Tile {
         Self {
             empty: true,
             active: false,
+            ghost: false,
             player: 0xffu8,
-            shape: Shapes::None,
         }
     }
 }

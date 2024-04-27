@@ -11,9 +11,10 @@ use crate::game::{DETECT_GAMEPAD_AXIS_THRESHOLD, UNDETECT_GAMEPAD_AXIS_THRESHOLD
 use std::convert::TryFrom;
 
 pub const SPAWN_DELAY: i16 = 20i16;
+pub type PlayerIdx = u8;
 
 pub struct Player {
-    pub player_num: u8,
+    pub player_num: PlayerIdx,
     pub control_scheme: (Option<KeyboardControlScheme>, bool),
     axis_wait_for_unpress_x: bool,
     axis_wait_for_unpress_y: bool,
@@ -31,7 +32,7 @@ pub struct Player {
 
 impl Player {
     pub fn new(
-        player_num: u8,
+        player_num: PlayerIdx,
         control_scheme: (Option<KeyboardControlScheme>, bool),
         spawn_column: BoardPos,
     ) -> Self {

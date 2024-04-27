@@ -8,7 +8,7 @@ use crate::game::{
 };
 
 pub type BoardDim = u16;
-pub type BoardPos = BoardDim;
+pub type BoardIdx = BoardDim;
 
 pub const BOARD_HEIGHT: BoardDim = 20;
 pub const ROTATRIS_BOARD_SIDE_LENGTH: BoardDim = 20;
@@ -95,7 +95,7 @@ impl BoardHandler {
     }
 
     // get...
-    pub fn get_spawn_columns(&self) -> Vec<BoardPos> {
+    pub fn get_spawn_columns(&self) -> Vec<BoardIdx> {
         match self.mode {
             GameMode::None => unreachable!("{}", BH_MODE_NONE),
             GameMode::Classic => {
@@ -106,15 +106,15 @@ impl BoardHandler {
                     .vec_active_piece
                     .len();
                 let board_width = self.classic.as_ref().expect(BH_WRONG_MODE).width;
-                let mut vec_cols: Vec<BoardPos> = vec![];
+                let mut vec_cols: Vec<BoardIdx> = vec![];
 
                 for p_idx in 0..num_players {
                     // spawn_column
-                    let spawn_column: BoardPos = if p_idx < num_players / 2 {
+                    let spawn_column: BoardIdx = if p_idx < num_players / 2 {
                         // first half, not including middle player if there's an odd number of players
                         (p_idx as f32 * (board_width as f32 / num_players as f32)
                             + board_width as f32 / (2.0 * num_players as f32))
-                            as BoardPos
+                            as BoardIdx
                     } else if p_idx == num_players / 2 && num_players % 2 == 1 {
                         // middle player, for an odd number of players
                         board_width / 2
@@ -124,7 +124,7 @@ impl BoardHandler {
                             - ((num_players - 1 - p_idx) as f32
                                 * (board_width as f32 / num_players as f32)
                                 + board_width as f32 / (2.0 * num_players as f32))
-                                as BoardPos
+                                as BoardIdx
                     };
 
                     vec_cols.push(spawn_column);
@@ -160,7 +160,7 @@ impl BoardHandler {
         }
     }
 
-    pub fn get_active_from_pos(&mut self, y: BoardPos, x: BoardPos) -> bool {
+    pub fn get_active_from_pos(&mut self, y: BoardIdx, x: BoardIdx) -> bool {
         match self.mode {
             GameMode::None => unreachable!("{}", BH_MODE_NONE),
             GameMode::Classic => {
@@ -172,7 +172,7 @@ impl BoardHandler {
         }
     }
 
-    pub fn get_empty_from_pos(&mut self, y: BoardPos, x: BoardPos) -> bool {
+    pub fn get_empty_from_pos(&mut self, y: BoardIdx, x: BoardIdx) -> bool {
         match self.mode {
             GameMode::None => unreachable!("{}", BH_MODE_NONE),
             GameMode::Classic => {
@@ -184,7 +184,7 @@ impl BoardHandler {
         }
     }
 
-    pub fn get_player_from_pos(&mut self, y: BoardPos, x: BoardPos) -> u8 {
+    pub fn get_player_from_pos(&mut self, y: BoardIdx, x: BoardIdx) -> u8 {
         match self.mode {
             GameMode::None => unreachable!("{}", BH_MODE_NONE),
             GameMode::Classic => {
@@ -196,7 +196,7 @@ impl BoardHandler {
         }
     }
 
-    pub fn get_shape_from_pos(&mut self, y: BoardPos, x: BoardPos) -> Shapes {
+    pub fn get_shape_from_pos(&mut self, y: BoardIdx, x: BoardIdx) -> Shapes {
         match self.mode {
             GameMode::None => unreachable!("{}", BH_MODE_NONE),
             GameMode::Classic => {
@@ -232,19 +232,15 @@ impl BoardHandler {
         }
     }
 
-    pub fn get_ghost_highlight_positions(&self) -> Vec<[(BoardPos, BoardPos); 4]> {
+    pub fn update_ghost_highlight_positions(&mut self) {
         match self.mode {
             GameMode::None => unreachable!("{}", BH_MODE_NONE),
             GameMode::Classic => self
                 .classic
-                .as_ref()
+                .as_mut_ref()
                 .expect(BH_WRONG_MODE)
-                .get_ghost_highlight_positions(),
-            GameMode::Rotatris => self
-                .rotatris
-                .as_ref()
-                .expect(BH_WRONG_MODE)
-                .get_ghost_highlight_positions(),
+                .update_ghost_highlight_positions(),
+            GameMode::Rotatris => {}
         }
     }
 
@@ -252,7 +248,7 @@ impl BoardHandler {
     pub fn attempt_piece_spawn(
         &mut self,
         player: u8,
-        spawn_col: BoardPos,
+        spawn_col: BoardIdx,
         spawn_piece_shape: Shapes,
     ) -> (bool, bool) {
         match self.mode {
@@ -342,7 +338,7 @@ pub struct BoardClassic {
     pub width: BoardDim,
     pub height: BoardDim,
     pub height_buffer: BoardDim,
-    pub spawn_row: BoardPos,
+    pub spawn_row: BoardIdx,
     pub matrix: Vec<Vec<Tile>>,
     pub vec_active_piece: Vec<Piece>,
     pub vec_full_lines: Vec<FullLine>,
@@ -353,7 +349,7 @@ impl BoardClassic {
         board_width: BoardDim,
         board_height: BoardDim,
         board_height_buffer: BoardDim,
-        spawn_row: BoardPos,
+        spawn_row: BoardIdx,
         num_players: u8,
     ) -> Self {
         let mut vec_active_piece: Vec<Piece> = Vec::with_capacity(num_players as usize);
@@ -418,18 +414,26 @@ impl BoardClassic {
         }
     }
 
-    pub fn get_ghost_highlight_positions(&self) -> Vec<[(BoardPos, BoardPos); 4]> {
-        let mut ghost_highlight_positions: Vec<[(BoardPos, BoardPos); 4]> = vec![];
+    pub fn update_ghost_highlight_positions(&mut self) {
+        // OPTIMIZATION: return early if no player pieces have moved and no lines were cleared
+        // TODO: fix all this butt-ugly code
+        for y in 0..self.height {
+            for x in 0..self.width {
+                self.matrix[y as usize][x as usize].ghost = false;
+            }
+        }
 
         for (idx, piece) in self.vec_active_piece.iter().enumerate() {
             if piece.shape == Shapes::None {
                 continue;
             }
-            let mut projection: [(BoardPos, BoardPos); 4] = piece.positions;
+            let mut projection: [(BoardIdx, BoardIdx); 4] = piece.positions;
             'project_down: loop {
                 for pos in projection.iter().take(4) {
                     if pos.0 + 1 >= self.height + self.height_buffer {
-                        ghost_highlight_positions.push(projection);
+                        for p in projection.iter().take(4) {
+                            self.matrix[p.0 as usize][p.1 as usize].ghost = true;
+                        }
                         break 'project_down;
                     } else if !self.matrix[1 + pos.0 as usize][pos.1 as usize].empty {
                         if self.matrix[1 + pos.0 as usize][pos.1 as usize].active {
@@ -437,7 +441,9 @@ impl BoardClassic {
                                 break 'project_down;
                             }
                         } else {
-                            ghost_highlight_positions.push(projection);
+                            for p in projection.iter().take(4) {
+                                self.matrix[p.0 as usize][p.1 as usize].ghost = true;
+                            }
                             break 'project_down;
                         }
                     }
@@ -447,15 +453,13 @@ impl BoardClassic {
                 }
             }
         }
-
-        ghost_highlight_positions
     }
 
     // returns (bool, bool) based on (blocked, blocked by some !active tile)
     pub fn attempt_piece_spawn(
         &mut self,
         player: u8,
-        spawn_col: BoardPos,
+        spawn_col: BoardIdx,
         spawn_piece_shape: Shapes,
     ) -> (bool, bool) {
         let new_piece = Piece::new(spawn_piece_shape);
@@ -515,7 +519,7 @@ impl BoardClassic {
             if movement == Movement::Down && self.should_lock(player) {
                 // lock piece and push any full lines to vec_full_lines
                 self.vec_active_piece[player as usize].shape = Shapes::None;
-                let mut full_line_rows: Vec<BoardPos> = Vec::with_capacity(4);
+                let mut full_line_rows: Vec<BoardIdx> = Vec::with_capacity(4);
                 for row in &self.lock_piece(player) {
                     if self.is_row_full(*row) {
                         full_line_rows.push(*row);
@@ -581,7 +585,7 @@ impl BoardClassic {
     }
 
     // returns y position(s) of the locked piece to test if it filled a line
-    fn lock_piece(&mut self, player: u8) -> Vec<BoardPos> {
+    fn lock_piece(&mut self, player: u8) -> Vec<BoardIdx> {
         for position in self.vec_active_piece[player as usize]
             .positions
             .iter()
@@ -591,7 +595,7 @@ impl BoardClassic {
             self.matrix[position.0 as usize][position.1 as usize].active = false;
         }
 
-        let mut y_vals: Vec<BoardPos> = vec![self.vec_active_piece[player as usize].positions[0].0];
+        let mut y_vals: Vec<BoardIdx> = vec![self.vec_active_piece[player as usize].positions[0].0];
         if self.vec_active_piece[player as usize].positions[1].0
             != self.vec_active_piece[player as usize].positions[0].0
         {
@@ -617,7 +621,7 @@ impl BoardClassic {
         y_vals
     }
 
-    fn is_row_full(&self, row: BoardPos) -> bool {
+    fn is_row_full(&self, row: BoardIdx) -> bool {
         for tile in &self.matrix[row as usize] {
             if tile.empty || tile.active {
                 return false;
@@ -742,7 +746,7 @@ impl BoardClassic {
 
 #[derive(Ord, Eq, PartialOrd, PartialEq)]
 pub struct FullLine {
-    pub row: BoardPos,
+    pub row: BoardIdx,
     pub lines_cleared_together: BoardDim,
     pub player: u8,
     pub clear_delay: i8,
@@ -750,7 +754,7 @@ pub struct FullLine {
 }
 
 impl FullLine {
-    pub fn new(row: BoardPos, lines_cleared_together: BoardDim, player: u8) -> Self {
+    pub fn new(row: BoardIdx, lines_cleared_together: BoardDim, player: u8) -> Self {
         Self {
             row,
             lines_cleared_together,
@@ -765,13 +769,13 @@ impl FullLine {
 pub struct BoardRotatris {
     pub gravity: Gravity,
     pub board_size: BoardDim,
-    pub spawn_row: BoardPos,
+    pub spawn_row: BoardIdx,
     pub matrix: Vec<Vec<Tile>>,
     pub vec_active_piece: Vec<Piece>,
 }
 
 impl BoardRotatris {
-    pub fn new(board_size: BoardDim, spawn_row: BoardPos, num_players: u8) -> Self {
+    pub fn new(board_size: BoardDim, spawn_row: BoardIdx, num_players: u8) -> Self {
         let mut vec_active_piece: Vec<Piece> = Vec::with_capacity(num_players as usize);
         for _ in 0..num_players {
             vec_active_piece.push(Piece::new(Shapes::None));
@@ -803,8 +807,8 @@ impl BoardRotatris {
         }
     }
 
-    pub fn get_ghost_highlight_positions(&self) -> Vec<[(BoardPos, BoardPos); 4]> {
-        let mut ghost_highlight_positions: Vec<[(BoardPos, BoardPos); 4]> = vec![];
+    pub fn get_ghost_highlight_positions(&self) -> Vec<[(BoardIdx, BoardIdx); 4]> {
+        let mut ghost_highlight_positions: Vec<[(BoardIdx, BoardIdx); 4]> = vec![];
 
         let piece_projection_movement: (isize, isize) = match self.gravity {
             Gravity::Down => (1, 0),
@@ -820,7 +824,7 @@ impl BoardRotatris {
             if piece.shape == Shapes::None {
                 continue;
             }
-            let mut projection: [(BoardPos, BoardPos); 4] = piece.positions;
+            let mut projection: [(BoardIdx, BoardIdx); 4] = piece.positions;
             'project_gravity_direction: loop {
                 for pos in projection.iter().take(4) {
                     if pos.0 as isize + piece_projection_movement.0 >= self.board_size as isize
@@ -852,8 +856,8 @@ impl BoardRotatris {
                     }
                 }
                 for pos in projection.iter_mut().take(4) {
-                    pos.0 += piece_projection_movement.0 as BoardPos;
-                    pos.1 += piece_projection_movement.1 as BoardPos;
+                    pos.0 += piece_projection_movement.0 as BoardIdx;
+                    pos.1 += piece_projection_movement.1 as BoardIdx;
                 }
             }
         }
@@ -863,9 +867,9 @@ impl BoardRotatris {
 
     // return bool is if rotate was successful
     pub fn attempt_rotate_board(&mut self, rotate_direction: Movement) -> bool {
-        let center: BoardPos = self.board_size / 2;
-        let is_center_even: BoardPos = (self.board_size + 1) % 2;
-        let mut new_positions: [(BoardPos, BoardPos); 4] = [(0, 0); 4];
+        let center: BoardIdx = self.board_size / 2;
+        let is_center_even: BoardIdx = (self.board_size + 1) % 2;
+        let mut new_positions: [(BoardIdx, BoardIdx); 4] = [(0, 0); 4];
         match rotate_direction {
             Movement::RotateCw => {
                 for (index, position) in self.vec_active_piece[0]
@@ -1009,7 +1013,7 @@ impl BoardRotatris {
     pub fn attempt_piece_spawn(
         &mut self,
         player: u8,
-        spawn_col: BoardPos,
+        spawn_col: BoardIdx,
         spawn_piece_shape: Shapes,
     ) -> (bool, bool) {
         let new_piece = Piece::new(spawn_piece_shape);
@@ -1038,7 +1042,7 @@ impl BoardRotatris {
     }
 
     // returns ring(s) of the locked piece to test if it filled a line
-    fn lock_piece(&mut self, player: u8) -> Vec<BoardPos> {
+    fn lock_piece(&mut self, player: u8) -> Vec<BoardIdx> {
         for position in self.vec_active_piece[player as usize]
             .positions
             .iter()
@@ -1048,7 +1052,7 @@ impl BoardRotatris {
             self.matrix[position.0 as usize][position.1 as usize].active = false;
         }
 
-        let rings_with_repeat: [BoardPos; 4] = [
+        let rings_with_repeat: [BoardIdx; 4] = [
             self.find_ring_from_pos(
                 self.vec_active_piece[player as usize].positions[0].0,
                 self.vec_active_piece[player as usize].positions[0].1,
@@ -1067,7 +1071,7 @@ impl BoardRotatris {
             ),
         ];
 
-        let mut rings: Vec<BoardPos> = vec![rings_with_repeat[0]];
+        let mut rings: Vec<BoardIdx> = vec![rings_with_repeat[0]];
         if rings_with_repeat[0] != rings_with_repeat[1] {
             rings.push(rings_with_repeat[1]);
         }
@@ -1086,7 +1090,7 @@ impl BoardRotatris {
         rings
     }
 
-    fn find_ring_from_pos(&self, y: BoardPos, x: BoardPos) -> BoardPos {
+    fn find_ring_from_pos(&self, y: BoardIdx, x: BoardIdx) -> BoardIdx {
         std::cmp::min(
             std::cmp::min(x, self.board_size - x - 1),
             std::cmp::min(y, self.board_size - y - 1),
@@ -1201,7 +1205,7 @@ impl BoardRotatris {
         (num_cleared_rings, score_from_cleared_rings)
     }
 
-    fn rotatris_check_single_ring(&mut self, z: BoardPos) -> bool {
+    fn rotatris_check_single_ring(&mut self, z: BoardIdx) -> bool {
         let min = std::cmp::min(z, self.board_size - z);
         let max = std::cmp::max(z, self.board_size - z);
         for a in [min, max - 1].iter() {
@@ -1221,7 +1225,7 @@ impl BoardRotatris {
         true
     }
 
-    fn rotatris_pull_single_ring_out(&mut self, j: BoardPos) {
+    fn rotatris_pull_single_ring_out(&mut self, j: BoardIdx) {
         let j = j as usize;
         let k = self.board_size as usize - j - 1;
 
@@ -1243,7 +1247,7 @@ impl BoardRotatris {
         self.matrix[k + 1][k + 1] = self.matrix[k][k];
     }
 
-    fn emptify_single_ring(&mut self, z: BoardPos) {
+    fn emptify_single_ring(&mut self, z: BoardIdx) {
         for a in [z, self.board_size - z - 1].iter() {
             for b in z..(self.board_size - z) {
                 if b >= z && b <= self.board_size - z {
