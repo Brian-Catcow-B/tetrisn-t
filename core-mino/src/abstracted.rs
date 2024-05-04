@@ -1,9 +1,26 @@
 use crate::game::board;
 use crate::game::board::BoardDim;
-use crate::game::player::PlayerIdx;
 use crate::game::tile::Tile;
 
 pub type KeyCode = u64;
+pub type GamepadId = u64;
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub enum Button {
+    DPadLeft,
+    DPadRight,
+    DPadDown,
+    East,
+    South,
+    North,
+    West,
+    Start,
+}
+pub type AxisValue = f64;
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub enum Axis {
+    LeftStickX,
+    LeftStickY,
+}
 
 pub enum PlacementX {
     FlushLeft,
@@ -29,8 +46,22 @@ pub enum Size {
     VeryLarge,
 }
 
+#[derive(PartialEq, Eq)]
+pub enum TextColor {
+    White,
+    Black,
+    Green,
+}
+
+#[derive(PartialEq, Eq)]
+pub enum LayoutDirection {
+    LeftRight,
+    UpDown,
+}
+
 pub struct TextArray {
     pub strings: Vec<String>,
+    pub colors: Vec<TextColor>,
     pub placement: (PlacementX, PlacementY),
     pub size: Size,
     pub active: bool,
@@ -40,7 +71,8 @@ pub struct TextArray {
 impl TextArray {
     pub fn new(
         strings: Vec<String>,
-        placement: &(PlacementX, PlacementY),
+        colors: Vec<TextColor>,
+        placement: (PlacementX, PlacementY),
         size: Size,
         active: bool,
     ) -> Self {
@@ -48,25 +80,34 @@ impl TextArray {
             strings,
             placement,
             size,
+            color,
             active,
             needs_redraw: active,
         }
     }
 
-    pub fn change_string(&mut self, index: usize, text: String) {
-        self.strings[index] = strings;
-        self.needs_redraw = true;
+    pub fn change_string(&mut self, index: usize, string: String) {
+        self.strings[index] = string;
+        self.needs_redraw = self.active;
     }
 
-    pub fn add_string(&mut self, text: String) {
-        self.strings.push(text);
-        self.needs_redraw = true;
+    pub fn add_string(&mut self, string: String, color: TextColor) {
+        self.strings.push(string);
+        self.colors.push(color);
+        self.needs_redraw = self.active;
+    }
+
+    pub fn change_color(&mut self, index: usize, color: TextColor) {
+        if self.colors[index] != color {
+            self.colors[index] = color;
+            self.needs_redraw = self.active;
+        }
     }
 
     pub fn set_active_state(&mut self, active: bool) {
         if self.active != active {
-            self.needs_redraw = active;
             self.active = active;
+            self.needs_redraw = true;
         }
     }
 }
@@ -89,7 +130,7 @@ impl Default for DrawBoard {
     }
 }
 
-impl From<board::BoardClassic> for DrawBoard {
+impl From<&board::BoardClassic> for DrawBoard {
     fn from(board: &board::BoardClassic) -> Self {
         let mut draw_board = DrawBoard::default();
         for y in 0..board.height {

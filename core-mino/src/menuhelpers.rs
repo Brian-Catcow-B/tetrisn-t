@@ -1,7 +1,7 @@
-use ggez::graphics::{self, Color, Font, PxScale, Text, TextFragment};
-
 use crate::game::inputs::KeyboardControlScheme;
 use crate::game::{GameMode, GameSettings};
+
+use crate::abstracted;
 
 pub const MAX_STARTING_LEVEL: u8 = 29; // this is just the fastest speed, so yeah
 pub const MAX_NUM_PLAYERS: u8 = 64; // num_players being u8 technically caps this at 255
@@ -62,7 +62,7 @@ pub struct MenuItem {
     min_value: u8,
     num_values: u8,
     value_show_increase: u8,
-    pub keycode: Option<KeyCode>,
+    pub keycode: Option<abstracted::KeyCode>,
     pub trigger: MenuItemTrigger,
     selected: bool,
     value_type: MenuItemValueType,
@@ -175,7 +175,7 @@ impl MenuItem {
     pub fn new_keycodevalue(
         title: &str,
         id: u8,
-        opt_start_keycode: Option<KeyCode>,
+        opt_start_keycode: Option<abstracted::KeyCode>,
         trigger: MenuItemTrigger,
         window_height: f32,
         text_scale_down: f32,
@@ -290,7 +290,7 @@ impl MenuItem {
         }
     }
 
-    pub fn set_keycode(&mut self, keycode: Option<KeyCode>) {
+    pub fn set_keycode(&mut self, keycode: Option<abstracted::KeyCode>) {
         self.keycode = keycode;
         match self.keycode {
             Some(key) => self.text.fragments_mut()[1].text = format!("{:?}", key),

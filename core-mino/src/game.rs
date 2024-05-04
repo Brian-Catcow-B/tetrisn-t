@@ -1,11 +1,7 @@
-use ggez::event::{Axis, Button, GamepadId};
-use ggez::graphics::{self, spritebatch, DrawParam};
-use ggez::graphics::{Text, TextFragment};
-use ggez::Context;
-
-use ggez::mint::{Point2, Vector2};
-
 use rand::random;
+
+pub mod inputs;
+pub mod tile;
 
 pub mod movement;
 use movement::Movement;
@@ -13,19 +9,15 @@ use movement::CONVERSION_FAILED_MOVEMENT_FROM_U8;
 
 use std::convert::TryFrom;
 
-mod player;
-use crate::game::player::{Player, SPAWN_DELAY};
-
-mod tile;
-use crate::game::tile::TileGraphic;
-use crate::game::tile::NUM_PIXEL_ROWS_PER_TILEGRAPHIC;
+pub mod player;
+use crate::game::player::{Player, PlayerIdx, SPAWN_DELAY};
 
 mod piece;
 use crate::game::piece::{NextPiece, Shapes};
 
 pub mod board;
 use crate::game::board::BoardHandler;
-use crate::game::board::{BoardDim, BoardPos, BOARD_HEIGHT, ROTATRIS_BOARD_SIDE_LENGTH};
+use crate::game::board::{BoardDim, BoardIdx, BOARD_HEIGHT, ROTATRIS_BOARD_SIDE_LENGTH};
 
 use crate::abstracted;
 use crate::game::inputs::KeyboardControlScheme;
@@ -238,7 +230,7 @@ pub struct Game {
     num_players: u8,
     vec_players: Vec<Player>,
     vec_next_piece: Vec<NextPiece>,
-    vec_gamepad_id_map_to_player: Vec<(Option<GamepadId>, u8)>,
+    vec_gamepad_id_map_to_player: Vec<(Option<abstracted::GamepadId>, u8)>,
     num_gamepads_to_initialize: u8,
     level: u8,
     starting_level: u8,
@@ -251,22 +243,21 @@ pub struct Game {
     game_over_flag: bool,
     game_over_delay: i8,
     determine_ghost_tile_locations: bool,
+    // input
+    esc_key: Option<abstracted::KeyCode>,
+    down_key: Option<abstracted::KeyCode>,
     // drawing
-    tile_size: f32,
-    batch_empty_tile: spritebatch::SpriteBatch,
-    batch_highlight_active_tile: spritebatch::SpriteBatch,
-    batch_highlight_clearing_standard_tile: spritebatch::SpriteBatch,
-    batch_highlight_clearing_tetrisnt_tile: spritebatch::SpriteBatch,
-    batch_highlight_ghost_tile: spritebatch::SpriteBatch,
-    vec_batch_player_piece: Vec<spritebatch::SpriteBatch>,
-    vec_batch_next_piece: Vec<spritebatch::SpriteBatch>,
     game_info_text: abstracted::TextArray,
     pause_text: abstracted::TextArray,
     game_over_text: abstracted::TextArray,
 }
 
 impl Game {
-    pub fn new(ctx: &mut Context, game_options: &GameOptions) -> Game {
+    pub fn new(
+        game_options: &GameOptions,
+        esc_key: Option<abstracted::KeyCode>,
+        down_key: Option<abstracted::KeyCode>,
+    ) -> Game {
         let mode = game_options.game_mode;
         let board_width: BoardDim = match mode {
             GameMode::None => unreachable!("{}", GAME_MODE_NONE),
@@ -284,7 +275,7 @@ impl Game {
         };
         let num_players = game_options.num_players;
         let bh = BoardHandler::new(board_width, board_height, num_players, mode);
-        let spawn_columns: Vec<BoardPos> = bh.get_spawn_columns();
+        let spawn_columns: Vec<BoardIdx> = bh.get_spawn_columns();
         let mut vec_players: Vec<Player> = Vec::with_capacity(game_options.num_players as usize);
         for player_index in 0..num_players {
             // control_scheme; we need to create a copy of game_options.vec_controls, but to do that,
@@ -300,27 +291,14 @@ impl Game {
                 spawn_columns[player_index as usize],
             ));
         }
-        let mut batch_empty_tile = spritebatch::SpriteBatch::new(TileGraphic::new_empty().image);
-        // the emtpy tile batch will be constant once the game starts with
-        // the player tile batches drawing on top of it, so just set that up here
-        for x in 0..board_width {
-            for y in 0..board_height as usize {
-                // empty tiles
-                let empty_tile = graphics::DrawParam::new().dest(Point2::from_slice(&[
-                    x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                    y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                ]));
-                batch_empty_tile.add(empty_tile);
-            }
-        }
         let mut vec_next_piece: Vec<NextPiece> =
             Vec::with_capacity(game_options.num_players as usize);
-        let mut vec_gamepad_id_map_to_player: Vec<(Option<GamepadId>, u8)>;
-        let mut temp_vec: Vec<(Option<GamepadId>, u8)> = vec![];
-        let mut num_gamepads_to_initialize: u8 = 0;
+        let mut vec_gamepad_id_map_to_player: Vec<(Option<abstracted::GamepadId>, PlayerIdx)>;
+        let mut temp_vec: Vec<(Option<abstracted::GamepadId>, PlayerIdx)> = vec![];
+        let mut num_gamepads_to_initialize: PlayerIdx = 0;
         for (idx, controls) in game_options.vec_controls.iter().enumerate() {
             if controls.1 {
-                temp_vec.push((None, idx as u8));
+                temp_vec.push((None, idx as PlayerIdx));
                 num_gamepads_to_initialize += 1;
             }
         }
@@ -330,19 +308,8 @@ impl Game {
         } else {
             vec_gamepad_id_map_to_player = Vec::with_capacity(1);
         }
-        // for 1 player we have 3 sprite batches for player pieces because we have different color pieces
-        let mut vec_batch_player_piece: Vec<spritebatch::SpriteBatch> =
-            Vec::with_capacity(std::cmp::max(game_options.num_players as usize, 3));
-        let mut vec_batch_next_piece: Vec<spritebatch::SpriteBatch> =
-            Vec::with_capacity(std::cmp::max(game_options.num_players as usize, 3));
-        for player in 0..std::cmp::max(game_options.num_players as usize, 3) {
+        for player in 0..game_options.num_players {
             vec_next_piece.push(NextPiece::new(Shapes::None));
-            vec_batch_player_piece.push(spritebatch::SpriteBatch::new(
-                TileGraphic::new_player(player as u8).image,
-            ));
-            vec_batch_next_piece.push(spritebatch::SpriteBatch::new(
-                TileGraphic::new_player(player as u8).image,
-            ));
         }
         let mut game_info_text = abstracted::TextArray::new(
             vec![],
@@ -382,9 +349,8 @@ impl Game {
             false,
         );
 
-        let (window_width, window_height) = graphics::size(ctx);
-
         Self {
+            // logic
             bh,
             num_players,
             vec_players,
@@ -402,27 +368,10 @@ impl Game {
             game_over_flag: false,
             game_over_delay: GAME_OVER_DELAY,
             determine_ghost_tile_locations: game_options.settings.ghost_pieces_state,
-            tile_size: TileGraphic::get_size(
-                window_width,
-                window_height,
-                board_width,
-                board_height + NON_BOARD_SPACE_U + NON_BOARD_SPACE_D,
-            ),
-            batch_empty_tile,
-            batch_highlight_active_tile: spritebatch::SpriteBatch::new(
-                TileGraphic::new_active_highlight().image,
-            ),
-            batch_highlight_clearing_standard_tile: spritebatch::SpriteBatch::new(
-                TileGraphic::new_clear_standard_highlight().image,
-            ),
-            batch_highlight_clearing_tetrisnt_tile: spritebatch::SpriteBatch::new(
-                TileGraphic::new_clear_tetrisnt_highlight().image,
-            ),
-            batch_highlight_ghost_tile: spritebatch::SpriteBatch::new(
-                TileGraphic::new_ghost_highlight().image,
-            ),
-            vec_batch_player_piece,
-            vec_batch_next_piece,
+            // input
+            esc_key,
+            down_key,
+            // drawing
             game_info_text,
             pause_text,
             game_over_text,
@@ -735,12 +684,12 @@ impl Game {
         self.keycode_escape_flags.1 = false;
     }
 
-    pub fn key_down_event(&mut self, keycode: KeyCode, repeat: bool) {
+    pub fn key_down_event(&mut self, keycode: abstracted::KeyCode, repeat: bool) {
         if !repeat {
-            if keycode == KeyCode::Escape {
+            if Some(keycode) == self.esc_key {
                 self.keycode_escape_flags = (true, true);
                 return;
-            } else if keycode == KeyCode::Down {
+            } else if Some(keycode) == self.down_key {
                 self.keycode_down_flags = (true, true);
             }
             for player in &mut self.vec_players {
@@ -751,11 +700,11 @@ impl Game {
         }
     }
 
-    pub fn key_up_event(&mut self, keycode: KeyCode) {
-        if keycode == KeyCode::Escape {
+    pub fn key_up_event(&mut self, keycode: abstracted::KeyCode) {
+        if Some(keycode) == self.esc_key {
             self.keycode_escape_flags = (false, false);
             return;
-        } else if keycode == KeyCode::Down {
+        } else if Some(keycode) == self.down_key {
             self.keycode_down_flags = (false, false);
             return;
         }
@@ -766,7 +715,11 @@ impl Game {
         }
     }
 
-    pub fn gamepad_button_down_event(&mut self, btn: Button, id: GamepadId) {
+    pub fn gamepad_button_down_event(
+        &mut self,
+        btn: abstracted::Button,
+        id: abstracted::GamepadId,
+    ) {
         for map in self.vec_gamepad_id_map_to_player.iter() {
             if Some(id) == map.0 {
                 self.vec_players[map.1 as usize].update_input_buttondown(btn);
@@ -789,7 +742,7 @@ impl Game {
         }
     }
 
-    pub fn gamepad_button_up_event(&mut self, btn: Button, id: GamepadId) {
+    pub fn gamepad_button_up_event(&mut self, btn: abstracted::Button, id: abstracted::GamepadId) {
         for map in self.vec_gamepad_id_map_to_player.iter() {
             if Some(id) == map.0 {
                 self.vec_players[map.1 as usize].update_input_buttonup(btn);
@@ -812,7 +765,12 @@ impl Game {
         }
     }
 
-    pub fn gamepad_axis_event(&mut self, axis: Axis, value: f32, id: GamepadId) {
+    pub fn gamepad_axis_event(
+        &mut self,
+        axis: abstracted::Axis,
+        value: f32,
+        id: abstracted::GamepadId,
+    ) {
         for map in self.vec_gamepad_id_map_to_player.iter() {
             if Some(id) == map.0 {
                 self.vec_players[map.1 as usize].update_input_axis(axis, value);
@@ -835,15 +793,6 @@ impl Game {
                 }
             }
         }
-    }
-
-    pub fn resize_event(&mut self, width: f32, height: f32) {
-        self.tile_size = TileGraphic::get_size(
-            width,
-            height,
-            self.bh.get_width(),
-            self.bh.get_height() + NON_BOARD_SPACE_U + NON_BOARD_SPACE_D,
-        );
     }
 
     pub fn focus_event(&mut self, gained: bool) {

@@ -1,6 +1,5 @@
 use crate::game::board::BoardDim;
 use crate::game::player::PlayerIdx;
-use crate::game::Shapes;
 
 pub const NUM_PIXEL_ROWS_PER_TILEGRAPHIC: u16 = 8u16;
 
@@ -157,7 +156,7 @@ impl TileGraphic {
         // create a buffer of (u8, u8, u8, u8), because rgba, big enough to hold each pixel
         let mut rgba_buf: Vec<(u8, u8, u8, u8)> = Vec::new();
         rgba_buf.resize(
-            NUM_PIXEL_ROWS_PER_TILEGRAPHIC * NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
+            (NUM_PIXEL_ROWS_PER_TILEGRAPHIC * NUM_PIXEL_ROWS_PER_TILEGRAPHIC) as usize,
             GRAY,
         );
         for row_index in &[0, NUM_PIXEL_ROWS_PER_TILEGRAPHIC - 1] {

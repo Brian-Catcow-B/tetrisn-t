@@ -1,4 +1,4 @@
-use crate::game::board::{BoardDim, BoardPos, Gravity};
+use crate::game::board::{BoardDim, BoardIdx, Gravity};
 use crate::game::movement::Movement;
 
 use std::convert::TryFrom;
@@ -36,10 +36,10 @@ impl TryFrom<u8> for Shapes {
 #[derive(Copy, Clone)]
 pub struct Piece {
     pub shape: Shapes,
-    pub positions: [(BoardPos, BoardPos); 4],
+    pub positions: [(BoardIdx, BoardIdx); 4],
     pub rotation: u8, // 0, 1, 2, 3: 0, 90, 180, 270; CW
     pub num_rotations: u8,
-    pivot: BoardPos,
+    pivot: BoardIdx,
 }
 
 impl Piece {
@@ -169,11 +169,11 @@ impl Piece {
 
     pub fn spawn_pos(
         &self,
-        spawn_column: BoardPos,
-        spawn_row: BoardPos,
+        spawn_column: BoardIdx,
+        spawn_row: BoardIdx,
         board_height_buffer: BoardDim,
         current_gravity: Gravity,
-    ) -> [(BoardPos, BoardPos); 4] {
+    ) -> [(BoardIdx, BoardIdx); 4] {
         let mut piece_copy = Self::new(self.shape);
         piece_copy.positions = match piece_copy.shape {
             Shapes::None => {
@@ -262,7 +262,7 @@ impl Piece {
     }
 
     // returns the resulting positions based on the given Movement type
-    pub fn piece_pos(&self, movement: Movement) -> [(BoardPos, BoardPos); 4] {
+    pub fn piece_pos(&self, movement: Movement) -> [(BoardIdx, BoardIdx); 4] {
         // for movements and rotations, we don't have to worry about integer underflow because we will assume the board width is nowhere close to 0xff
         if movement == Movement::None {
             self.positions
@@ -328,7 +328,7 @@ impl Piece {
         }
     }
 
-    fn rotate(&self, clockwise_flag: bool) -> [(BoardPos, BoardPos); 4] {
+    fn rotate(&self, clockwise_flag: bool) -> [(BoardIdx, BoardIdx); 4] {
         if self.pivot > 3 {
             println!("[!] tried to rotate piece with pivot fields {}", self.pivot);
             return self.positions;
@@ -390,7 +390,7 @@ impl Piece {
         }
     }
 
-    fn double_rotate(&self) -> [(BoardPos, BoardPos); 4] {
+    fn double_rotate(&self) -> [(BoardIdx, BoardIdx); 4] {
         if self.pivot > 3 {
             println!("[!] tried to rotate piece with pivot fields {}", self.pivot);
             return self.positions;

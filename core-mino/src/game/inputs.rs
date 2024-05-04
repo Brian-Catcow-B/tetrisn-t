@@ -1,5 +1,5 @@
-use crate::movement::Movement;
-use ggez::event::KeyCode;
+use crate::abstracted;
+use crate::game::movement::Movement;
 
 // (is pressed down, was pressed this frame)
 pub struct Input {
@@ -86,12 +86,12 @@ impl Input {
 
 #[derive(Clone, Default)]
 pub struct KeyboardControlScheme {
-    pub vec_keycode_movement_pair: Vec<(KeyCode, Movement)>,
+    pub vec_keycode_movement_pair: Vec<(abstracted::KeyCode, Movement)>,
 }
 
 impl KeyboardControlScheme {
     pub fn copy(&self) -> Self {
-        let mut copy_vec_keycode_movement_pair: Vec<(KeyCode, Movement)> =
+        let mut copy_vec_keycode_movement_pair: Vec<(abstracted::KeyCode, Movement)> =
             Vec::with_capacity(self.vec_keycode_movement_pair.capacity());
         for item in self.vec_keycode_movement_pair.iter() {
             copy_vec_keycode_movement_pair.push(*item);
@@ -114,11 +114,11 @@ impl KeyboardControlScheme {
     }
 
     pub fn new_classic(
-        left: KeyCode,
-        right: KeyCode,
-        down: KeyCode,
-        rotate_cw: KeyCode,
-        rotate_ccw: KeyCode,
+        left: abstracted::KeyCode,
+        right: abstracted::KeyCode,
+        down: abstracted::KeyCode,
+        rotate_cw: abstracted::KeyCode,
+        rotate_ccw: abstracted::KeyCode,
     ) -> Self {
         Self {
             vec_keycode_movement_pair: vec![
@@ -132,13 +132,13 @@ impl KeyboardControlScheme {
     }
 
     pub fn new_rotatris(
-        left: KeyCode,
-        right: KeyCode,
-        down: KeyCode,
-        rotate_cw: KeyCode,
-        rotate_ccw: KeyCode,
-        rotate_board_cw: KeyCode,
-        rotate_board_ccw: KeyCode,
+        left: abstracted::KeyCode,
+        right: abstracted::KeyCode,
+        down: abstracted::KeyCode,
+        rotate_cw: abstracted::KeyCode,
+        rotate_ccw: abstracted::KeyCode,
+        rotate_board_cw: abstracted::KeyCode,
+        rotate_board_ccw: abstracted::KeyCode,
     ) -> Self {
         Self {
             vec_keycode_movement_pair: vec![
@@ -153,7 +153,7 @@ impl KeyboardControlScheme {
         }
     }
 
-    pub fn keycode_from_movement(&self, m: Movement) -> Option<KeyCode> {
+    pub fn keycode_from_movement(&self, m: Movement) -> Option<abstracted::KeyCode> {
         for pair in self.vec_keycode_movement_pair.iter() {
             if pair.1 == m {
                 return Some(pair.0);
@@ -163,7 +163,7 @@ impl KeyboardControlScheme {
         None
     }
 
-    pub fn movement_from_keycode(&self, k: KeyCode) -> Option<Movement> {
+    pub fn movement_from_keycode(&self, k: abstracted::KeyCode) -> Option<Movement> {
         for pair in self.vec_keycode_movement_pair.iter() {
             if pair.0 == k {
                 return Some(pair.1);
@@ -173,7 +173,7 @@ impl KeyboardControlScheme {
         None
     }
 
-    pub fn add_pair(&mut self, k: KeyCode, m: Movement) {
+    pub fn add_pair(&mut self, k: abstracted::KeyCode, m: Movement) {
         self.vec_keycode_movement_pair.push((k, m));
     }
 }

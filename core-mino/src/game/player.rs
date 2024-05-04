@@ -1,7 +1,8 @@
-use ggez::event::{Axis, Button, KeyCode};
 use rand::random;
 
-use crate::game::board::BoardPos;
+use crate::abstracted;
+
+use crate::game::board::BoardIdx;
 use crate::game::inputs::{Input, KeyboardControlScheme};
 use crate::game::movement::Movement;
 use crate::game::piece::Shapes;
@@ -20,7 +21,7 @@ pub struct Player {
     axis_wait_for_unpress_y: bool,
     pub input: Input,
     pub spawn_piece_flag: bool,
-    pub spawn_column: BoardPos,
+    pub spawn_column: BoardIdx,
     pub spawn_delay: i16,
     pub next_piece_shape: Shapes,
     pub redraw_next_piece_flag: bool,
@@ -34,7 +35,7 @@ impl Player {
     pub fn new(
         player_num: PlayerIdx,
         control_scheme: (Option<KeyboardControlScheme>, bool),
-        spawn_column: BoardPos,
+        spawn_column: BoardIdx,
     ) -> Self {
         Self {
             player_num,
@@ -74,7 +75,7 @@ impl Player {
         false
     }
 
-    pub fn update_input_keydown(&mut self, input: KeyCode) -> bool {
+    pub fn update_input_keydown(&mut self, input: abstracted::KeyCode) -> bool {
         if let Some(k_ctrl_scheme) = &self.control_scheme.0 {
             let movement_opt = k_ctrl_scheme.movement_from_keycode(input);
             if let Some(movement) = movement_opt {
@@ -139,7 +140,7 @@ impl Player {
         false
     }
 
-    pub fn update_input_keyup(&mut self, input: KeyCode) -> bool {
+    pub fn update_input_keyup(&mut self, input: abstracted::KeyCode) -> bool {
         if let Some(k_ctrl_scheme) = &self.control_scheme.0 {
             let movement_opt = k_ctrl_scheme.movement_from_keycode(input);
             if let Some(movement) = movement_opt {
@@ -194,60 +195,60 @@ impl Player {
         false
     }
 
-    pub fn update_input_buttondown(&mut self, btn: Button) {
-        if btn == Button::DPadLeft {
+    pub fn update_input_buttondown(&mut self, btn: abstracted::Button) {
+        if btn == abstracted::Button::DPadLeft {
             self.input.keydown_left = (true, true);
             self.input.keydown_right = (false, false);
-        } else if btn == Button::DPadRight {
+        } else if btn == abstracted::Button::DPadRight {
             self.input.keydown_right = (true, true);
             self.input.keydown_left = (false, false);
-        } else if btn == Button::DPadDown {
+        } else if btn == abstracted::Button::DPadDown {
             self.input.keydown_down = (true, true);
-        } else if btn == Button::East {
+        } else if btn == abstracted::Button::East {
             self.input.keydown_rotate_cw = (true, true);
-        } else if btn == Button::South {
+        } else if btn == abstracted::Button::South {
             self.input.keydown_rotate_ccw = (true, true);
-        } else if btn == Button::North {
+        } else if btn == abstracted::Button::North {
             self.input.keydown_board_cw = (true, true);
-        } else if btn == Button::West {
+        } else if btn == abstracted::Button::West {
             self.input.keydown_board_ccw = (true, true);
-        } else if btn == Button::Start {
+        } else if btn == abstracted::Button::Start {
             self.input.keydown_start = (true, true);
         }
     }
 
-    pub fn update_input_buttonup(&mut self, btn: Button) {
-        if btn == Button::DPadLeft {
+    pub fn update_input_buttonup(&mut self, btn: abstracted::Button) {
+        if btn == abstracted::Button::DPadLeft {
             // for auto-shift reasons
             if self.input.keydown_left.0 {
                 self.das_countdown = DAS_THRESHOLD_BIG;
                 self.waiting_to_shift = false;
             }
             self.input.keydown_left = (false, false);
-        } else if btn == Button::DPadRight {
+        } else if btn == abstracted::Button::DPadRight {
             // for auto-shift reasons
             if self.input.keydown_right.0 {
                 self.das_countdown = DAS_THRESHOLD_BIG;
                 self.waiting_to_shift = false;
             }
             self.input.keydown_right = (false, false);
-        } else if btn == Button::DPadDown {
+        } else if btn == abstracted::Button::DPadDown {
             self.input.keydown_down = (false, false);
-        } else if btn == Button::East {
+        } else if btn == abstracted::Button::East {
             self.input.keydown_rotate_cw = (false, false);
-        } else if btn == Button::South {
+        } else if btn == abstracted::Button::South {
             self.input.keydown_rotate_ccw = (false, false);
-        } else if btn == Button::North {
+        } else if btn == abstracted::Button::North {
             self.input.keydown_board_cw = (false, false);
-        } else if btn == Button::West {
+        } else if btn == abstracted::Button::West {
             self.input.keydown_board_ccw = (false, false);
-        } else if btn == Button::Start {
+        } else if btn == abstracted::Button::Start {
             self.input.keydown_start = (false, false);
         }
     }
 
-    pub fn update_input_axis(&mut self, axis: Axis, value: f32) {
-        if axis == Axis::LeftStickX {
+    pub fn update_input_axis(&mut self, axis: abstracted::Axis, value: f32) {
+        if axis == abstracted::Axis::LeftStickX {
             // left and right
             if !self.axis_wait_for_unpress_x && value < -DETECT_GAMEPAD_AXIS_THRESHOLD {
                 // press left
@@ -270,7 +271,7 @@ impl Player {
                 self.input.keydown_left = (false, false);
                 self.input.keydown_right = (false, false);
             }
-        } else if axis == Axis::LeftStickY {
+        } else if axis == abstracted::Axis::LeftStickY {
             // down
             if !self.axis_wait_for_unpress_y && value < -DETECT_GAMEPAD_AXIS_THRESHOLD {
                 // press down

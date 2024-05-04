@@ -196,18 +196,6 @@ impl BoardHandler {
         }
     }
 
-    pub fn get_shape_from_pos(&mut self, y: BoardIdx, x: BoardIdx) -> Shapes {
-        match self.mode {
-            GameMode::None => unreachable!("{}", BH_MODE_NONE),
-            GameMode::Classic => {
-                self.classic.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].shape
-            }
-            GameMode::Rotatris => {
-                self.rotatris.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].shape
-            }
-        }
-    }
-
     pub fn get_shape_from_player(&mut self, player: u8) -> Shapes {
         match self.mode {
             GameMode::None => unreachable!("{}", BH_MODE_NONE),
@@ -237,7 +225,7 @@ impl BoardHandler {
             GameMode::None => unreachable!("{}", BH_MODE_NONE),
             GameMode::Classic => self
                 .classic
-                .as_mut_ref()
+                .as_mut()
                 .expect(BH_WRONG_MODE)
                 .update_ghost_highlight_positions(),
             GameMode::Rotatris => {}
@@ -402,12 +390,8 @@ impl BoardClassic {
             .take(4)
         {
             if position != &(0xff, 0xff) {
-                self.matrix[position.0 as usize][position.1 as usize] = Tile::new(
-                    false,
-                    true,
-                    player,
-                    self.vec_active_piece[player as usize].shape,
-                );
+                self.matrix[position.0 as usize][position.1 as usize] =
+                    Tile::new(false, true, false, player);
             } else {
                 println!("[!] tried to playerify piece that contained position (0xffu8, 0xffu8)");
             }
@@ -482,7 +466,7 @@ impl BoardClassic {
         // initialize the tile logic for the newly spawned piece
         for position in spawn_positions.iter().take(4) {
             self.matrix[position.0 as usize][position.1 as usize] =
-                Tile::new(false, true, player, spawn_piece_shape);
+                Tile::new(false, true, false, player);
         }
 
         (false, false)
@@ -930,12 +914,8 @@ impl BoardRotatris {
             .take(4)
         {
             if position != &(0xff, 0xff) {
-                self.matrix[position.0 as usize][position.1 as usize] = Tile::new(
-                    false,
-                    true,
-                    player,
-                    self.vec_active_piece[player as usize].shape,
-                );
+                self.matrix[position.0 as usize][position.1 as usize] =
+                    Tile::new(false, true, false, player);
             } else {
                 println!("[!] tried to playerify piece that contained position (0xff, 0xff)");
             }
@@ -1035,7 +1015,7 @@ impl BoardRotatris {
         // initialize the tile logic for the newly spawned piece
         for position in spawn_positions.iter().take(4) {
             self.matrix[position.0 as usize][position.1 as usize] =
-                Tile::new(false, true, player, spawn_piece_shape);
+                Tile::new(false, true, false, player);
         }
 
         (false, false)
