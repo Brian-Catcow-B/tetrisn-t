@@ -286,6 +286,8 @@ impl BoardHandler {
         }
     }
 
+    // returns (bool, bool) based on (if piece moved successfully, if (piece is locked && filled some line))
+    // sets the shape of the piece to Shapes::None if it locks
     pub fn attempt_piece_movement(&mut self, m: Movement, p: u8) -> (bool, bool) {
         match self.mode {
             GameMode::None => unreachable!("{}", BH_MODE_NONE),

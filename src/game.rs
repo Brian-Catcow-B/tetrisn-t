@@ -30,6 +30,8 @@ use crate::game::board::{BoardDim, BoardPos, BOARD_HEIGHT, ROTATRIS_BOARD_SIDE_L
 use crate::inputs::KeyboardControlScheme;
 use crate::menu::menuhelpers::MenuGameOptions;
 
+use crate::sounds::{SoundTracks, SoundTypes, play_sound_track};
+
 pub const CLEAR_DELAY_CLASSIC: i8 = 30i8;
 
 pub const SCORE_SINGLE_BASE: u8 = 40u8;
@@ -244,6 +246,9 @@ pub struct Game {
     game_over_flag: bool,
     game_over_delay: i8,
     determine_ghost_tile_locations: bool,
+    // sound
+    sounds: SoundTracks,
+    sound_queue: Vec<SoundTypes>,
     // drawing
     tile_size: f32,
     batch_empty_tile: spritebatch::SpriteBatch,
@@ -407,6 +412,10 @@ impl Game {
             game_over_flag: false,
             game_over_delay: GAME_OVER_DELAY,
             determine_ghost_tile_locations: game_options.settings.ghost_pieces_state,
+            // sounds
+            sounds: SoundTracks::new(ctx),
+            sound_queue: vec![],
+            // drawing
             tile_size: TileGraphic::get_size(
                 window_width,
                 window_height,
@@ -575,7 +584,7 @@ impl Game {
                 // LEFT / RIGHT
                 if player.input.keydown_left.1 {
                     // if it didn't move on the initial input, set waiting_to_shift to true
-                    player.waiting_to_shift = !self
+                    let moved = self
                         .bh
                         .attempt_piece_movement(
                             Movement::try_from(
@@ -585,11 +594,15 @@ impl Game {
                             player.player_num,
                         )
                         .0;
+                    if moved {
+                        self.sound_queue.push(SoundTypes::LRClick);
+                    }
+                    player.waiting_to_shift = !moved;
                     player.das_countdown = DAS_THRESHOLD_BIG;
                 }
                 if player.input.keydown_right.1 {
                     // if it didn't move on the initial input, set waiting_to_shift to true
-                    player.waiting_to_shift = !self
+                    let moved = self
                         .bh
                         .attempt_piece_movement(
                             Movement::try_from(
@@ -599,6 +612,10 @@ impl Game {
                             player.player_num,
                         )
                         .0;
+                    if moved {
+                        self.sound_queue.push(SoundTypes::LRClick);
+                    }
+                    player.waiting_to_shift = !moved;
                     player.das_countdown = DAS_THRESHOLD_BIG;
                 }
                 if (player.input.keydown_left.0 && !player.input.keydown_left.1)
@@ -622,7 +639,8 @@ impl Game {
                             )
                             .0
                         {
-                            // if the piece moved, set variables accordingly
+                            // if the piece moved, set variables accordingly and play sound
+                            self.sound_queue.push(SoundTypes::LRClick);
                             player.das_countdown =
                                 std::cmp::max(DAS_THRESHOLD_LITTLE, player.das_countdown);
                             player.waiting_to_shift = false;
@@ -845,6 +863,14 @@ impl Game {
     // then when we actually draw the board, we scale it to the appropriate size and place the top left corner of the board at the appropriate place;
     // there's a sprite batch for each players' tiles and one more for the empty tiles, which is constant, and the player tiles are drawn after so they are on top
     pub fn draw(&mut self, ctx: &mut Context) {
+        // sounds
+        for sound_type in self.sound_queue.iter() {
+            if !play_sound_track(ctx, &mut self.sounds.tracks[*sound_type as usize]) {
+                println!("[!] failed to play sound: {:?}", sound_type);
+            }
+        }
+        self.sound_queue.clear();
+
         // constants used throughout draw
         let height_buffer = self.bh.get_height_buffer();
         let width = self.bh.get_width();
