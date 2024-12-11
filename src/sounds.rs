@@ -26,7 +26,7 @@ impl SoundTracks {
 pub fn play_sound_track(ctx: &mut Context, sound_track: &mut GameResult<audio::Source>) -> bool {
     match sound_track {
         Ok(audio_src) => {
-            match audio_src.play(ctx) {
+            match audio_src.play_detached(ctx) {
                 Ok(_) => true,
                 Err(_) => false,
             }
