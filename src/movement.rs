@@ -39,6 +39,24 @@ impl TryFrom<u8> for Movement {
     }
 }
 
+// RotationDirection is for Movement that is specifically rotation,
+// which will be used semi-rarely
+#[repr(u8)]
+#[derive(Copy, Clone)]
+pub enum RotationDirection {
+    Cw,
+    Ccw,
+}
+
+impl From<RotationDirection> for Movement {
+    fn from(value: RotationDirection) -> Self {
+        match value {
+            RotationDirection::Cw => Self::RotateCw,
+            RotationDirection::Ccw => Self::RotateCcw,
+        }
+    }
+}
+
 pub static CONVERSION_FAILED_MOVEMENT_FROM_MENUITEMTRIGGER: &str =
     "[!] Failed to get Movement value from MenuItemTrigger";
 

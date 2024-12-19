@@ -1,5 +1,5 @@
 use crate::game::board::{BoardDim, BoardPos, Gravity};
-use crate::movement::Movement;
+use crate::movement::{Movement, RotationDirection};
 
 use std::convert::TryFrom;
 
@@ -33,17 +33,81 @@ impl TryFrom<u8> for Shapes {
     }
 }
 
+pub type NextRotationDirection = RotationDirection;
 #[derive(Copy, Clone)]
+pub enum PivotType {
+    QuadRotation,
+    BiRotation(NextRotationDirection),
+}
+
+impl PivotType {
+    fn get_num_rotations(&self) -> u8 {
+        match self {
+            Self::QuadRotation => 4,
+            Self::BiRotation(_) => 2,
+        }
+    }
+}
+
+#[derive(Copy, Clone)]
+struct Pivot {
+    pub pivot_type: PivotType,
+    pub position: (BoardPos, BoardPos) // y, x
+}
+
+impl Pivot {
+    fn get_num_rotations(&self) -> u8 {
+        self.pivot_type.get_num_rotations()
+    }
+}
+
+#[derive(Clone)]
 pub struct Piece {
-    pub shape: Shapes,
-    pub positions: [(BoardPos, BoardPos); 4],
+    pub block_positions: Vec<(BoardPos, BoardPos)>, // y, x
+    pub pivot: Option<Pivot>,
     pub rotation: u8, // 0, 1, 2, 3: 0, 90, 180, 270; CW
-    pub num_rotations: u8,
-    pivot: BoardPos,
+}
+
+impl TryFrom<String> for Piece {
+// TODO
+}
+
+impl From<Piece> for String {
+// TODO
 }
 
 impl Piece {
-    pub fn new(shape: Shapes) -> Self {
+    // 1, 2, or 4 based on the style of rotation the piece has
+    pub fn get_num_rotations(&self) -> u8 {
+        match self.pivot {
+            Some(ref p) => p.get_num_rotations(),
+            None => 1,
+        }
+    }
+
+    pub fn get_width(&self) -> usize {
+        if (self.block_positions.empty()) {
+            panic!("Piece::get_piece_width called with empty self.block_positions vector");
+        }
+        let mut (min_x, max_x): (usize, usize) = (self.block_positions[0].1, self.block_positions[0].1);
+        for i in 1..block_positions.size() {
+            min_x = std::cmp::min(min_x, self.block_positions[i]);
+            max_x = std::cmp::max(max_x, self.block_positions[i]);
+        }
+        max_x - min_x + 1
+    }
+
+/*#[derive(Copy, Clone)]
+pub struct Piece {
+    pub shape: Shapes,
+    pub positions: [(BoardPos, BoardPos); 4], // y, x
+    pub rotation: u8, // 0, 1, 2, 3: 0, 90, 180, 270; CW
+    pub num_rotations: u8,
+    pivot: usize,
+}
+
+impl Piece {*/
+    /*pub fn new(shape: Shapes) -> Self {
         match shape {
             // The I piece is the special case for rotation because then the logic is easier for pieces of num_rotations: 2
             // (notice the pivots and which direction the piece must turn from the spawned positions)
@@ -104,9 +168,9 @@ impl Piece {
                 pivot: 0xff,
             },
         }
-    }
+    }*/
 
-    pub fn new_next(shape: Shapes) -> Self {
+    /*pub fn new_next(shape: Shapes) -> Self {
         match shape {
             Shapes::None => Self {
                 shape,
@@ -165,286 +229,136 @@ impl Piece {
                 pivot: 1,
             },
         }
-    }
+    }*/
 
+    // spawn_column should favor right when necessary because this function favors left when
+    // necessary
     pub fn spawn_pos(
         &self,
         spawn_column: BoardPos,
-        spawn_row: BoardPos,
+        topmost_spawn_row: BoardPos,
         board_height_buffer: BoardDim,
         current_gravity: Gravity,
-    ) -> [(BoardPos, BoardPos); 4] {
-        let mut piece_copy = Self::new(self.shape);
-        piece_copy.positions = match piece_copy.shape {
-            Shapes::None => {
-                println!("[!] tried to spawn a piece with shape type Shapes::None");
-                [(0xff, 0xff); 4]
+    ) -> Vec<(BoardPos, BoardPos)> {
+        let piece_width = self.get_width();
+        let x_addend = spawn_column - (piece_width / 2);
+        let y_addend = topmost_spawn_row;
+        let mut piece_copy = self.clone();
+        for pos in piece_copy.block_positions.iter_mut() {
+            pos.0 += y_addend;
+            pos.1 += x_addend;
+        }
+        // rotatris magic :O
+        match current_gravity {
+            Gravity::Down => piece_copy.positions,
+            Gravity::Left => {
+                piece_copy.positions = piece_copy.rotate(true);
+                piece_copy.piece_pos(Movement::Right)
             }
-            Shapes::I => {
-                [
-                    (spawn_row + board_height_buffer, spawn_column - 2), // [-][-][-][-] | [-][-][0][-]
-                    (spawn_row + board_height_buffer, spawn_column - 1), // [-][-][-][-] | [-][-][1][-]
-                    (spawn_row + board_height_buffer, spawn_column), //     [0][1][2][3] | [-][-][2][-]
-                    (spawn_row + board_height_buffer, spawn_column + 1), // [-][-][-][-] | [-][-][3][-]
-                ]
+            Gravity::Up => {
+                piece_copy.positions = piece_copy.double_rotate();
+                piece_copy.piece_pos(Movement::Down)
             }
-            Shapes::O => {
-                [
-                    (spawn_row + board_height_buffer, spawn_column - 1), //     [-][-][-][-]
-                    (spawn_row + board_height_buffer, spawn_column),     //     [-][-][-][-]
-                    (spawn_row + 1 + board_height_buffer, spawn_column - 1), // [-][0][1][-]
-                    (spawn_row + 1 + board_height_buffer, spawn_column), //     [-][2][3][-]
-                ]
+            Gravity::Right => {
+                piece_copy.positions = piece_copy.rotate(false);
+                piece_copy.piece_pos(Movement::Down)
             }
-            Shapes::T => {
-                [
-                    (spawn_row + board_height_buffer, spawn_column - 1), // [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
-                    (spawn_row + board_height_buffer, spawn_column), //     [-][-][-][-] | [-][-][0][-] | [-][-][3][-] | [-][-][2][-]
-                    (spawn_row + board_height_buffer, spawn_column + 1), // [-][0][1][2] | [-][3][1][-] | [-][2][1][0] | [-][-][1][3]
-                    (spawn_row + 1 + board_height_buffer, spawn_column), // [-][-][3][-] | [-][-][2][-] | [-][-][-][-] | [-][-][0][-]
-                ]
-            }
-            Shapes::J => {
-                [
-                    (spawn_row + board_height_buffer, spawn_column - 1), //     [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
-                    (spawn_row + board_height_buffer, spawn_column), //         [-][-][-][-] | [-][-][0][-] | [-][3][-][-] | [-][-][2][3]
-                    (spawn_row + board_height_buffer, spawn_column + 1), //     [-][0][1][2] | [-][-][1][-] | [-][2][1][0] | [-][-][1][-]
-                    (spawn_row + 1 + board_height_buffer, spawn_column + 1), // [-][-][-][3] | [-][3][2][-] | [-][-][-][-] | [-][-][0][-]
-                ]
-            }
-            Shapes::L => {
-                [
-                    (spawn_row + board_height_buffer, spawn_column - 1), //     [-][-][-][-] | [-][-][-][-] | [-][-][-][-] | [-][-][-][-]
-                    (spawn_row + board_height_buffer, spawn_column), //         [-][-][-][-] | [-][3][0][-] | [-][-][-][3] | [-][-][2][-]
-                    (spawn_row + board_height_buffer, spawn_column + 1), //     [-][0][1][2] | [-][-][1][-] | [-][2][1][0] | [-][-][1][-]
-                    (spawn_row + 1 + board_height_buffer, spawn_column - 1), // [-][3][-][-] | [-][-][2][-] | [-][-][-][-] | [-][-][0][3]
-                ]
-            }
-            Shapes::S => {
-                [
-                    (spawn_row + board_height_buffer, spawn_column), //         [-][-][-][-] | [-][-][-][-]
-                    (spawn_row + board_height_buffer, spawn_column + 1), //     [-][-][-][-] | [-][-][1][-]
-                    (spawn_row + 1 + board_height_buffer, spawn_column - 1), // [-][-][0][1] | [-][-][0][3]
-                    (spawn_row + 1 + board_height_buffer, spawn_column), //     [-][2][3][-] | [-][-][-][2]
-                ]
-            }
-            Shapes::Z => {
-                [
-                    (spawn_row + board_height_buffer, spawn_column - 1), //     [-][-][-][-] | [-][-][-][-]
-                    (spawn_row + board_height_buffer, spawn_column), //         [-][-][-][-] | [-][-][-][3]
-                    (spawn_row + 1 + board_height_buffer, spawn_column), //     [-][0][1][-] | [-][-][1][2]
-                    (spawn_row + 1 + board_height_buffer, spawn_column + 1), // [-][-][2][3] | [-][-][0][-]
-                ]
-            }
-        };
-        if piece_copy.shape == Shapes::None {
-            unreachable!("[!] Error: `Piece::spawn_pos()` called with shape: Shapes::None");
-        } else if piece_copy.shape == Shapes::O {
-            piece_copy.positions
-        } else {
-            match current_gravity {
-                Gravity::Down => piece_copy.positions,
-                Gravity::Left => {
-                    piece_copy.positions = piece_copy.rotate(true);
-                    piece_copy.piece_pos(Movement::Right)
-                }
-                Gravity::Up => {
-                    piece_copy.positions = piece_copy.double_rotate();
-                    piece_copy.piece_pos(Movement::Down)
-                }
-                Gravity::Right => {
-                    piece_copy.positions = piece_copy.rotate(false);
-                    piece_copy.piece_pos(Movement::Down)
-                }
-                Gravity::Invalid => unreachable!("[!] Gravity::Invalid passed into `spawn_pos()`"),
-            }
+            Gravity::Invalid => unreachable!("[!] Gravity::Invalid passed into Piece::spawn_pos()"),
         }
     }
 
     // returns the resulting positions based on the given Movement type
-    pub fn piece_pos(&self, movement: Movement) -> [(BoardPos, BoardPos); 4] {
+    pub fn piece_pos(&self, movement: Movement) -> Vec<(BoardPos, BoardPos)> {
         // for movements and rotations, we don't have to worry about integer underflow because we will assume the board width is nowhere close to 0xff
-        if movement == Movement::None {
-            self.positions
-        } else if movement == Movement::Left {
-            [
-                (self.positions[0].0, self.positions[0].1 - 1),
-                (self.positions[1].0, self.positions[1].1 - 1),
-                (self.positions[2].0, self.positions[2].1 - 1),
-                (self.positions[3].0, self.positions[3].1 - 1),
-            ]
-        } else if movement == Movement::Right {
-            [
-                (self.positions[0].0, self.positions[0].1 + 1),
-                (self.positions[1].0, self.positions[1].1 + 1),
-                (self.positions[2].0, self.positions[2].1 + 1),
-                (self.positions[3].0, self.positions[3].1 + 1),
-            ]
-        } else if movement == Movement::Down {
-            [
-                (self.positions[0].0 + 1, self.positions[0].1),
-                (self.positions[1].0 + 1, self.positions[1].1),
-                (self.positions[2].0 + 1, self.positions[2].1),
-                (self.positions[3].0 + 1, self.positions[3].1),
-            ]
-        } else if movement == Movement::Up {
-            return [
-                (self.positions[0].0 - 1, self.positions[0].1),
-                (self.positions[1].0 - 1, self.positions[1].1),
-                (self.positions[2].0 - 1, self.positions[2].1),
-                (self.positions[3].0 - 1, self.positions[3].1),
-            ];
-        } else {
-            // T, L, J
-            if self.num_rotations == 4 {
-                if movement == Movement::RotateCw {
-                    self.rotate(true)
-                } else if movement == Movement::RotateCcw {
-                    self.rotate(false)
-                } else {
-                    self.double_rotate()
+        let rotation_regulated_movement = match movement {
+            Movement::RotateCcw | Movement::RotateCw => {
+                match self.pivot {
+                    Ok(ref p) => {
+                        match p.pivot_type {
+                            PivotType::QuadRotation => movement,
+                            PivotType::BiRotation(next_rot) => Movement::From(next_rot),
+                        }
+                    },
+                    None => Movement::None,
                 }
-            // I, S, Z
-            } else if self.num_rotations == 2 {
-                // the I piece is special in that it starts with rotation: 1 so that it lines up with S and Z
-                if movement != Movement::DoubleRotate {
-                    if self.rotation == 0 {
-                        self.rotate(false)
-                    } else {
-                        self.rotate(true)
+            },
+            _ => movement,
+        };
+        let mut new_positions: Vec<(BoardPos, BoardPos)> = vec![];
+        match rotation_regulated_movement {
+            Movement::Down => {
+                for pos in self.block_positions.iter() {
+                    new_positions.push((pos.0 + 1, pos.1));
+                }
+            },
+            Movement::Left => {
+                for pos in self.block_positions.iter() {
+                    new_positions.push((pos.0, pos.1 - 1));
+                }
+            },
+            Movement::Up => {
+                for pos in self.block_positions.iter() {
+                    new_positions.push((pos.0 - 1, pos.1));
+                    pos.0 - 1;
+                }
+            },
+            Movement::Right => {
+                for pos in self.block_positions.iter() {
+                    new_positions.push((pos.0, pos.1 + 1));
+                }
+            },
+            Movement::RotateCw => {
+                self.rotate(true)
+            },
+            Movement::RotateCcw => {
+                self.rotate(false)
+            },
+            Movement::None => self.positions, // ggez :D
+            _ => {
+                unreachable!("Invalid Movement enum given to Piece::piece_pos");
+            },
+        }
+    }
+
+    fn rotate(&self, clockwise_flag: bool) -> Vec<(BoardPos, BoardPos)> {
+        let mut new_positions: Vec<(BoardPos, BoardPos)> = vec![];
+        match self.pivot {
+            Ok(ref piv) => {
+                if clockwise_flag {
+                    for pos in self.block_positions.iter() {
+                        // what
+                        new_positions.push(
+                            (
+                                piv.position.0 + (pos.1 - piv.position.1),
+                                piv.position.1 + (piv.position.0 - pos.0),
+                            )
+                        );
                     }
                 } else {
-                    self.positions
+                    for pos in self.block_positions.iter() {
+                        // even
+                        new_positions.push(
+                            (
+                                piv.position.0 + (piv.position.1 - pos.1),
+                                piv.position.1 + (pos.0 - piv.position.0),
+                            )
+                        );
+                    }
                 }
-            } else if self.num_rotations == 1 {
-                self.positions
-            } else {
-                println!(
-                    "[!] tried to rotate piece with num_rotations: {}",
-                    self.num_rotations
-                );
-                self.positions
-            }
+            },
+            None => unreachable!("[internal error] Piece::rotate called with self.pivot set to None"),
         }
+        new_positions
     }
 
-    fn rotate(&self, clockwise_flag: bool) -> [(BoardPos, BoardPos); 4] {
-        if self.pivot > 3 {
-            println!("[!] tried to rotate piece with pivot fields {}", self.pivot);
-            return self.positions;
-        }
-        if clockwise_flag {
-            [
-                (
-                    self.positions[self.pivot as usize].0
-                        + (self.positions[0].1 - self.positions[self.pivot as usize].1),
-                    self.positions[self.pivot as usize].1
-                        + (self.positions[self.pivot as usize].0 - self.positions[0].0),
-                ),
-                (
-                    self.positions[self.pivot as usize].0
-                        + (self.positions[1].1 - self.positions[self.pivot as usize].1),
-                    self.positions[self.pivot as usize].1
-                        + (self.positions[self.pivot as usize].0 - self.positions[1].0),
-                ),
-                (
-                    self.positions[self.pivot as usize].0
-                        + (self.positions[2].1 - self.positions[self.pivot as usize].1),
-                    self.positions[self.pivot as usize].1
-                        + (self.positions[self.pivot as usize].0 - self.positions[2].0),
-                ),
-                (
-                    self.positions[self.pivot as usize].0
-                        + (self.positions[3].1 - self.positions[self.pivot as usize].1),
-                    self.positions[self.pivot as usize].1
-                        + (self.positions[self.pivot as usize].0 - self.positions[3].0),
-                ),
-            ]
-        } else {
-            [
-                (
-                    self.positions[self.pivot as usize].0
-                        + (self.positions[self.pivot as usize].1 - self.positions[0].1),
-                    self.positions[self.pivot as usize].1
-                        + (self.positions[0].0 - self.positions[self.pivot as usize].0),
-                ),
-                (
-                    self.positions[self.pivot as usize].0
-                        + (self.positions[self.pivot as usize].1 - self.positions[1].1),
-                    self.positions[self.pivot as usize].1
-                        + (self.positions[1].0 - self.positions[self.pivot as usize].0),
-                ),
-                (
-                    self.positions[self.pivot as usize].0
-                        + (self.positions[self.pivot as usize].1 - self.positions[2].1),
-                    self.positions[self.pivot as usize].1
-                        + (self.positions[2].0 - self.positions[self.pivot as usize].0),
-                ),
-                (
-                    self.positions[self.pivot as usize].0
-                        + (self.positions[self.pivot as usize].1 - self.positions[3].1),
-                    self.positions[self.pivot as usize].1
-                        + (self.positions[3].0 - self.positions[self.pivot as usize].0),
-                ),
-            ]
-        }
-    }
-
-    fn double_rotate(&self) -> [(BoardPos, BoardPos); 4] {
-        if self.pivot > 3 {
-            println!("[!] tried to rotate piece with pivot fields {}", self.pivot);
-            return self.positions;
-        }
-        let pivot = self.pivot;
-        let positions = [
-            (
-                self.positions[self.pivot as usize].0
-                    + (self.positions[0].1 - self.positions[self.pivot as usize].1),
-                self.positions[self.pivot as usize].1
-                    + (self.positions[self.pivot as usize].0 - self.positions[0].0),
-            ),
-            (
-                self.positions[self.pivot as usize].0
-                    + (self.positions[1].1 - self.positions[self.pivot as usize].1),
-                self.positions[self.pivot as usize].1
-                    + (self.positions[self.pivot as usize].0 - self.positions[1].0),
-            ),
-            (
-                self.positions[self.pivot as usize].0
-                    + (self.positions[2].1 - self.positions[self.pivot as usize].1),
-                self.positions[self.pivot as usize].1
-                    + (self.positions[self.pivot as usize].0 - self.positions[2].0),
-            ),
-            (
-                self.positions[self.pivot as usize].0
-                    + (self.positions[3].1 - self.positions[self.pivot as usize].1),
-                self.positions[self.pivot as usize].1
-                    + (self.positions[self.pivot as usize].0 - self.positions[3].0),
-            ),
-        ];
-
-        [
-            (
-                positions[pivot as usize].0 + (positions[0].1 - positions[pivot as usize].1),
-                positions[pivot as usize].1 + (positions[pivot as usize].0 - positions[0].0),
-            ),
-            (
-                positions[pivot as usize].0 + (positions[1].1 - positions[pivot as usize].1),
-                positions[pivot as usize].1 + (positions[pivot as usize].0 - positions[1].0),
-            ),
-            (
-                positions[pivot as usize].0 + (positions[2].1 - positions[pivot as usize].1),
-                positions[pivot as usize].1 + (positions[pivot as usize].0 - positions[2].0),
-            ),
-            (
-                positions[pivot as usize].0 + (positions[3].1 - positions[pivot as usize].1),
-                positions[pivot as usize].1 + (positions[pivot as usize].0 - positions[3].0),
-            ),
-        ]
+    fn double_rotate(&self) -> Vec<(BoardPos, BoardPos)> {
+        let mut piece_copy = self.clone();
+        piece_copy.block_positions = self.rotate(true);
+        piece_copy.rotate(true)
     }
 }
 
-#[derive(PartialEq, Eq)]
+/*#[derive(PartialEq, Eq)]
 pub struct NextPiece {
     pub shape: Shapes,
     pub matrix: [[bool; 4]; 2],
@@ -464,4 +378,4 @@ impl NextPiece {
         }
         Self { shape, matrix }
     }
-}
+}*/
