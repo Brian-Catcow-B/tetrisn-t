@@ -21,7 +21,7 @@ use crate::game::tile::TileGraphic;
 use crate::game::tile::NUM_PIXEL_ROWS_PER_TILEGRAPHIC;
 
 mod piece;
-use crate::game::piece::{NextPiece, Shapes};
+use crate::game::piece::Piece;
 
 pub mod board;
 use crate::game::board::BoardHandler;
@@ -230,7 +230,7 @@ pub struct Game {
     bh: BoardHandler,
     num_players: u8,
     vec_players: Vec<Player>,
-    vec_next_piece: Vec<NextPiece>,
+    vec_next_piece: Vec<Piece>,
     vec_gamepad_id_map_to_player: Vec<(Option<GamepadId>, u8)>,
     num_gamepads_to_initialize: u8,
     level: u8,
@@ -306,7 +306,7 @@ impl Game {
                 batch_empty_tile.add(empty_tile);
             }
         }
-        let mut vec_next_piece: Vec<NextPiece> =
+        let mut vec_next_piece: Vec<Piece> =
             Vec::with_capacity(game_options.num_players as usize);
         let mut vec_gamepad_id_map_to_player: Vec<(Option<GamepadId>, u8)>;
         let mut temp_vec: Vec<(Option<GamepadId>, u8)> = vec![];
@@ -930,11 +930,13 @@ impl Game {
                             x_draw_pos as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                             y_draw_pos as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                         ]));
-                        if self.num_players > 1 {
-                            let player = self.bh.get_player_from_pos(y + height_buffer, x);
-                            self.vec_batch_player_piece[player as usize].add(player_tile);
-                        } else {
-                            let shape: Shapes = self.bh.get_shape_from_pos(y + height_buffer, x);
+                        // TODO: re-impl multicolor on singleplayer
+                        //if self.num_players > 1 {
+                        let player = self.bh.get_player_from_pos(y + height_buffer, x);
+                        self.vec_batch_player_piece[player as usize].add(player_tile);
+                        //}
+                        /*else {
+                            let piece_set_id: PieceSetId = self.bh.get_piece_set_id_from_pos(y + height_buffer, x);
                             if shape == Shapes::J || shape == Shapes::S {
                                 self.vec_batch_player_piece[0].add(player_tile);
                             } else if shape == Shapes::L || shape == Shapes::Z {
@@ -943,7 +945,7 @@ impl Game {
                             {
                                 self.vec_batch_player_piece[2].add(player_tile);
                             }
-                        }
+                        }*/
                         // highlight if active
                         if self.bh.get_active_from_pos(y + height_buffer, x) {
                             self.batch_highlight_active_tile.add(player_tile);
@@ -1031,24 +1033,25 @@ impl Game {
                 if player.redraw_next_piece_flag {
                     // if we need to redraw, clear the next piece sprite batch and rebuild it
                     player.redraw_next_piece_flag = false;
-                    if self.num_players > 1 {
-                        self.vec_batch_next_piece[player.player_num as usize].clear();
-                        for x in 0u8..4u8 {
-                            for y in 0u8..2u8 {
-                                if self.vec_next_piece[player.player_num as usize].matrix
-                                    [y as usize][x as usize]
-                                {
-                                    let next_tile =
-                                        graphics::DrawParam::new().dest(Point2::from_slice(&[
-                                            x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
-                                            y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                    // TODO re-impl multicolor on singleplayer
+                    //if self.num_players > 1 {
+                    self.vec_batch_next_piece[player.player_num as usize].clear();
+                    for x in 0u8..4u8 {
+                        for y in 0u8..2u8 {
+                            if self.vec_next_piece[player.player_num as usize].matrix
+                                [y as usize][x as usize]
+                            {
+                                let next_tile =
+                                    graphics::DrawParam::new().dest(Point2::from_slice(&[
+                                        x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
+                                        y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                                         ]));
-                                    self.vec_batch_next_piece[player.player_num as usize]
-                                        .add(next_tile);
-                                }
+                                self.vec_batch_next_piece[player.player_num as usize]
+                                    .add(next_tile);
                             }
                         }
-                    } else {
+                    }
+                    /*} else {
                         for x in 0..3 {
                             self.vec_batch_next_piece[x].clear();
                         }
@@ -1067,7 +1070,7 @@ impl Game {
                                 }
                             }
                         }
-                    }
+                    }*/
                 }
             }
 
@@ -1152,14 +1155,15 @@ impl Game {
             .unwrap();
             // next piece tiles
             for player in self.vec_players.iter() {
-                if self.num_players > 1 {
-                    graphics::draw(
-                        ctx,
-                        &self.vec_batch_next_piece[player.player_num as usize],
-                        DrawParam::new()
-                            .dest(Point2::from_slice(&[
-                                board_top_left_corner
-                                    + (player.spawn_column - 2) as f32
+                // TODO re-impl multicolor on singleplayer
+                //if self.num_players > 1 {
+                graphics::draw(
+                    ctx,
+                    &self.vec_batch_next_piece[player.player_num as usize],
+                    DrawParam::new()
+                        .dest(Point2::from_slice(&[
+                            board_top_left_corner
+                                + (player.spawn_column - 2) as f32
                                         * scaled_tile_size
                                         * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                                 (NON_BOARD_SPACE_U - BOARD_NEXT_PIECE_SPACING) as f32
@@ -1168,7 +1172,7 @@ impl Game {
                             .scale(Vector2::from_slice(&[scaled_tile_size, scaled_tile_size])),
                     )
                     .unwrap();
-                } else {
+                /*} else {
                     let spawn_column = player.spawn_column;
                     graphics::draw(
                         ctx,
@@ -1185,7 +1189,7 @@ impl Game {
                             .scale(Vector2::from_slice(&[scaled_tile_size, scaled_tile_size])),
                     )
                     .unwrap();
-                }
+                }*/
             }
             // score text; TODO: perhaps make a separate function for something based on the bottom,
             // or just figure out how to do this better so we don't divide out by the window_height

@@ -1,4 +1,4 @@
-use crate::game::piece::{Piece, Shapes};
+use crate::game::piece::{Piece, PieceSetId, PIECE_SET_NULL_ID, PieceManager};
 use crate::game::tile::Tile;
 use crate::game::GameMode;
 use crate::game::{
@@ -196,30 +196,30 @@ impl BoardHandler {
         }
     }
 
-    pub fn get_shape_from_pos(&mut self, y: BoardPos, x: BoardPos) -> Shapes {
+    pub fn get_piece_set_id_from_pos(&mut self, y: BoardPos, x: BoardPos) -> PieceSetId {
         match self.mode {
             GameMode::None => unreachable!("{}", BH_MODE_NONE),
             GameMode::Classic => {
-                self.classic.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].shape
+                self.classic.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].piece_set_id
             }
             GameMode::Rotatris => {
-                self.rotatris.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].shape
+                self.rotatris.as_mut().expect(BH_WRONG_MODE).matrix[y as usize][x as usize].piece_set_id
             }
         }
     }
 
-    pub fn get_shape_from_player(&mut self, player: u8) -> Shapes {
+    pub fn get_piece_set_id_from_player(&mut self, player: u8) -> PieceSetId {
         match self.mode {
             GameMode::None => unreachable!("{}", BH_MODE_NONE),
             GameMode::Classic => {
-                self.classic.as_mut().expect(BH_WRONG_MODE).vec_active_piece[player as usize].shape
+                self.classic.as_mut().expect(BH_WRONG_MODE).vec_active_piece[player as usize].piece_set_id
             }
             GameMode::Rotatris => {
                 self.rotatris
                     .as_mut()
                     .expect(BH_WRONG_MODE)
                     .vec_active_piece[player as usize]
-                    .shape
+                    .piece_set_id
             }
         }
     }
@@ -253,7 +253,7 @@ impl BoardHandler {
         &mut self,
         player: u8,
         spawn_col: BoardPos,
-        spawn_piece_shape: Shapes,
+        spawn_piece_id: PieceSetId,
     ) -> (bool, bool) {
         match self.mode {
             GameMode::None => unreachable!("{}", BH_MODE_NONE),
@@ -261,12 +261,12 @@ impl BoardHandler {
                 .classic
                 .as_mut()
                 .expect(BH_WRONG_MODE)
-                .attempt_piece_spawn(player, spawn_col, spawn_piece_shape),
+                .attempt_piece_spawn(player, spawn_col, spawn_piece_id),
             GameMode::Rotatris => self
                 .rotatris
                 .as_mut()
                 .expect(BH_WRONG_MODE)
-                .attempt_piece_spawn(player, spawn_col, spawn_piece_shape),
+                .attempt_piece_spawn(player, spawn_col, spawn_piece_id),
         }
     }
 
@@ -345,6 +345,7 @@ pub struct BoardClassic {
     pub spawn_row: BoardPos,
     pub matrix: Vec<Vec<Tile>>,
     pub vec_active_piece: Vec<Piece>,
+    pub vec_last_piece_set_ids: Vec<PieceSetId>,
     pub vec_full_lines: Vec<FullLine>,
 }
 
@@ -357,8 +358,10 @@ impl BoardClassic {
         num_players: u8,
     ) -> Self {
         let mut vec_active_piece: Vec<Piece> = Vec::with_capacity(num_players as usize);
+        let mut vec_last_piece_set_ids: Vec<PieceSetId> = Vec::with_capacity(num_players as usize);
         for _ in 0..num_players {
             vec_active_piece.push(Piece::new(Shapes::None));
+            vec_last_piece_set_ids.push(PIECE_SET_NULL_ID);
         }
         let matrix = vec![
             vec![Tile::default(); board_width as usize];
@@ -456,13 +459,14 @@ impl BoardClassic {
         &mut self,
         player: u8,
         spawn_col: BoardPos,
-        spawn_piece_shape: Shapes,
+        spawn_piece_id: PieceSetId,
+        piece_manager: &PieceManager,
     ) -> (bool, bool) {
-        let new_piece = Piece::new(spawn_piece_shape);
+        let new_piece = piece_manager.get_piece_clone(spawn_piece_id);
         let spawn_positions =
             new_piece.spawn_pos(spawn_col, self.spawn_row, self.height_buffer, Gravity::Down);
         let mut blocked_flag: bool = false;
-        for position in spawn_positions.iter().take(4) {
+        for position in spawn_positions.iter() {
             if !self.matrix[position.0 as usize][position.1 as usize].empty {
                 if !self.matrix[position.0 as usize][position.1 as usize].active {
                     return (true, true);
@@ -476,9 +480,9 @@ impl BoardClassic {
         self.vec_active_piece[player as usize] = new_piece;
         self.vec_active_piece[player as usize].positions = spawn_positions;
         // initialize the tile logic for the newly spawned piece
-        for position in spawn_positions.iter().take(4) {
+        for position in spawn_positions.iter() {
             self.matrix[position.0 as usize][position.1 as usize] =
-                Tile::new(false, true, player, spawn_piece_shape);
+                Tile::new(false, true, player, spawn_piece_id);
         }
 
         (false, false)
@@ -1010,12 +1014,13 @@ impl BoardRotatris {
         &mut self,
         player: u8,
         spawn_col: BoardPos,
-        spawn_piece_shape: Shapes,
+        spawn_piece_id: PieceSetId,
+        piece_manager: &PieceManager,
     ) -> (bool, bool) {
-        let new_piece = Piece::new(spawn_piece_shape);
+        let new_piece = piece_manager.get_piece_clone(spawn_piece_id);
         let spawn_positions = new_piece.spawn_pos(spawn_col, self.spawn_row, 0, self.gravity);
         let mut blocked_flag: bool = false;
-        for position in spawn_positions.iter().take(4) {
+        for position in spawn_positions.iter() {
             if !self.matrix[position.0 as usize][position.1 as usize].empty {
                 if !self.matrix[position.0 as usize][position.1 as usize].active {
                     return (true, true);
@@ -1029,9 +1034,9 @@ impl BoardRotatris {
         self.vec_active_piece[player as usize] = new_piece;
         self.vec_active_piece[player as usize].positions = spawn_positions;
         // initialize the tile logic for the newly spawned piece
-        for position in spawn_positions.iter().take(4) {
+        for position in spawn_positions.iter() {
             self.matrix[position.0 as usize][position.1 as usize] =
-                Tile::new(false, true, player, spawn_piece_shape);
+                Tile::new(false, true, player, spawn_piece_id);
         }
 
         (false, false)

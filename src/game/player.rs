@@ -1,14 +1,11 @@
 use ggez::event::{Axis, Button, KeyCode};
-use rand::random;
 
 use crate::game::board::BoardPos;
-use crate::game::piece::Shapes;
+use crate::game::piece::PieceSetId;
 use crate::game::{DAS_THRESHOLD_BIG, FORCE_FALL_DELAY, INITIAL_HANG_FRAMES};
 use crate::game::{DETECT_GAMEPAD_AXIS_THRESHOLD, UNDETECT_GAMEPAD_AXIS_THRESHOLD};
 use crate::inputs::{Input, KeyboardControlScheme};
 use crate::movement::Movement;
-
-use std::convert::TryFrom;
 
 pub const SPAWN_DELAY: i16 = 20i16;
 
@@ -21,7 +18,7 @@ pub struct Player {
     pub spawn_piece_flag: bool,
     pub spawn_column: BoardPos,
     pub spawn_delay: i16,
-    pub next_piece_shape: Shapes,
+    pub next_piece_id: PieceSetId,
     pub redraw_next_piece_flag: bool,
     pub fall_countdown: u8,
     pub force_fall_countdown: u8,
@@ -34,6 +31,7 @@ impl Player {
         player_num: u8,
         control_scheme: (Option<KeyboardControlScheme>, bool),
         spawn_column: BoardPos,
+        first_next_piece_id: PieceSetId,
     ) -> Self {
         Self {
             player_num,
@@ -44,16 +42,7 @@ impl Player {
             spawn_piece_flag: true,
             spawn_column,
             spawn_delay: SPAWN_DELAY,
-            next_piece_shape: {
-                let mut rand: u8;
-                loop {
-                    rand = random::<u8>();
-                    if rand < 252 {
-                        break;
-                    }
-                }
-                Shapes::try_from(rand % 7).expect("Unable to get random piece")
-            },
+            next_piece_id: first_next_piece_id,
             redraw_next_piece_flag: true,
             fall_countdown: INITIAL_HANG_FRAMES,
             force_fall_countdown: FORCE_FALL_DELAY,

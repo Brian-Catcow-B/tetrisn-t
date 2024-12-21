@@ -1,7 +1,7 @@
 use ggez::{graphics, Context};
 
 use crate::game::board::BoardDim;
-use crate::game::Shapes;
+use crate::game::piece::{PieceSetId, PIECE_SET_NULL_ID};
 
 pub const NUM_PIXEL_ROWS_PER_TILEGRAPHIC: u16 = 8u16;
 
@@ -100,16 +100,16 @@ pub struct Tile {
     pub empty: bool,
     pub active: bool,
     pub player: u8,
-    pub shape: Shapes,
+    pub piece_set_id: PieceSetId,
 }
 
 impl Tile {
-    pub fn new(empty: bool, active: bool, player: u8, shape: Shapes) -> Self {
+    pub fn new(empty: bool, active: bool, player: u8, piece_set_id: PieceSetId) -> Self {
         Self {
             empty,
             active,
             player,
-            shape,
+            piece_set_id,
         }
     }
 }
@@ -120,7 +120,7 @@ impl Default for Tile {
             empty: true,
             active: false,
             player: 0xffu8,
-            shape: Shapes::None,
+            piece_set_id: PIECE_SET_NULL_ID,
         }
     }
 }

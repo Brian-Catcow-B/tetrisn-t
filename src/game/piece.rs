@@ -3,33 +3,31 @@ use crate::movement::{Movement, RotationDirection};
 
 use std::convert::TryFrom;
 
-#[repr(u8)]
-#[derive(PartialEq, Eq, Copy, Clone)]
-pub enum Shapes {
-    I,
-    O,
-    T,
-    J,
-    S,
-    L,
-    Z,
-    None,
+pub type PieceSetId = usize;
+pub const PIECE_SET_NULL_ID: PieceSetId = usize::MAX;
+pub struct PieceManager {
+    pub vec_pieceset: Vec<Piece>,
 }
 
-impl TryFrom<u8> for Shapes {
+impl TryFrom<String> for PieceManager {
     type Error = &'static str;
+    fn try_from(_: String) -> Result<Self, <Self as TryFrom<String>>::Error> { todo!() }
+}
 
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Shapes::I),
-            1 => Ok(Shapes::O),
-            2 => Ok(Shapes::T),
-            3 => Ok(Shapes::J),
-            4 => Ok(Shapes::S),
-            5 => Ok(Shapes::L),
-            6 => Ok(Shapes::Z),
-            _ => Err("Conversion failed (u8 -> Shapes): Invalid value"),
-        }
+impl From<&PieceManager> for String {
+    fn from(pm: &PieceManager) -> String {
+        todo!()
+    }
+}
+
+impl PieceManager {
+    pub fn generate_random_piece_set_id(&mut self, player_previous_piece_set_id: PieceSetId) -> PieceSetId {
+        // TODO: make this random
+        0
+    }
+
+    pub fn get_piece_clone(&self, id: PieceSetId) -> Piece {
+        self.vec_pieceset[id].clone()
     }
 }
 
@@ -66,14 +64,18 @@ pub struct Piece {
     pub block_positions: Vec<(BoardPos, BoardPos)>, // y, x
     pub pivot: Option<Pivot>,
     pub rotation: u8, // 0, 1, 2, 3: 0, 90, 180, 270; CW
+    pub piece_set_id: PieceSetId,
 }
 
 impl TryFrom<String> for Piece {
-// TODO
+    type Error = &'static str;
+    fn try_from(_: String) -> Result<Self, <Self as TryFrom<String>>::Error> { todo!() }
 }
 
-impl From<Piece> for String {
-// TODO
+impl From<&Piece> for String {
+    fn from(p: &Piece) -> String {
+        todo!()
+    }
 }
 
 impl Piece {
@@ -85,14 +87,14 @@ impl Piece {
         }
     }
 
-    pub fn get_width(&self) -> usize {
-        if (self.block_positions.empty()) {
+    pub fn get_width(&self) -> BoardDim {
+        if self.block_positions.is_empty() {
             panic!("Piece::get_piece_width called with empty self.block_positions vector");
         }
-        let mut (min_x, max_x): (usize, usize) = (self.block_positions[0].1, self.block_positions[0].1);
-        for i in 1..block_positions.size() {
-            min_x = std::cmp::min(min_x, self.block_positions[i]);
-            max_x = std::cmp::max(max_x, self.block_positions[i]);
+        let (mut min_x, mut max_x): (BoardPos, BoardPos) = (self.block_positions[0].1, self.block_positions[0].1);
+        for i in 1..self.block_positions.len() {
+            min_x = std::cmp::min(min_x, self.block_positions[i].1);
+            max_x = std::cmp::max(max_x, self.block_positions[i].1);
         }
         max_x - min_x + 1
     }
@@ -250,17 +252,17 @@ impl Piece {*/
         }
         // rotatris magic :O
         match current_gravity {
-            Gravity::Down => piece_copy.positions,
+            Gravity::Down => piece_copy.block_positions,
             Gravity::Left => {
-                piece_copy.positions = piece_copy.rotate(true);
+                piece_copy.block_positions = piece_copy.rotate(true);
                 piece_copy.piece_pos(Movement::Right)
             }
             Gravity::Up => {
-                piece_copy.positions = piece_copy.double_rotate();
+                piece_copy.block_positions = piece_copy.double_rotate();
                 piece_copy.piece_pos(Movement::Down)
             }
             Gravity::Right => {
-                piece_copy.positions = piece_copy.rotate(false);
+                piece_copy.block_positions = piece_copy.rotate(false);
                 piece_copy.piece_pos(Movement::Down)
             }
             Gravity::Invalid => unreachable!("[!] Gravity::Invalid passed into Piece::spawn_pos()"),
@@ -273,10 +275,10 @@ impl Piece {*/
         let rotation_regulated_movement = match movement {
             Movement::RotateCcw | Movement::RotateCw => {
                 match self.pivot {
-                    Ok(ref p) => {
+                    Some(ref p) => {
                         match p.pivot_type {
                             PivotType::QuadRotation => movement,
-                            PivotType::BiRotation(next_rot) => Movement::From(next_rot),
+                            PivotType::BiRotation(next_rot) => Movement::from(next_rot),
                         }
                     },
                     None => Movement::None,
@@ -290,22 +292,25 @@ impl Piece {*/
                 for pos in self.block_positions.iter() {
                     new_positions.push((pos.0 + 1, pos.1));
                 }
+                new_positions
             },
             Movement::Left => {
                 for pos in self.block_positions.iter() {
                     new_positions.push((pos.0, pos.1 - 1));
                 }
+                new_positions
             },
             Movement::Up => {
                 for pos in self.block_positions.iter() {
                     new_positions.push((pos.0 - 1, pos.1));
-                    pos.0 - 1;
                 }
+                new_positions
             },
             Movement::Right => {
                 for pos in self.block_positions.iter() {
                     new_positions.push((pos.0, pos.1 + 1));
                 }
+                new_positions
             },
             Movement::RotateCw => {
                 self.rotate(true)
@@ -313,7 +318,7 @@ impl Piece {*/
             Movement::RotateCcw => {
                 self.rotate(false)
             },
-            Movement::None => self.positions, // ggez :D
+            Movement::None => self.block_positions, // ggez :D
             _ => {
                 unreachable!("Invalid Movement enum given to Piece::piece_pos");
             },
@@ -323,7 +328,7 @@ impl Piece {*/
     fn rotate(&self, clockwise_flag: bool) -> Vec<(BoardPos, BoardPos)> {
         let mut new_positions: Vec<(BoardPos, BoardPos)> = vec![];
         match self.pivot {
-            Ok(ref piv) => {
+            Some(ref piv) => {
                 if clockwise_flag {
                     for pos in self.block_positions.iter() {
                         // what
