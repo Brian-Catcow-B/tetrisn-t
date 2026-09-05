@@ -3,6 +3,13 @@ Tetrisn-t (python version) rewritten in Rust, better.
 
 Binaries for Windows and Linux are included in each tagged release.
 
+# Prerequisites
+The GGEZ library needs the following libraries installed with 
+```
+sudo apt install libasound2-dev libudev-dev pkg-config
+```
+On Windows it should just build according to the documentation [here](https://github.com/ggez/ggez/blob/master/docs/BuildingForEveryPlatform.md)
+
 # Build
 Download and install cargo, then build with
 ```
