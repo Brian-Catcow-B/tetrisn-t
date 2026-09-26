@@ -1,6 +1,6 @@
 use ggez::graphics;
 use ggez::input::gamepad::gilrs;
-use ggez::ContextBuilder;
+use ggez::{ContextBuilder, GameResult};
 
 // file systems stuff
 use ggez::filesystem::resources_dir;
@@ -20,7 +20,7 @@ mod movement;
 
 use ggez::input::gamepad::GilrsGamepadContext;
 
-fn main() {
+fn main() -> GameResult {
     let mut context = ContextBuilder::new("Tetrisn-t", "Catcow")
         .window_setup(ggez::conf::WindowSetup::default().title("Tetrisn't"));
 
@@ -31,12 +31,12 @@ fn main() {
         context = context.add_resource_path(path);
     }
 
-    let (mut ctx, event_loop) = context.build().expect("[!] Failed to build context");
+    let (mut ctx, event_loop) = context.build()?;
 
     // custom controller setup stuffs
     let mut gilrs_builder = gilrs::GilrsBuilder::new().add_included_mappings(false);
 
-    match resources_dir(&ctx).join("gamecontrollerdb.txt").as_path().to_str() {
+    match ctx.fs.resources_dir().join("gamecontrollerdb.txt").as_path().to_str() {
         Some(path) => {
             match std::fs::read_to_string(path) {
                 Ok(string) => {

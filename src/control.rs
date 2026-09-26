@@ -4,7 +4,7 @@ use ggez::graphics;
 use ggez::timer;
 use ggez::{Context, GameResult};
 
-use crate::game::{Game, GameOptions};
+use crate::game::{Game, GameOptions, piece::PieceManager};
 use crate::menu::{menuhelpers::MenuGameOptions, Menu};
 
 static STATE_MENU_BUT_MENU_NONE: &str =
@@ -21,6 +21,7 @@ pub enum ProgramState {
 
 pub struct Control {
     state: ProgramState,
+    piece_manager: PieceManager,
     menu: Option<Menu>,
     game: Option<Game>,
     game_options: MenuGameOptions,
@@ -29,6 +30,9 @@ pub struct Control {
 impl Control {
     pub fn new(ctx: &mut Context) -> Control {
         let menu_game_options = MenuGameOptions::default();
+        let pieceset: String;
+        ctx.fs
+        let piece_manager: PieceManager = PieceManager::try_from().expect("Failed to load any piece set");
         Self {
             state: ProgramState::Menu,
             menu: Some(Menu::new(ctx, &menu_game_options)),

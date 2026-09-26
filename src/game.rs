@@ -228,6 +228,7 @@ pub struct Game {
     // GAME STUFF
     // logic (mostly)
     bh: BoardHandler,
+    ph: PieceHandler,
     num_players: u8,
     vec_players: Vec<Player>,
     vec_next_piece: Vec<Piece>,
@@ -260,6 +261,9 @@ pub struct Game {
 
 impl Game {
     pub fn new(ctx: &mut Context, game_options: &GameOptions) -> Game {
+        // TODO: CHANGE BEFORE RELEASE (legal reasons regading tetrominos or some crap)
+
+        let ph: PieceHandler = PieceHandler::try_from().expect("");
         let mode = game_options.game_mode;
         let board_width: BoardDim = match mode {
             GameMode::None => unreachable!("{}", GAME_MODE_NONE),
