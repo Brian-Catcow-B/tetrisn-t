@@ -1,5 +1,5 @@
-use ggez::event::KeyCode;
-use ggez::graphics::{self, DrawParam, Font, PxScale, Text, TextFragment};
+use ggez::graphics::{self, Canvas, Drawable, DrawParam, PxScale, Text, TextFragment};
+use ggez::input::keyboard::KeyCode;
 use ggez::mint::Point2;
 use ggez::Context;
 
@@ -428,14 +428,15 @@ impl InputConfigMenu {
         }
     }
 
-    pub fn draw(&mut self, ctx: &mut Context, game_options: &MenuGameOptions) {
-        let window_dimensions = graphics::size(ctx);
+    pub fn draw(&mut self, ctx: &mut Context, canvas: &mut Canvas, game_options: &MenuGameOptions) {
+        let window_dimensions = ctx.gfx.size();
 
         // always drawn stuff
 
         for (index, item) in self.vec_menu_items_main.iter().enumerate() {
             self.draw_text(
                 ctx,
+                canvas,
                 &item.text,
                 0.1 + 0.2 * index as f32,
                 &window_dimensions,
@@ -479,16 +480,20 @@ impl InputConfigMenu {
                 )
                 .unwrap();
             }
-            graphics::draw(
-                ctx,
+            canvas.draw(
                 &editing_indicator_rectangle,
-                (Point2::from_slice(&[0.0, 0.0]),),
-            )
-            .unwrap();
+                Point2::from_slice(&[0.0, 0.0]),
+            );
 
             if self.vec_menu_items_main[self.selection].trigger == MenuItemTrigger::SubSelection {
                 if self.keycode_conflict_flag {
-                    self.draw_text(ctx, &self.keycode_conflict_text, 0.43, &window_dimensions);
+                    self.draw_text(
+                        ctx,
+                        canvas,
+                        &self.keycode_conflict_text,
+                        0.43,
+                        &window_dimensions,
+                    );
                 }
 
                 if self.sub_selection_keyboard_flag
@@ -497,15 +502,22 @@ impl InputConfigMenu {
                     for (index, item) in self.vec_menu_items_keycode.iter().enumerate() {
                         self.draw_text(
                             ctx,
+                            canvas,
                             &item.text,
                             0.5 + 0.05 * index as f32,
                             &window_dimensions,
                         );
                     }
                 } else if game_options.arr_controls[self.player_num as usize].1 {
-                    self.draw_text(ctx, &self.is_gamepad_text, 0.63, &window_dimensions);
+                    self.draw_text(ctx, canvas, &self.is_gamepad_text, 0.63, &window_dimensions);
                 } else {
-                    self.draw_text(ctx, &self.input_uninitialized_text, 0.5, &window_dimensions);
+                    self.draw_text(
+                        ctx,
+                        canvas,
+                        &self.input_uninitialized_text,
+                        0.5,
+                        &window_dimensions,
+                    );
                 }
             }
         }
@@ -514,20 +526,19 @@ impl InputConfigMenu {
     fn draw_text(
         &self,
         ctx: &mut Context,
+        canvas: &mut Canvas,
         text_var: &Text,
         vertical_position: f32,
         window_dimensions: &(f32, f32),
     ) {
         let text_var_dimensions = text_var.dimensions(ctx);
-        graphics::draw(
-            ctx,
+        canvas.draw(
             text_var,
             DrawParam::new().dest(Point2::from_slice(&[
                 (window_dimensions.0 - text_var_dimensions.w as f32) / 2.0,
                 (window_dimensions.1 - text_var_dimensions.h as f32) * vertical_position,
             ])),
-        )
-        .unwrap();
+        );
     }
 
     pub fn resize_event(&mut self, height: f32) {
@@ -538,10 +549,10 @@ impl InputConfigMenu {
             item.resize(height);
         }
         self.input_uninitialized_text
-            .set_font(Font::default(), PxScale::from(height / SUB_TEXT_SCALE_DOWN));
+            .set_scale(PxScale::from(height / SUB_TEXT_SCALE_DOWN));
         self.keycode_conflict_text
-            .set_font(Font::default(), PxScale::from(height / SUB_TEXT_SCALE_DOWN));
+            .set_scale(PxScale::from(height / SUB_TEXT_SCALE_DOWN));
         self.is_gamepad_text
-            .set_font(Font::default(), PxScale::from(height / SUB_TEXT_SCALE_DOWN));
+            .set_scale(PxScale::from(height / SUB_TEXT_SCALE_DOWN));
     }
 }

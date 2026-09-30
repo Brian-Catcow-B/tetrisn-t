@@ -1,5 +1,5 @@
 use crate::movement::Movement;
-use ggez::event::KeyCode;
+use ggez::input::keyboard::KeyCode;
 
 // (is pressed down, was pressed this frame)
 pub struct Input {
