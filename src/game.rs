@@ -1,6 +1,7 @@
-use ggez::event::{Axis, Button, GamepadId, KeyCode};
-use ggez::graphics::{self, spritebatch, DrawParam};
+use ggez::event::{Axis, Button, GamepadId};
+use ggez::graphics::{self, Canvas, DrawParam, Drawable, InstanceArray};
 use ggez::graphics::{PxScale, Text, TextFragment};
+use ggez::input::keyboard::KeyCode;
 use ggez::Context;
 
 use ggez::mint::{Point2, Vector2};
@@ -230,13 +231,13 @@ pub struct Game {
     determine_ghost_tile_locations: bool,
     // drawing
     tile_size: f32,
-    batch_empty_tile: spritebatch::SpriteBatch,
-    batch_highlight_active_tile: spritebatch::SpriteBatch,
-    batch_highlight_clearing_standard_tile: spritebatch::SpriteBatch,
-    batch_highlight_clearing_tetrisnt_tile: spritebatch::SpriteBatch,
-    batch_highlight_ghost_tile: spritebatch::SpriteBatch,
-    vec_batch_player_piece: Vec<spritebatch::SpriteBatch>,
-    vec_batch_next_piece: Vec<spritebatch::SpriteBatch>,
+    batch_empty_tile: InstanceArray,
+    batch_highlight_active_tile: InstanceArray,
+    batch_highlight_clearing_standard_tile: InstanceArray,
+    batch_highlight_clearing_tetrisnt_tile: InstanceArray,
+    batch_highlight_ghost_tile: InstanceArray,
+    vec_batch_player_piece: Vec<InstanceArray>,
+    vec_batch_next_piece: Vec<InstanceArray>,
     game_info_text: Text,
     pause_text: Text,
     game_over_text: Text,
@@ -284,7 +285,8 @@ impl Game {
 
             vec_players.push(Player::new(player, control_scheme, spawn_column));
         }
-        let mut batch_empty_tile = spritebatch::SpriteBatch::new(TileGraphic::new_empty(ctx).image);
+        let empty_tile_graphic = TileGraphic::new_empty(ctx);
+        let mut batch_empty_tile = InstanceArray::new(ctx, empty_tile_graphic.image);
         // the emtpy tile batch will be constant once the game starts with the player tile batches drawing on top of it, so just set that up here
         for x in 0..board_width {
             for y in 0..board_height as usize {
@@ -293,7 +295,7 @@ impl Game {
                     x as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                     y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                 ]));
-                batch_empty_tile.add(empty_tile);
+                batch_empty_tile.push(empty_tile);
             }
         }
         let mut vec_next_piece: Vec<NextPiece> =
@@ -314,18 +316,16 @@ impl Game {
             vec_gamepad_id_map_to_player = Vec::with_capacity(1);
         }
         // for 1 player we have 3 sprite batches for player pieces because we have different color pieces
-        let mut vec_batch_player_piece: Vec<spritebatch::SpriteBatch> =
+        let mut vec_batch_player_piece: Vec<InstanceArray> =
             Vec::with_capacity(std::cmp::max(game_options.num_players as usize, 3));
-        let mut vec_batch_next_piece: Vec<spritebatch::SpriteBatch> =
+        let mut vec_batch_next_piece: Vec<InstanceArray> =
             Vec::with_capacity(std::cmp::max(game_options.num_players as usize, 3));
         for player in 0..std::cmp::max(game_options.num_players as usize, 3) {
             vec_next_piece.push(NextPiece::new(Shapes::None));
-            vec_batch_player_piece.push(spritebatch::SpriteBatch::new(
-                TileGraphic::new_player(ctx, player as u8).image,
-            ));
-            vec_batch_next_piece.push(spritebatch::SpriteBatch::new(
-                TileGraphic::new_player(ctx, player as u8).image,
-            ));
+            let player_tile_graphic = TileGraphic::new_player(ctx, player as u8);
+            vec_batch_player_piece.push(InstanceArray::new(ctx, player_tile_graphic.image));
+            let player_tile_graphic = TileGraphic::new_player(ctx, player as u8);
+            vec_batch_next_piece.push(InstanceArray::new(ctx, player_tile_graphic.image));
         }
         let little_text_scale = PxScale::from(LITTLE_TEXT_SCALE);
         let mut game_info_text = match mode {
@@ -377,8 +377,12 @@ impl Game {
                 .scale(PxScale::from(LITTLE_TEXT_SCALE * 2.0)),
         );
 
-        let (window_width, window_height) = graphics::size(ctx);
+        let (window_width, window_height) = ctx.gfx.size();
 
+        let active_highlight_tile_graphic = TileGraphic::new_active_highlight(ctx);
+        let clear_standard_highlight_tile_graphic = TileGraphic::new_clear_standard_highlight(ctx);
+        let clear_tetrisnt_highlight_tile_graphic = TileGraphic::new_clear_tetrisnt_highlight(ctx);
+        let ghost_highlight_tile_graphic = TileGraphic::new_ghost_highlight(ctx);
         Self {
             bh: BoardHandler::new(board_width, board_height, game_options.num_players, mode),
             num_players: game_options.num_players,
@@ -404,18 +408,19 @@ impl Game {
                 board_height + NON_BOARD_SPACE_U + NON_BOARD_SPACE_D,
             ),
             batch_empty_tile,
-            batch_highlight_active_tile: spritebatch::SpriteBatch::new(
-                TileGraphic::new_active_highlight(ctx).image,
+            batch_highlight_active_tile: InstanceArray::new(
+                ctx,
+                active_highlight_tile_graphic.image,
             ),
-            batch_highlight_clearing_standard_tile: spritebatch::SpriteBatch::new(
-                TileGraphic::new_clear_standard_highlight(ctx).image,
+            batch_highlight_clearing_standard_tile: InstanceArray::new(
+                ctx,
+                clear_standard_highlight_tile_graphic.image,
             ),
-            batch_highlight_clearing_tetrisnt_tile: spritebatch::SpriteBatch::new(
-                TileGraphic::new_clear_tetrisnt_highlight(ctx).image,
+            batch_highlight_clearing_tetrisnt_tile: InstanceArray::new(
+                ctx,
+                clear_tetrisnt_highlight_tile_graphic.image,
             ),
-            batch_highlight_ghost_tile: spritebatch::SpriteBatch::new(
-                TileGraphic::new_ghost_highlight(ctx).image,
-            ),
+            batch_highlight_ghost_tile: InstanceArray::new(ctx, ghost_highlight_tile_graphic.image),
             vec_batch_player_piece,
             vec_batch_next_piece,
             game_info_text,
@@ -733,7 +738,7 @@ impl Game {
             if keycode == KeyCode::Escape {
                 self.keycode_escape_flags = (true, true);
                 return;
-            } else if keycode == KeyCode::Down {
+            } else if keycode == KeyCode::ArrowDown {
                 self.keycode_down_flags = (true, true);
             }
             for player in &mut self.vec_players {
@@ -748,7 +753,7 @@ impl Game {
         if keycode == KeyCode::Escape {
             self.keycode_escape_flags = (false, false);
             return;
-        } else if keycode == KeyCode::Down {
+        } else if keycode == KeyCode::ArrowDown {
             self.keycode_down_flags = (false, false);
             return;
         }
@@ -834,32 +839,39 @@ impl Game {
     // with the top left of the board at (0, 0), which is the top left corner of the screen;
     // then when we actually draw the board, we scale it to the appropriate size and place the top left corner of the board at the appropriate place;
     // there's a sprite batch for each players' tiles and one more for the empty tiles, which is constant, and the player tiles are drawn after so they are on top
-    pub fn draw(&mut self, ctx: &mut Context) {
+    pub fn draw(&mut self, ctx: &mut Context, canvas: &mut Canvas) {
         // constants used throughout draw
         let height_buffer = self.bh.get_height_buffer();
         let width = self.bh.get_width();
         let height = self.bh.get_height();
 
         // start doing drawing stuff
-        graphics::clear(ctx, graphics::Color::BLACK);
-        let (window_width, window_height) = graphics::size(ctx);
+        let (window_width, window_height) = ctx.gfx.size();
         if self.game_over_flag && self.game_over_delay == 0 {
             // DRAW GAME OVER
             self.draw_text(
                 ctx,
+                canvas,
                 &self.game_over_text,
                 0.4,
                 &(window_width, window_height),
             );
             self.draw_text(
                 ctx,
+                canvas,
                 &self.game_info_text,
                 0.55,
                 &(window_width, window_height),
             );
         } else if self.pause_flags.0 {
             // DRAW PAUSE
-            self.draw_text(ctx, &self.pause_text, 0.4, &(window_width, window_height));
+            self.draw_text(
+                ctx,
+                canvas,
+                &self.pause_text,
+                0.4,
+                &(window_width, window_height),
+            );
         } else {
             // DRAW GAME
 
@@ -885,7 +897,7 @@ impl Game {
                             ),
                         };
                         self.batch_highlight_ghost_tile
-                            .add(graphics::DrawParam::new().dest(Point2::from_slice(&[
+                            .push(graphics::DrawParam::new().dest(Point2::from_slice(&[
                                 x_draw_pos as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                                 (y_draw_pos - height_buffer) as f32
                                     * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
@@ -922,21 +934,21 @@ impl Game {
                         ]));
                         if self.num_players > 1 {
                             let player = self.bh.get_player_from_pos(y + height_buffer, x);
-                            self.vec_batch_player_piece[player as usize].add(player_tile);
+                            self.vec_batch_player_piece[player as usize].push(player_tile);
                         } else {
                             let shape: Shapes = self.bh.get_shape_from_pos(y + height_buffer, x);
                             if shape == Shapes::J || shape == Shapes::S {
-                                self.vec_batch_player_piece[0].add(player_tile);
+                                self.vec_batch_player_piece[0].push(player_tile);
                             } else if shape == Shapes::L || shape == Shapes::Z {
-                                self.vec_batch_player_piece[1].add(player_tile);
+                                self.vec_batch_player_piece[1].push(player_tile);
                             } else if shape == Shapes::I || shape == Shapes::O || shape == Shapes::T
                             {
-                                self.vec_batch_player_piece[2].add(player_tile);
+                                self.vec_batch_player_piece[2].push(player_tile);
                             }
                         }
                         // highlight if active
                         if self.bh.get_active_from_pos(y + height_buffer, x) {
-                            self.batch_highlight_active_tile.add(player_tile);
+                            self.batch_highlight_active_tile.push(player_tile);
                         }
                     }
                 }
@@ -965,9 +977,9 @@ impl Game {
                                 ]));
 
                             self.batch_highlight_clearing_standard_tile
-                                .add(highlight_pos_right);
+                                .push(highlight_pos_right);
                             self.batch_highlight_clearing_standard_tile
-                                .add(highlight_pos_left);
+                                .push(highlight_pos_left);
 
                             if ((x as f32) / (width as f32) - 0.5) * 2.0
                                 > 1.0 - (full_line.clear_delay as f32 / CLEAR_DELAY_CLASSIC as f32)
@@ -995,9 +1007,9 @@ impl Game {
                                 ]));
 
                             self.batch_highlight_clearing_tetrisnt_tile
-                                .add(highlight_pos_right);
+                                .push(highlight_pos_right);
                             self.batch_highlight_clearing_tetrisnt_tile
-                                .add(highlight_pos_left);
+                                .push(highlight_pos_left);
 
                             if ((x as f32) / (width as f32) - 0.5) * 2.0
                                 > 1.0 - (full_line.clear_delay as f32 / CLEAR_DELAY_CLASSIC as f32)
@@ -1034,7 +1046,7 @@ impl Game {
                                             y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                                         ]));
                                     self.vec_batch_next_piece[player.player_num as usize]
-                                        .add(next_tile);
+                                        .push(next_tile);
                                 }
                             }
                         }
@@ -1053,7 +1065,7 @@ impl Game {
                                             y as f32 * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32,
                                         ]));
                                     self.vec_batch_next_piece[color_number_singleplayer]
-                                        .add(next_tile);
+                                        .push(next_tile);
                                 }
                             }
                         }
@@ -1067,8 +1079,7 @@ impl Game {
             let board_top_left_corner = window_width / 2.0
                 - (scaled_tile_size * NUM_PIXEL_ROWS_PER_TILEGRAPHIC as f32 * width as f32 / 2.0);
             // empty tiles
-            graphics::draw(
-                ctx,
+            canvas.draw(
                 &self.batch_empty_tile,
                 DrawParam::new()
                     .dest(Point2::from_slice(&[
@@ -1076,11 +1087,9 @@ impl Game {
                         NON_BOARD_SPACE_U as f32 * self.tile_size,
                     ]))
                     .scale(Vector2::from_slice(&[scaled_tile_size, scaled_tile_size])),
-            )
-            .unwrap();
+            );
             // ghost pieces
-            graphics::draw(
-                ctx,
+            canvas.draw(
                 &self.batch_highlight_ghost_tile,
                 DrawParam::new()
                     .dest(Point2::from_slice(&[
@@ -1088,12 +1097,10 @@ impl Game {
                         NON_BOARD_SPACE_U as f32 * self.tile_size,
                     ]))
                     .scale(Vector2::from_slice(&[scaled_tile_size, scaled_tile_size])),
-            )
-            .unwrap();
+            );
             // player tiles
             for player in 0..std::cmp::max(self.num_players, 3) {
-                graphics::draw(
-                    ctx,
+                canvas.draw(
                     &self.vec_batch_player_piece[player as usize],
                     DrawParam::new()
                         .dest(Point2::from_slice(&[
@@ -1101,12 +1108,10 @@ impl Game {
                             NON_BOARD_SPACE_U as f32 * self.tile_size,
                         ]))
                         .scale(Vector2::from_slice(&[scaled_tile_size, scaled_tile_size])),
-                )
-                .unwrap();
+                );
             }
             // active tile highlights
-            graphics::draw(
-                ctx,
+            canvas.draw(
                 &self.batch_highlight_active_tile,
                 DrawParam::new()
                     .dest(Point2::from_slice(&[
@@ -1114,11 +1119,9 @@ impl Game {
                         NON_BOARD_SPACE_U as f32 * self.tile_size,
                     ]))
                     .scale(Vector2::from_slice(&[scaled_tile_size, scaled_tile_size])),
-            )
-            .unwrap();
+            );
             // clearing tile standard highlights
-            graphics::draw(
-                ctx,
+            canvas.draw(
                 &self.batch_highlight_clearing_standard_tile,
                 DrawParam::new()
                     .dest(Point2::from_slice(&[
@@ -1126,11 +1129,9 @@ impl Game {
                         NON_BOARD_SPACE_U as f32 * self.tile_size,
                     ]))
                     .scale(Vector2::from_slice(&[scaled_tile_size, scaled_tile_size])),
-            )
-            .unwrap();
+            );
             // clearing tile tetrisnt highlights
-            graphics::draw(
-                ctx,
+            canvas.draw(
                 &self.batch_highlight_clearing_tetrisnt_tile,
                 DrawParam::new()
                     .dest(Point2::from_slice(&[
@@ -1138,13 +1139,11 @@ impl Game {
                         NON_BOARD_SPACE_U as f32 * self.tile_size,
                     ]))
                     .scale(Vector2::from_slice(&[scaled_tile_size, scaled_tile_size])),
-            )
-            .unwrap();
+            );
             // next piece tiles
             for player in self.vec_players.iter() {
                 if self.num_players > 1 {
-                    graphics::draw(
-                        ctx,
+                    canvas.draw(
                         &self.vec_batch_next_piece[player.player_num as usize],
                         DrawParam::new()
                             .dest(Point2::from_slice(&[
@@ -1156,12 +1155,10 @@ impl Game {
                                     * self.tile_size,
                             ]))
                             .scale(Vector2::from_slice(&[scaled_tile_size, scaled_tile_size])),
-                    )
-                    .unwrap();
+                    );
                 } else {
                     let spawn_column = player.spawn_column;
-                    graphics::draw(
-                        ctx,
+                    canvas.draw(
                         &self.vec_batch_next_piece[color_number_singleplayer],
                         DrawParam::new()
                             .dest(Point2::from_slice(&[
@@ -1173,14 +1170,14 @@ impl Game {
                                     * self.tile_size,
                             ]))
                             .scale(Vector2::from_slice(&[scaled_tile_size, scaled_tile_size])),
-                    )
-                    .unwrap();
+                    );
                 }
             }
             // score text; TODO: perhaps make a separate function for something based on the bottom,
             // or just figure out how to do this better so we don't divide out by the window_height
             self.draw_text(
                 ctx,
+                canvas,
                 &self.game_info_text,
                 1.0 - ((NON_BOARD_SPACE_D as f32 * self.tile_size) / window_height),
                 &(window_width, window_height),
@@ -1202,20 +1199,19 @@ impl Game {
     fn draw_text(
         &self,
         ctx: &mut Context,
+        canvas: &mut Canvas,
         text_var: &Text,
         vertical_position: f32,
         window_dimensions: &(f32, f32),
     ) {
         let text_var_dimensions = text_var.dimensions(ctx);
-        graphics::draw(
-            ctx,
+        canvas.draw(
             text_var,
             DrawParam::new().dest(Point2::from_slice(&[
                 (window_dimensions.0 - text_var_dimensions.w as f32) / 2.0,
                 (window_dimensions.1 - text_var_dimensions.h as f32) * vertical_position,
             ])),
-        )
-        .unwrap();
+        );
     }
 
     pub fn resize_event(&mut self, width: f32, height: f32) {

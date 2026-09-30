@@ -1,4 +1,4 @@
-use ggez::graphics::{self, DrawParam, Text};
+use ggez::graphics::{Canvas, DrawParam, Drawable, Text};
 use ggez::mint::Point2;
 use ggez::Context;
 
@@ -69,13 +69,14 @@ impl ChooseModeMenu {
         MenuItemTrigger::None
     }
 
-    pub fn draw(&mut self, ctx: &mut Context) {
-        let window_dimensions = graphics::size(ctx);
+    pub fn draw(&mut self, ctx: &mut Context, canvas: &mut Canvas) {
+        let window_dimensions = ctx.gfx.size();
         let num_menu_items_to_draw = self.vec_menu_items.len();
 
         for (index, item) in self.vec_menu_items.iter().enumerate() {
             self.draw_text(
                 ctx,
+                canvas,
                 &item.text,
                 (1.0 * (index + 1) as f32) / (num_menu_items_to_draw + 1) as f32,
                 &window_dimensions,
@@ -86,20 +87,19 @@ impl ChooseModeMenu {
     fn draw_text(
         &self,
         ctx: &mut Context,
+        canvas: &mut Canvas,
         text_var: &Text,
         vertical_position: f32,
         window_dimensions: &(f32, f32),
     ) {
         let text_var_dimensions = text_var.dimensions(ctx);
-        graphics::draw(
-            ctx,
+        canvas.draw(
             text_var,
             DrawParam::new().dest(Point2::from_slice(&[
                 (window_dimensions.0 - text_var_dimensions.w as f32) / 2.0,
                 (window_dimensions.1 - text_var_dimensions.h as f32) * vertical_position,
             ])),
-        )
-        .unwrap();
+        );
     }
 
     pub fn resize_event(&mut self, height: f32) {

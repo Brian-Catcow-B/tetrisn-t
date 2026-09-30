@@ -1,10 +1,12 @@
 use ggez::event::EventHandler;
-use ggez::event::{Axis, Button, GamepadId, KeyCode, KeyMods};
-use ggez::graphics;
-use ggez::timer;
+use ggez::event::{Axis, Button, GamepadId};
+use ggez::graphics::{Canvas, Color, Rect};
+use ggez::input::keyboard::KeyInput;
+use ggez::winit::keyboard::PhysicalKey;
 use ggez::{Context, GameResult};
 
 use crate::game::{Game, GameOptions};
+use crate::menu::menuhelpers;
 use crate::menu::{menuhelpers::MenuGameOptions, Menu};
 
 static STATE_MENU_BUT_MENU_NONE: &str =
@@ -24,6 +26,7 @@ pub struct Control {
     menu: Option<Menu>,
     game: Option<Game>,
     game_options: MenuGameOptions,
+    screen_size: Rect,
 }
 
 impl Control {
@@ -34,6 +37,7 @@ impl Control {
             menu: Some(Menu::new(ctx, &menu_game_options)),
             game: None,
             game_options: menu_game_options,
+            screen_size: Rect::new(0.0, 0.0, 800.0, 600.0), // TODO: use constants instead of magic numbers that align with what's in main.rs
         }
     }
 
@@ -52,11 +56,11 @@ impl Control {
 }
 
 // this is run once every frame and passes control off to whichever state the game is in
-impl EventHandler<ggez::GameError> for Control {
-    fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
+impl EventHandler for Control {
+    fn update(&mut self, ctx: &mut Context) -> GameResult {
         const DESIRED_FPS: u32 = 60;
 
-        while timer::check_update_time(ctx, DESIRED_FPS) {
+        while ctx.time.check_update_time(DESIRED_FPS) {
             match self.state {
                 ProgramState::Menu => {
                     // update the menu and get the state with GameOptions if ProgramState is changing
@@ -89,40 +93,50 @@ impl EventHandler<ggez::GameError> for Control {
     fn key_down_event(
         &mut self,
         _ctx: &mut Context,
-        keycode: KeyCode,
-        _keymod: KeyMods,
+        keyinput: KeyInput,
         repeat: bool,
-    ) {
-        match self.state {
-            ProgramState::Menu => self
-                .menu
-                .as_mut()
-                .expect(STATE_MENU_BUT_MENU_NONE)
-                .key_down_event(keycode, repeat),
-            ProgramState::Game => self
-                .game
-                .as_mut()
-                .expect(STATE_GAME_BUT_GAME_NONE)
-                .key_down_event(keycode, repeat),
-        };
+    ) -> GameResult {
+        if let PhysicalKey::Code(keycode) = keyinput.event.physical_key {
+            match self.state {
+                ProgramState::Menu => self
+                    .menu
+                    .as_mut()
+                    .expect(STATE_MENU_BUT_MENU_NONE)
+                    .key_down_event(keycode, repeat),
+                ProgramState::Game => self
+                    .game
+                    .as_mut()
+                    .expect(STATE_GAME_BUT_GAME_NONE)
+                    .key_down_event(keycode, repeat),
+            };
+        }
+        Ok(())
     }
 
-    fn key_up_event(&mut self, _ctx: &mut Context, keycode: KeyCode, _keymod: KeyMods) {
-        match self.state {
-            ProgramState::Menu => self
-                .menu
-                .as_mut()
-                .expect(STATE_MENU_BUT_MENU_NONE)
-                .key_up_event(keycode),
-            ProgramState::Game => self
-                .game
-                .as_mut()
-                .expect(STATE_GAME_BUT_GAME_NONE)
-                .key_up_event(keycode),
-        };
+    fn key_up_event(&mut self, _ctx: &mut Context, keyinput: KeyInput) -> GameResult {
+        if let PhysicalKey::Code(keycode) = keyinput.event.physical_key {
+            match self.state {
+                ProgramState::Menu => self
+                    .menu
+                    .as_mut()
+                    .expect(STATE_MENU_BUT_MENU_NONE)
+                    .key_up_event(keycode),
+                ProgramState::Game => self
+                    .game
+                    .as_mut()
+                    .expect(STATE_GAME_BUT_GAME_NONE)
+                    .key_up_event(keycode),
+            };
+        }
+        Ok(())
     }
 
-    fn gamepad_button_down_event(&mut self, _ctx: &mut Context, btn: Button, id: GamepadId) {
+    fn gamepad_button_down_event(
+        &mut self,
+        _ctx: &mut Context,
+        btn: Button,
+        id: GamepadId,
+    ) -> GameResult {
         match self.state {
             ProgramState::Menu => (),
             ProgramState::Game => self
@@ -131,9 +145,15 @@ impl EventHandler<ggez::GameError> for Control {
                 .expect(STATE_GAME_BUT_GAME_NONE)
                 .gamepad_button_down_event(btn, id),
         };
+        Ok(())
     }
 
-    fn gamepad_button_up_event(&mut self, _ctx: &mut Context, btn: Button, id: GamepadId) {
+    fn gamepad_button_up_event(
+        &mut self,
+        _ctx: &mut Context,
+        btn: Button,
+        id: GamepadId,
+    ) -> GameResult {
         match self.state {
             ProgramState::Menu => (),
             ProgramState::Game => self
@@ -142,9 +162,16 @@ impl EventHandler<ggez::GameError> for Control {
                 .expect(STATE_GAME_BUT_GAME_NONE)
                 .gamepad_button_up_event(btn, id),
         };
+        Ok(())
     }
 
-    fn gamepad_axis_event(&mut self, _ctx: &mut Context, axis: Axis, value: f32, id: GamepadId) {
+    fn gamepad_axis_event(
+        &mut self,
+        _ctx: &mut Context,
+        axis: Axis,
+        value: f32,
+        id: GamepadId,
+    ) -> GameResult {
         match self.state {
             ProgramState::Menu => (),
             ProgramState::Game => self
@@ -153,28 +180,41 @@ impl EventHandler<ggez::GameError> for Control {
                 .expect(STATE_GAME_BUT_GAME_NONE)
                 .gamepad_axis_event(axis, value, id),
         }
+        Ok(())
     }
 
-    fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
+    fn draw(&mut self, ctx: &mut Context) -> GameResult {
         match self.state {
-            ProgramState::Menu => self
-                .menu
-                .as_mut()
-                .expect(STATE_MENU_BUT_MENU_NONE)
-                .draw(ctx, &self.game_options),
-            ProgramState::Game => self
-                .game
-                .as_mut()
-                .expect(STATE_GAME_BUT_GAME_NONE)
-                .draw(ctx),
-        };
+            ProgramState::Menu => {
+                let mut canvas: Canvas = Canvas::from_frame(ctx, menuhelpers::GRAY);
+                canvas.set_screen_coordinates(self.screen_size);
 
-        graphics::present(ctx)
+                self.menu.as_mut().expect(STATE_MENU_BUT_MENU_NONE).draw(
+                    ctx,
+                    &mut canvas,
+                    &self.game_options,
+                );
+
+                canvas.finish(ctx)
+            }
+            ProgramState::Game => {
+                let mut canvas: Canvas = Canvas::from_frame(ctx, Color::BLACK);
+                canvas.set_screen_coordinates(self.screen_size);
+
+                self.game
+                    .as_mut()
+                    .expect(STATE_GAME_BUT_GAME_NONE)
+                    .draw(ctx, &mut canvas);
+
+                canvas.finish(ctx)
+            }
+        }
     }
 
-    fn resize_event(&mut self, ctx: &mut Context, width: f32, height: f32) {
-        let new_rect = graphics::Rect::new(0.0, 0.0, width, height);
-        graphics::set_screen_coordinates(ctx, new_rect).unwrap();
+    fn resize_event(&mut self, _ctx: &mut Context, width: f32, height: f32) -> GameResult {
+        //let new_rect = graphics::Rect::new(0.0, 0.0, width, height);
+        //FIXME: canvas.set_screen_coordinates(...) - or maybe it doesn't matter
+        //graphics::set_screen_coordinates(ctx, new_rect).unwrap();
 
         match self.state {
             ProgramState::Menu => self
@@ -188,14 +228,16 @@ impl EventHandler<ggez::GameError> for Control {
                 .expect(STATE_GAME_BUT_GAME_NONE)
                 .resize_event(width, height),
         };
+        Ok(())
     }
 
-    fn focus_event(&mut self, _ctx: &mut Context, gained: bool) {
+    fn focus_event(&mut self, _ctx: &mut Context, gained: bool) -> GameResult {
         if self.state == ProgramState::Game {
             self.game
                 .as_mut()
                 .expect(STATE_GAME_BUT_GAME_NONE)
                 .focus_event(gained);
         }
+        Ok(())
     }
 }

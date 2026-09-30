@@ -1,5 +1,5 @@
-use ggez::event::KeyCode;
-use ggez::graphics::{self, Color, Font, PxScale, Text, TextFragment};
+use ggez::graphics::{self, Color, Text, TextFragment};
+use ggez::input::keyboard::KeyCode;
 
 use crate::game::GameMode;
 use crate::inputs::KeyboardControlScheme;
@@ -103,10 +103,11 @@ impl MenuItem {
                 text.add(TextFragment::new("".to_string()).color(graphics::Color::BLACK));
             }
         }
-        text.set_font(
-            Font::default(),
-            PxScale::from(window_height / text_scale_down),
-        );
+        // FIXME: maybe
+        //text.set_font(
+        //FontData::default(),
+        //PxScale::from(window_height / text_scale_down),
+        //);
         Self {
             text,
             value_type,
@@ -173,11 +174,12 @@ impl MenuItem {
         };
     }
 
-    pub fn resize(&mut self, window_height: f32) {
-        self.text.set_font(
-            Font::default(),
-            PxScale::from(window_height / self.text_scale_down),
-        );
+    pub fn resize(&mut self, _window_height: f32) {
+        // FIXME: maybe
+        //self.text.set_font(
+        //FontData::default(),
+        //PxScale::from(window_height / self.text_scale_down),
+        //);
     }
 
     pub fn set_num_values(&mut self, num_vals: u8) {

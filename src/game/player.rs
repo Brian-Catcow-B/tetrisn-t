@@ -1,4 +1,5 @@
-use ggez::event::{Axis, Button, KeyCode};
+use ggez::event::{Axis, Button};
+use ggez::input::keyboard::KeyCode;
 use rand::random;
 
 use crate::game::piece::Shapes;

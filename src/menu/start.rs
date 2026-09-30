@@ -1,4 +1,4 @@
-use ggez::graphics::{self, DrawParam, Text, TextFragment};
+use ggez::graphics::{Canvas, DrawParam, Drawable, Text, TextFragment};
 use ggez::mint::Point2;
 use ggez::Context;
 
@@ -178,16 +178,23 @@ impl StartMenu {
         0u8
     }
 
-    pub fn draw(&mut self, ctx: &mut Context) {
-        let window_dimensions = graphics::size(ctx);
+    pub fn draw(&mut self, ctx: &mut Context, canvas: &mut Canvas) {
+        let window_dimensions = ctx.gfx.size();
         let num_menu_items_to_draw = self.vec_menu_items.len();
 
         if self.not_enough_controls_flag {
-            self.draw_text(ctx, &self.not_enough_controls_text, 0.1, &window_dimensions);
+            self.draw_text(
+                ctx,
+                canvas,
+                &self.not_enough_controls_text,
+                0.1,
+                &window_dimensions,
+            );
         }
         for (index, item) in self.vec_menu_items.iter().enumerate() {
             self.draw_text(
                 ctx,
+                canvas,
                 &item.text,
                 (1.0 * (index + 1) as f32) / (num_menu_items_to_draw + 1) as f32,
                 &window_dimensions,
@@ -198,20 +205,19 @@ impl StartMenu {
     fn draw_text(
         &self,
         ctx: &mut Context,
+        canvas: &mut Canvas,
         text_var: &Text,
         vertical_position: f32,
         window_dimensions: &(f32, f32),
     ) {
         let text_var_dimensions = text_var.dimensions(ctx);
-        graphics::draw(
-            ctx,
+        canvas.draw(
             text_var,
             DrawParam::new().dest(Point2::from_slice(&[
                 (window_dimensions.0 - text_var_dimensions.w as f32) / 2.0,
                 (window_dimensions.1 - text_var_dimensions.h as f32) * vertical_position,
             ])),
-        )
-        .unwrap();
+        );
     }
 
     pub fn resize_event(&mut self, height: f32) {

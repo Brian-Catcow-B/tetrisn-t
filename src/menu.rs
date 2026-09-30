@@ -1,5 +1,5 @@
-use ggez::event::KeyCode;
-use ggez::graphics;
+use ggez::graphics::Canvas;
+use ggez::input::keyboard::KeyCode;
 use ggez::Context;
 
 use crate::control::ProgramState;
@@ -12,7 +12,6 @@ pub mod menuhelpers;
 mod start;
 use choosemode::ChooseModeMenu;
 use inputconfig::InputConfigMenu;
-use menuhelpers::GRAY;
 use menuhelpers::{MenuGameOptions, MenuItemTrigger};
 use start::StartMenu;
 
@@ -40,7 +39,7 @@ pub struct Menu {
 
 impl Menu {
     pub fn new(ctx: &mut Context, game_options: &MenuGameOptions) -> Self {
-        let window_dimensions = graphics::size(ctx);
+        let window_dimensions = ctx.gfx.size();
         Self {
             input: Input::new(),
             num_required_keycode_movement_pairs: game_options.game_mode.num_required_inputs(),
@@ -124,23 +123,23 @@ impl Menu {
 
     pub fn key_down_event(&mut self, keycode: KeyCode, _repeat: bool) {
         self.input_config_menu.most_recently_pressed_key = Some(keycode);
-        if keycode == KeyCode::Left {
+        if keycode == KeyCode::ArrowLeft {
             if !self.input.keydown_left.0 {
                 self.input.keydown_left = (true, true);
             }
-        } else if keycode == KeyCode::Right {
+        } else if keycode == KeyCode::ArrowRight {
             if !self.input.keydown_right.0 {
                 self.input.keydown_right = (true, true);
             }
-        } else if keycode == KeyCode::Down {
+        } else if keycode == KeyCode::ArrowDown {
             if !self.input.keydown_down.0 {
                 self.input.keydown_down = (true, true);
             }
-        } else if keycode == KeyCode::Up {
+        } else if keycode == KeyCode::ArrowUp {
             if !self.input.keydown_up.0 {
                 self.input.keydown_up = (true, true);
             }
-        } else if keycode == KeyCode::G {
+        } else if keycode == KeyCode::KeyG {
             if !self.input.keydown_rotate_cw.0 {
                 self.input.keydown_rotate_cw = (true, true);
             }
@@ -149,7 +148,7 @@ impl Menu {
                 self.input.keydown_rotate_ccw = (true, true);
             }
         } else if (keycode == KeyCode::Space
-            || keycode == KeyCode::Return
+            || keycode == KeyCode::Enter
             || keycode == KeyCode::NumpadEnter)
             && !self.input.keydown_start.0
         {
@@ -158,33 +157,31 @@ impl Menu {
     }
 
     pub fn key_up_event(&mut self, keycode: KeyCode) {
-        if keycode == KeyCode::Left {
+        if keycode == KeyCode::ArrowLeft {
             self.input.keydown_left = (false, false);
-        } else if keycode == KeyCode::Right {
+        } else if keycode == KeyCode::ArrowRight {
             self.input.keydown_right = (false, false);
-        } else if keycode == KeyCode::Down {
+        } else if keycode == KeyCode::ArrowDown {
             self.input.keydown_down = (false, false);
-        } else if keycode == KeyCode::Up {
+        } else if keycode == KeyCode::ArrowUp {
             self.input.keydown_up = (false, false);
-        } else if keycode == KeyCode::G {
+        } else if keycode == KeyCode::KeyG {
             self.input.keydown_rotate_cw = (false, false);
         } else if keycode == KeyCode::Escape {
             self.input.keydown_rotate_ccw = (false, false);
         } else if keycode == KeyCode::Space
-            || keycode == KeyCode::Return
+            || keycode == KeyCode::Enter
             || keycode == KeyCode::NumpadEnter
         {
             self.input.keydown_start = (false, false);
         }
     }
 
-    pub fn draw(&mut self, ctx: &mut Context, game_options: &MenuGameOptions) {
-        graphics::clear(ctx, GRAY);
-
+    pub fn draw(&mut self, ctx: &mut Context, canvas: &mut Canvas, game_options: &MenuGameOptions) {
         match self.state {
-            MenuState::ChooseMode => self.choose_mode_menu.draw(ctx),
-            MenuState::Start => self.start_menu.draw(ctx),
-            MenuState::InputConfig => self.input_config_menu.draw(ctx, game_options),
+            MenuState::ChooseMode => self.choose_mode_menu.draw(ctx, canvas),
+            MenuState::Start => self.start_menu.draw(ctx, canvas),
+            MenuState::InputConfig => self.input_config_menu.draw(ctx, canvas, game_options),
         }
     }
 
