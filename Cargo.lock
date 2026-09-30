@@ -443,7 +443,7 @@ checksum = "28780d72908948745af036ca7418d6d932f60afb48ed623291d2ccbfb8aefbff"
 dependencies = [
  "bytemuck",
  "crevice-derive",
- "glam 0.32.1",
+ "glam",
  "mint",
 ]
 
@@ -792,7 +792,7 @@ dependencies = [
  "crevice",
  "directories",
  "gilrs",
- "glam 0.32.1",
+ "glam",
  "glyph_brush",
  "image",
  "log",
@@ -854,12 +854,6 @@ dependencies = [
  "log",
  "xml-rs",
 ]
-
-[[package]]
-name = "glam"
-version = "0.19.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b8509e6791516e81c1a630d0bd7fbac36d2fa8712a9da8662e716b52d5051ca"
 
 [[package]]
 name = "glam"
@@ -2648,7 +2642,6 @@ name = "tetrisn-t"
 version = "0.2.0"
 dependencies = [
  "ggez",
- "glam 0.19.0",
  "rand 0.7.3",
 ]
 

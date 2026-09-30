@@ -16,4 +16,3 @@ opt-level = 3
 [dependencies]
 ggez = "0.10"
 rand = "0.7.3"
-glam = "0.19.0"
