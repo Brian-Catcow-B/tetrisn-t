@@ -1,4 +1,4 @@
-use ggez::graphics::{self, Color, Text, TextFragment};
+use ggez::graphics::{self, Color, PxScale, Text, TextFragment};
 use ggez::input::keyboard::KeyCode;
 
 use crate::game::GameMode;
@@ -103,11 +103,7 @@ impl MenuItem {
                 text.add(TextFragment::new("".to_string()).color(graphics::Color::BLACK));
             }
         }
-        // FIXME: maybe
-        //text.set_font(
-        //FontData::default(),
-        //PxScale::from(window_height / text_scale_down),
-        //);
+        text.set_scale(PxScale::from(window_height / text_scale_down));
         Self {
             text,
             value_type,
@@ -174,12 +170,9 @@ impl MenuItem {
         };
     }
 
-    pub fn resize(&mut self, _window_height: f32) {
-        // FIXME: maybe
-        //self.text.set_font(
-        //FontData::default(),
-        //PxScale::from(window_height / self.text_scale_down),
-        //);
+    pub fn resize(&mut self, window_height: f32) {
+        self.text
+            .set_scale(PxScale::from(window_height / self.text_scale_down));
     }
 
     pub fn set_num_values(&mut self, num_vals: u8) {

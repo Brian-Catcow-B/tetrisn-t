@@ -212,10 +212,6 @@ impl EventHandler for Control {
     }
 
     fn resize_event(&mut self, _ctx: &mut Context, width: f32, height: f32) -> GameResult {
-        //let new_rect = graphics::Rect::new(0.0, 0.0, width, height);
-        //FIXME: canvas.set_screen_coordinates(...) - or maybe it doesn't matter
-        //graphics::set_screen_coordinates(ctx, new_rect).unwrap();
-
         match self.state {
             ProgramState::Menu => self
                 .menu
