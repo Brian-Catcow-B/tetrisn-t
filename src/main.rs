@@ -19,7 +19,8 @@ use ggez::input::gamepad::GamepadContext;
 
 fn main() {
     let mut context = ContextBuilder::new("Tetrisn-t", "Catcow")
-        .window_setup(ggez::conf::WindowSetup::default().title("Tetrisn't"));
+        .window_setup(ggez::conf::WindowSetup::default().title("Tetrisn't"))
+        .window_mode(ggez::conf::WindowMode::default().dimensions(800.0, 600.0));
 
     // file systems stuff
     if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
@@ -50,9 +51,6 @@ fn main() {
     ctx.gfx
         .set_resizable(true)
         .expect("[!] Failed to set window to resizable");
-    ctx.gfx
-        .set_drawable_size(800.0, 600.0)
-        .expect("[!] Failed to resize window");
 
     // make it not blurry ???
     //ctx.gfx.set_default_filter(graphics::FilterMode::Nearest);

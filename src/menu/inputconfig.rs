@@ -1,4 +1,4 @@
-use ggez::graphics::{self, Canvas, Drawable, DrawParam, PxScale, Text, TextFragment};
+use ggez::graphics::{self, Canvas, DrawParam, Drawable, PxScale, Text, TextFragment};
 use ggez::input::keyboard::KeyCode;
 use ggez::mint::Point2;
 use ggez::Context;

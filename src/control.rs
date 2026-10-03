@@ -1,6 +1,6 @@
 use ggez::event::EventHandler;
 use ggez::event::{Axis, Button, GamepadId};
-use ggez::graphics::{Canvas, Color, Rect};
+use ggez::graphics::{self, Canvas, Color, Rect};
 use ggez::input::keyboard::KeyInput;
 use ggez::winit::keyboard::PhysicalKey;
 use ggez::{Context, GameResult};
@@ -187,7 +187,14 @@ impl EventHandler for Control {
         match self.state {
             ProgramState::Menu => {
                 let mut canvas: Canvas = Canvas::from_frame(ctx, menuhelpers::GRAY);
-                canvas.set_screen_coordinates(self.screen_size);
+                let window_size = ctx.gfx.window().inner_size();
+                let screen_rect = graphics::Rect::new(
+                    0.0,
+                    0.0,
+                    window_size.width as f32,
+                    window_size.height as f32,
+                );
+                canvas.set_screen_coordinates(screen_rect);
 
                 self.menu.as_mut().expect(STATE_MENU_BUT_MENU_NONE).draw(
                     ctx,
@@ -199,7 +206,14 @@ impl EventHandler for Control {
             }
             ProgramState::Game => {
                 let mut canvas: Canvas = Canvas::from_frame(ctx, Color::BLACK);
-                canvas.set_screen_coordinates(self.screen_size);
+                let window_size = ctx.gfx.window().inner_size();
+                let screen_rect = graphics::Rect::new(
+                    0.0,
+                    0.0,
+                    window_size.width as f32,
+                    window_size.height as f32,
+                );
+                canvas.set_screen_coordinates(screen_rect);
 
                 self.game
                     .as_mut()

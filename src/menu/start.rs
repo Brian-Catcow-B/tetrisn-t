@@ -205,14 +205,36 @@ impl StartMenu {
         vertical_position: f32,
         window_dimensions: &(f32, f32),
     ) {
+        let window_dimensions_int = ctx.gfx.window().inner_size();
         let text_var_dimensions = text_var.dimensions(ctx);
+        println!(
+            "window dimensions in startdraw_text {}, {}",
+            window_dimensions.0, window_dimensions.1
+        );
+        println!(
+            "text var dims     in startdraw_text {}, {}",
+            text_var_dimensions.w, text_var_dimensions.h
+        );
+        println!(
+            "drawing text at position {}, {}",
+            (window_dimensions.0 - text_var_dimensions.w as f32) / 2.0,
+            (window_dimensions.1 - text_var_dimensions.h as f32) * vertical_position
+        );
         canvas.draw(
             text_var,
             DrawParam::new().dest(Point2::from_slice(&[
-                (window_dimensions.0 - text_var_dimensions.w as f32) / 2.0,
-                (window_dimensions.1 - text_var_dimensions.h as f32) * vertical_position,
+                (window_dimensions_int.width as f32 - text_var_dimensions.w as f32) / 2.0,
+                (window_dimensions_int.height as f32 - text_var_dimensions.h as f32)
+                    * vertical_position,
             ])),
         );
+        //        canvas.draw(
+        //            text_var,
+        //            DrawParam::new().dest(Point2::from_slice(&[
+        //                (window_dimensions.0 - text_var_dimensions.w as f32) / 2.0,
+        //                (window_dimensions.1 - text_var_dimensions.h as f32) * vertical_position,
+        //            ])),
+        //        );
     }
 
     pub fn resize_event(&mut self, height: f32) {
