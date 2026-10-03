@@ -47,13 +47,10 @@ fn main() {
     }
     ctx.gamepad = GamepadContext::from(gilrs_builder.build().unwrap());
 
-    // set window size
+    // set window to be resizable
     ctx.gfx
         .set_resizable(true)
         .expect("[!] Failed to set window to resizable");
-
-    // make it not blurry ???
-    //ctx.gfx.set_default_filter(graphics::FilterMode::Nearest);
 
     // create an instance of the event handler
     let control = Control::new(&mut ctx);
