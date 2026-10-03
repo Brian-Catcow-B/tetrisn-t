@@ -86,49 +86,8 @@ impl MenuItem {
         window_height: f32,
         text_scale_down: f32,
     ) -> Self {
-        //<<<<<<< HEAD
         let mut text = Text::new(TextFragment::new(title).color(graphics::Color::BLACK));
         text.set_scale(PxScale::from(window_height / text_scale_down));
-        //=======
-        //let mut text = Text::new(TextFragment::new(item_start_str).color(graphics::Color::BLACK));
-        //let mut num_values = 0;
-        //let mut value_show_increase = 0;
-        //match value_type {
-        //MenuItemValueType::None => {}
-        //MenuItemValueType::NumPlayers => {
-        //num_values = MAX_NUM_PLAYERS;
-        //value_show_increase = 1;
-        //text.add(
-        //TextFragment::new(format!(" {}", value + value_show_increase))
-        //.color(graphics::Color::BLACK),
-        //);
-        //}
-        //MenuItemValueType::StartingLevel => {
-        //num_values = MAX_STARTING_LEVEL + 1; // level indexes by 0, so we have one more than max starting level
-        //text.add(TextFragment::new(format!(" {}", value)).color(graphics::Color::BLACK));
-        //}
-        //MenuItemValueType::PlayerNum => {
-        //num_values = MAX_NUM_PLAYERS;
-        //value_show_increase = 1;
-        //text.add(
-        //TextFragment::new(format!(" {}", value + value_show_increase))
-        //.color(graphics::Color::BLACK),
-        //);
-        //}
-        //MenuItemValueType::KeyCode => {
-        //match keycode {
-        //Some(key) => text
-        //.add(TextFragment::new(format!("{:?}", key)).color(graphics::Color::BLACK)),
-        //None => text
-        //.add(TextFragment::new("None".to_string()).color(graphics::Color::BLACK)),
-        //};
-        //}
-        //MenuItemValueType::Custom => {
-        //text.add(TextFragment::new("".to_string()).color(graphics::Color::BLACK));
-        //}
-        //}
-        //text.set_scale(PxScale::from(window_height / text_scale_down));
-        //>>>>>>> 0705610c2852014c24920e44e8fa5fb3ebc1c2b5
         Self {
             text,
             id,
