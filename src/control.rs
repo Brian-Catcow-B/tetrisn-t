@@ -1,6 +1,6 @@
 use ggez::event::EventHandler;
 use ggez::event::{Axis, Button, GamepadId};
-use ggez::graphics::{self, Canvas, Color, Rect};
+use ggez::graphics::{self, Canvas, Color};
 use ggez::input::keyboard::KeyInput;
 use ggez::winit::keyboard::PhysicalKey;
 use ggez::{Context, GameResult};
@@ -26,7 +26,6 @@ pub struct Control {
     menu: Option<Menu>,
     game: Option<Game>,
     game_options: MenuGameOptions,
-    screen_size: Rect,
 }
 
 impl Control {
@@ -37,7 +36,6 @@ impl Control {
             menu: Some(Menu::new(ctx, &menu_game_options)),
             game: None,
             game_options: menu_game_options,
-            screen_size: Rect::new(0.0, 0.0, 800.0, 600.0), // TODO: use constants instead of magic numbers that align with what's in main.rs
         }
     }
 
