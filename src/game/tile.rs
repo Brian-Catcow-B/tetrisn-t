@@ -168,13 +168,13 @@ impl TileGraphic {
             }
         }
         Self {
-            image: graphics::Image::from_rgba8(
+            image: graphics::Image::from_pixels(
                 ctx,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
                 &TileGraphic::pack_color_buf(&pixel_color_buf),
-            )
-            .expect("Failed to create background tile image"),
+                graphics::ImageFormat::Rgba8UnormSrgb,
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as u32,
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as u32,
+            ),
         }
     }
 
@@ -357,13 +357,13 @@ impl TileGraphic {
         }
 
         Self {
-            image: graphics::Image::from_rgba8(
+            image: graphics::Image::from_pixels(
                 ctx,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
                 &TileGraphic::pack_color_buf(&pixel_color_buf),
-            )
-            .expect("Failed to create player piece tile image"),
+                graphics::ImageFormat::Rgba8UnormSrgb,
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as u32,
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as u32,
+            ),
         }
     }
 
@@ -426,13 +426,13 @@ impl TileGraphic {
         }
 
         Self {
-            image: graphics::Image::from_rgba8(
+            image: graphics::Image::from_pixels(
                 ctx,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
                 &TileGraphic::pack_color_buf(&pixel_color_buf),
-            )
-            .expect("Failed to create active player tile highlight image"),
+                graphics::ImageFormat::Rgba8UnormSrgb,
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as u32,
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as u32,
+            ),
         }
     }
 
@@ -495,13 +495,13 @@ impl TileGraphic {
         }
 
         Self {
-            image: graphics::Image::from_rgba8(
+            image: graphics::Image::from_pixels(
                 ctx,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
                 &TileGraphic::pack_color_buf(&pixel_color_buf),
-            )
-            .expect("Failed to create tile clearing standard highlight image"),
+                graphics::ImageFormat::Rgba8UnormSrgb,
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as u32,
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as u32,
+            ),
         }
     }
 
@@ -564,13 +564,13 @@ impl TileGraphic {
         }
 
         Self {
-            image: graphics::Image::from_rgba8(
+            image: graphics::Image::from_pixels(
                 ctx,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
                 &TileGraphic::pack_color_buf(&pixel_color_buf),
-            )
-            .expect("Failed to create tile clearing tetrisnt highlight image"),
+                graphics::ImageFormat::Rgba8UnormSrgb,
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as u32,
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as u32,
+            ),
         }
     }
 
@@ -622,13 +622,13 @@ impl TileGraphic {
         }
 
         Self {
-            image: graphics::Image::from_rgba8(
+            image: graphics::Image::from_pixels(
                 ctx,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
-                NUM_PIXEL_ROWS_PER_TILEGRAPHIC,
                 &TileGraphic::pack_color_buf(&pixel_color_buf),
-            )
-            .expect("Failed to create tile ghost tile highlight image"),
+                graphics::ImageFormat::Rgba8UnormSrgb,
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as u32,
+                NUM_PIXEL_ROWS_PER_TILEGRAPHIC as u32,
+            ),
         }
     }
 
@@ -647,7 +647,7 @@ impl TileGraphic {
     pub fn _print_image_buf(self, ctx: &mut Context) {
         let image_buf: Vec<u8> = self
             .image
-            .to_rgba8(ctx)
+            .to_pixels(ctx)
             .expect("Failed to create image buffer");
         for (index, image) in image_buf.iter().enumerate() {
             if index % 4 == 0 {

@@ -1,5 +1,5 @@
-use ggez::event::KeyCode;
-use ggez::graphics::{self, Color, Font, PxScale, Text, TextFragment};
+use ggez::graphics::{self, Color, PxScale, Text, TextFragment};
+use ggez::input::keyboard::KeyCode;
 
 use crate::game::{GameMode, GameSettings};
 use crate::inputs::KeyboardControlScheme;
@@ -87,10 +87,7 @@ impl MenuItem {
         text_scale_down: f32,
     ) -> Self {
         let mut text = Text::new(TextFragment::new(title).color(graphics::Color::BLACK));
-        text.set_font(
-            Font::default(),
-            PxScale::from(window_height / text_scale_down),
-        );
+        text.set_scale(PxScale::from(window_height / text_scale_down));
         Self {
             text,
             id,
@@ -117,10 +114,7 @@ impl MenuItem {
     ) -> Self {
         let mut text = Text::new(TextFragment::new(title).color(graphics::Color::BLACK));
         text.add(TextFragment::new(Self::onoffstr(start_on)).color(graphics::Color::BLACK));
-        text.set_font(
-            Font::default(),
-            PxScale::from(window_height / text_scale_down),
-        );
+        text.set_scale(PxScale::from(window_height / text_scale_down));
         Self {
             text,
             id,
@@ -153,10 +147,7 @@ impl MenuItem {
             TextFragment::new(format!("{}", start_value + value_show_increase))
                 .color(graphics::Color::BLACK),
         );
-        text.set_font(
-            Font::default(),
-            PxScale::from(window_height / text_scale_down),
-        );
+        text.set_scale(PxScale::from(window_height / text_scale_down));
         Self {
             text,
             id,
@@ -186,10 +177,7 @@ impl MenuItem {
             Some(key) => TextFragment::new(format!("{:?}", key)).color(graphics::Color::BLACK),
             None => TextFragment::new("None").color(graphics::Color::BLACK),
         });
-        text.set_font(
-            Font::default(),
-            PxScale::from(window_height / text_scale_down),
-        );
+        text.set_scale(PxScale::from(window_height / text_scale_down));
         Self {
             text,
             id,
@@ -218,10 +206,7 @@ impl MenuItem {
     ) -> Self {
         let mut text = Text::new(TextFragment::new(title).color(graphics::Color::BLACK));
         text.add(TextFragment::new(start_custom_str).color(graphics::Color::BLACK));
-        text.set_font(
-            Font::default(),
-            PxScale::from(window_height / text_scale_down),
-        );
+        text.set_scale(PxScale::from(window_height / text_scale_down));
         Self {
             text,
             id,
@@ -300,10 +285,8 @@ impl MenuItem {
     }
 
     pub fn resize(&mut self, window_height: f32) {
-        self.text.set_font(
-            Font::default(),
-            PxScale::from(window_height / self.text_scale_down),
-        );
+        self.text
+            .set_scale(PxScale::from(window_height / self.text_scale_down));
     }
 }
 
