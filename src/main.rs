@@ -34,16 +34,11 @@ fn main() {
     // custom controller setup stuffs
     let mut gilrs_builder = gilrs::GilrsBuilder::new().add_included_mappings(false);
 
-    ctx.fs.read_dir("/").expect("[!] Couldn't read dir \"/\"");
-
-    match ctx.fs.read_to_string("gamecontrollerdb.txt") {
+    match ctx.fs.read_to_string("/gamecontrollerdb.txt") {
         Ok(contents) => {
             gilrs_builder = gilrs_builder.add_mappings(&contents);
         }
-        Err(e) => println!(
-            "[!] file 'resources/gamecontrollerdb.txt' could not be read: {}",
-            e
-        ),
+        Err(e) => println!("[!] file 'gamecontrollerdb.txt' could not be read: {}", e),
     }
     ctx.gamepad = GamepadContext::from(gilrs_builder.build().unwrap());
 
